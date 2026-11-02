@@ -132,6 +132,8 @@ p.note{margin:6px 0 0}
 .bhead span:first-child{text-align:left}
 .brow .bname{font-size:13px;color:var(--fg);line-height:1.2;min-width:0}
 .brow .bname .note{font-size:11px}
+.blist.b4 .brow,.blist.b4 .bhead{grid-template-columns:minmax(0,1fr) 62px 52px 84px}
+.brow .bv{text-align:right;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .brow input{padding:4px 6px;text-align:right;font-variant-numeric:tabular-nums;width:100%}
 .calc{grid-column:1/-1;font-size:12px;color:var(--muted);background:var(--chip);border-radius:6px;padding:6px 9px;font-variant-numeric:tabular-nums}
 .sub{grid-column:1/-1;font-family:var(--f-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
@@ -593,7 +595,7 @@ function viewUtil(m){
          :`<td colspan="2"><span class="pill open">нет показаний</span></td><td class="num mut">—</td>`)+`</tr>`;
   }
   let h=`<section class="card"><div class="shead"><h2>Коммуналка · ${mLabel(m)}</h2>
-    ${ed?`<button class="btn sm pri" data-act="bulkUtil" type="button">Внести показания</button>`:''}${canWrite?`<button class="btn sm" data-act="editTariffs" type="button">Тарифы</button>`:''}</div>
+    ${ed?`<button class="btn sm pri" data-act="bulkUtil" data-id="w" type="button">Показания воды</button><button class="btn sm pri" data-act="bulkUtil" data-id="e" type="button">Показания света</button>`:''}${canWrite?`<button class="btn sm" data-act="editTariffs" type="button">Тарифы</button>`:''}</div>
   <div class="tiles">
     <div class="tile"><div class="l">Вода</div><div class="v">${f0(wS)}</div><div class="s">${nf1.format(wU)} м³ · ${fmt1(perL(LW,L))} л на 1 л</div></div>
     <div class="tile"><div class="l">Электроэнергия</div><div class="v">${f0(eS)}</div><div class="s">${nf1.format(eU)} кВт·ч · ${fmt1(perL(LE,L))} Вт·ч на 1 л</div></div>
@@ -624,49 +626,52 @@ async function saveUtilDoc(m,pid,doc){
   if(r&&!isClosed(m)) await w(()=>db.doc('pm/'+id).set({...r,water:doc.noCharge?0:(+doc.wSum||0),elec:doc.noCharge?0:(+doc.eSum||0)}));
   return true;
 }
-function bulkUtil(){
-  const m=cur, pts=utilPts(m);
+function bulkUtil(kind){
+  kind=kind==='e'?'e':'w';
+  const m=cur, pts=utilPts(m), W=kind==='w';
+  const K0=W?'w0':'e0',K1=W?'w1':'e1',KT=W?'wT':'eT',KU=W?'wUse':'eUse',KS=W?'wSum':'eSum';
+  const unit=W?'м³':'кВт·ч', what=W?'воды':'электроэнергии';
   let rows='';
   for(const p of pts){
     const u=S.util[m+'_'+p.id]||{}, pv=utilPrev(p.id,m)||{}, t=tariffOf(p.id,m);
-    const w0=u.w0??pv.w1, e0=u.e0??pv.e1;
-    rows+=`<div class="brow" data-p="${p.id}" data-w0="${w0??''}" data-e0="${e0??''}" data-wt="${u.wT??t.wT??''}" data-et="${u.eT??t.eT??''}">
-      <div class="bname">${esc(p.name)}<div class="note" id="bc_${p.id}"></div></div>
-      <input name="w_${p.id}" id="f_w_${p.id}" aria-label="${esc(p.name)}: вода" inputmode="decimal" autocomplete="off" value="${esc(u.w1??'')}" placeholder="${w0??'—'}">
-      <input name="e_${p.id}" id="f_e_${p.id}" aria-label="${esc(p.name)}: электро" inputmode="decimal" autocomplete="off" value="${esc(u.e1??'')}" placeholder="${e0??'—'}">
+    const v0=u[K0]??pv[K1], tr=u[KT]??t[KT];
+    rows+=`<div class="brow" data-p="${p.id}" data-v0="${v0??''}" data-t="${tr??''}">
+      <div class="bname">${esc(p.name)}${u.noCharge?' <span class="pill">не начисляем</span>':''}<div class="note" id="bc_${p.id}"></div></div>
+      <div class="bv">${v0!=null?nf1.format(v0):'—'}</div>
+      <div class="bv">${tr!=null?String(+tr).replace('.',','):'—'}</div>
+      <input name="v_${p.id}" id="f_v_${p.id}" aria-label="${esc(p.name)}: показание ${what} сейчас" inputmode="decimal" autocomplete="off" value="${esc(u[K1]??'')}">
     </div>`;
   }
-  openSheet('Показания · '+mLabel(m).toLowerCase(),'Текущие показания. Серым — прошлые. Пустые строки пропускаются.',
-    `<div class="full blist"><div class="bhead"><span>Точка</span><span>Вода, м³</span><span>Эл., кВт·ч</span></div>${rows}</div><div class="calc" id="btot"></div>`,
+  openSheet((W?'Вода':'Электроэнергия')+' · '+mLabel(m).toLowerCase(),`Впишите текущие показания ${what}. «Было» — показание за прошлый месяц, тариф — действующий в этом месяце (₴ за ${unit}). Пустые строки пропускаются. Если «было» или тариф не те, поправьте их в карточке точки.`,
+    `<div class="full blist b4"><div class="bhead"><span>Точка</span><span>Было</span><span>Тариф</span><span>Сейчас, ${unit}</span></div>${rows}</div><div class="calc" id="btot"></div>`,
     async fd=>{
       const todo=[];
       for(const el of document.querySelectorAll('.brow')){
-        const pid=el.dataset.p, wv=String(fd['w_'+pid]??'').trim(), ev=String(fd['e_'+pid]??'').trim();
-        if(!wv&&!ev)continue;
+        const pid=el.dataset.p, val=String(fd['v_'+pid]??'').trim();
+        if(!val)continue;
         const u=S.util[m+'_'+pid]||{}, name=S.points[pid]?.name||pid;
+        if(u[K1]!=null&&parseNum(val)===+u[K1])continue; // не трогаем то, что не меняли
+        if(el.dataset.v0===''||el.dataset.t==='')return `${name}: нет прошлого показания или тарифа ${what}. Внесите через карточку точки.`;
+        const c=calcFrom(el.dataset.v0,val,el.dataset.t);
+        if(!c)return `${name}: не понял показание.`;
+        if(c.use<0)return `${name}: «сейчас» меньше, чем было (${el.dataset.v0}).`;
         const doc={month:m,point:pid,paid:u.paid||0,paidDate:u.paidDate||'',note:u.note||'',noCharge:!!u.noCharge,
           w0:u.w0??null,w1:u.w1??null,wT:u.wT??null,wUse:u.wUse||0,wSum:u.wSum||0,e0:u.e0??null,e1:u.e1??null,eT:u.eT??null,eUse:u.eUse||0,eSum:u.eSum||0};
-        if(wv){if(el.dataset.w0===''||el.dataset.wt==='')return `${name}: нет прошлого показания или тарифа воды. Внесите через карточку точки.`;
-          const c=calcFrom(el.dataset.w0,wv,el.dataset.wt);if(!c)return `${name}: не понял показание воды.`;if(c.use<0)return `${name}: вода «сейчас» меньше, чем было (${el.dataset.w0}).`;
-          Object.assign(doc,{w0:parseNum(el.dataset.w0),w1:parseNum(wv),wT:parseNum(el.dataset.wt),wUse:c.use,wSum:c.sum})}
-        if(ev){if(el.dataset.e0===''||el.dataset.et==='')return `${name}: нет прошлого показания или тарифа электроэнергии. Внесите через карточку точки.`;
-          const c=calcFrom(el.dataset.e0,ev,el.dataset.et);if(!c)return `${name}: не понял показание электроэнергии.`;if(c.use<0)return `${name}: электро «сейчас» меньше, чем было (${el.dataset.e0}).`;
-          Object.assign(doc,{e0:parseNum(el.dataset.e0),e1:parseNum(ev),eT:parseNum(el.dataset.et),eUse:c.use,eSum:c.sum})}
+        Object.assign(doc,{[K0]:parseNum(el.dataset.v0),[K1]:parseNum(val),[KT]:parseNum(el.dataset.t),[KU]:c.use,[KS]:c.sum});
         todo.push([pid,doc]);
       }
-      if(!todo.length)return 'Не введено ни одного показания.';
+      if(!todo.length)return 'Нет новых показаний.';
       $('#saveBtn').disabled=true;$('#saveBtn').textContent='Сохраняю…';
       for(const [pid,doc] of todo) if(!await saveUtilDoc(m,pid,doc)){$('#saveBtn').disabled=false;$('#saveBtn').textContent='Сохранить';return 'Не всё сохранилось, попробуйте ещё раз.'}
-      toast(`Сохранено точек: ${todo.length}`);
+      toast(`${W?'Вода':'Электроэнергия'}: сохранено точек ${todo.length}`);
     });
   const upd=()=>{let tot=0,n=0;
-    for(const el of document.querySelectorAll('.brow')){const pid=el.dataset.p,out=$('#bc_'+pid);
-      const wv=$('#f_w_'+pid).value.trim(),ev=$('#f_e_'+pid).value.trim();const parts=[];let sum=0,bad=false;
-      if(wv){const c=calcFrom(el.dataset.w0,wv,el.dataset.wt);if(!c||c.use<0)bad=true;else{parts.push(nf1.format(c.use)+' м³');sum+=c.sum}}
-      if(ev){const c=calcFrom(el.dataset.e0,ev,el.dataset.et);if(!c||c.use<0)bad=true;else{parts.push(nf1.format(c.use)+' кВт·ч');sum+=c.sum}}
-      out.textContent=bad?'проверьте показание':(parts.length?parts.join(' · ')+' = '+f0(sum)+' грн':'');out.style.color=bad?'var(--bad)':'';
-      if(parts.length&&!bad){tot+=sum;n++}}
-    $('#btot').textContent=`Заполнено точек: ${n} · сумма ${f0(tot)} грн`};
+    for(const el of document.querySelectorAll('.brow')){const pid=el.dataset.p,out=$('#bc_'+pid),val=$('#f_v_'+pid).value.trim();
+      if(!val){out.textContent='';continue}
+      const c=calcFrom(el.dataset.v0,val,el.dataset.t), bad=!c||c.use<0;
+      out.textContent=bad?'проверьте показание':`${nf1.format(c.use)} ${unit} = ${f0(c.sum)} грн`;out.style.color=bad?'var(--bad)':'';
+      if(!bad){tot+=c.sum;n++}}
+    $('#btot').textContent=`Заполнено точек: ${n} · ${what} на ${f0(tot)} грн`};
   $('#sf').addEventListener('input',upd);upd();
 }
 function editTariffs(){
