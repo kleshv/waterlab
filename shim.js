@@ -56,6 +56,7 @@
     for(;;){const {data,error}=await sb.from('docs').select('col,id,data').order('col').order('id').range(from,from+page-1);
       if(error)throw error;for(const r of data){(store[r.col]=store[r.col]||{})[r.id]=r.data}
       if(data.length<page)break;from+=page}
+    if(role==='accountant'){const {data:a,error:ae}=await sb.rpc('acct_data');if(ae)throw ae;for(const r of a||[]){(store[r.col]=store[r.col]||{})[r.id]=r.data}}
     try{const {data:u}=await sb.from('allowed_users').select('email,name');(u||[]).forEach(x=>names[x.email.toLowerCase()]=x.name)}catch(_){}
     loaded=true;Object.keys(subs).forEach(emit);
     channel=sb.channel('docs-live').on('postgres_changes',{event:'*',schema:'public',table:'docs'},p=>{
@@ -65,9 +66,11 @@
   }
   function ref(col,id){
     return {id,path:col+'/'+id,
-      async set(data){const {error}=await sb.from('docs').upsert({col,id,data});if(error)throw {code:error.code==='42501'?'invalid_argument':'unavailable',message:error.message};(store[col]=store[col]||{})[id]=data;emit(col)},
+      async set(data){if(role==='accountant'&&!ACCT_COLS.includes(col)){(store[col]=store[col]||{})[id]=data;emit(col);return}
+        const {error}=await sb.from('docs').upsert({col,id,data});if(error)throw {code:error.code==='42501'?'invalid_argument':'unavailable',message:error.message};(store[col]=store[col]||{})[id]=data;emit(col)},
       async update(data){const cur=(store[col]||{})[id];if(!cur)throw {code:'invalid_argument',message:'not found'};return this.set({...cur,...data})},
-      async delete(){const {error}=await sb.from('docs').delete().eq('col',col).eq('id',id);if(error)throw {code:'unavailable',message:error.message};if(store[col])delete store[col][id];emit(col)}};
+      async delete(){if(role==='accountant'&&!ACCT_COLS.includes(col))throw {code:'invalid_argument',message:'Нет прав'};
+        const {error}=await sb.from('docs').delete().eq('col',col).eq('id',id);if(error)throw {code:'unavailable',message:error.message};if(store[col])delete store[col][id];emit(col)}};
   }
   const rid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
   const db={collection:col=>({path:col,doc:id=>ref(col,id||rid()),onSnapshot(cb,err){(subs[col]=subs[col]||[]).push(cb);(errs[col]=errs[col]||[]).push(err);if(loaded)setTimeout(()=>emit(col),0);return()=>{subs[col]=(subs[col]||[]).filter(x=>x!==cb)}}}),
@@ -87,13 +90,15 @@
     const b=document.createElement('button');b.id='logoutBtn';b.type='button';b.className='btn sm';b.textContent='Выйти';b.title=session?session.user.email:'';
     b.onclick=async()=>{await sb.auth.signOut();location.reload()};row.appendChild(b)}
 
-  let started=false;
+  let started=false, role='owner'; const ACCT_COLS=['points','util','pay','tariffs'];
   function denied(email){const d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:#f4f8fc;font-family:Arimo,Arial,sans-serif';
     d.innerHTML='<div style="max-width:380px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 20px rgba(17,35,63,.12);color:#11233f"><b style="font-size:18px">Нет доступа</b><p style="margin:12px 0 18px;line-height:1.45">Учётная запись <b></b> ещё не добавлена в список доступа WaterLab. Попросите Влада добавить её и затем обновите страницу.</p><button type="button" style="background:#11233f;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer">Выйти</button></div>';
     d.querySelector('p b').textContent=email||'';d.querySelector('button').onclick=async()=>{await sb.auth.signOut();location.reload()};document.body.appendChild(d)}
   async function start(){if(started)return;started=true;hideLogin();addLogout();
     try{const {data:ok,error}=await sb.rpc('is_allowed');if(!error&&ok===false){denied(session&&session.user.email);return}}catch(_){}
+    try{const {data:r}=await sb.rpc('my_role');role=r||'owner'}catch(_){}
+    window.WL_ROLE=role;
     try{await loadAll()}catch(e){Object.values(errs).flat().forEach(f=>f&&f({code:'unavailable',message:e.message}))}
     readyResolve()}
   sb.auth.onAuthStateChange((ev,s)=>{session=s;if(ev==='PASSWORD_RECOVERY'){show('newpass');return}if(s&&ev!=='SIGNED_OUT')start()});

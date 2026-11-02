@@ -189,6 +189,7 @@ const artCat=a=>{for(const g of ARTS) if(g.items.includes(a)) return g.cat; retu
 const S={points:{},months:{},pm:{},exp:{},settle:{},meta:{},util:{},pay:{},tariffs:{}};
 let me=null, userApi=null; const names={};
 const loaded=new Set();
+let role='owner'; const ACCT_TABS=['util','pay','points'];
 let db=null, canWrite=true, tab='month', cur=null, stale=false, fatal='', expFilter='all', utilPoint='';
 const ls={get(k){try{return localStorage.getItem(k)}catch(_){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(_){}}};
 
@@ -273,8 +274,10 @@ function render(){
   const sel=$('#monthSel');
   sel.innerHTML=ms.slice().reverse().map(m=>`<option value="${m}" ${m===cur?'selected':''}>${mLabel(m)}${S.months[m].closed?'':' •'}</option>`).join('')||'<option>нет месяцев</option>';
   sel.disabled=!ms.length;
-  $('#newMonthBtn').hidden=!canWrite||!Object.keys(S.points).length;
-  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.tab===tab));
+  const acct=role==='accountant';
+  if(acct&&!ACCT_TABS.includes(tab)) tab='util';
+  $('#newMonthBtn').hidden=acct||!canWrite||!Object.keys(S.points).length;
+  document.querySelectorAll('.tab').forEach(t=>{t.hidden=acct&&!ACCT_TABS.includes(t.dataset.tab);t.setAttribute('aria-selected',t.dataset.tab===tab)});
   const main=$('#main');
   if(fatal){main.innerHTML=`<div class="banner warn">${esc(fatal)}</div>`;return}
   if(loaded.size<COLS.length){main.innerHTML=`<section class="card"><h2>Загрузка</h2><p class="note">${stale?'База пока не отвечает. Данные появятся, как только соединение восстановится.':'Подключаюсь к базе: точки, месяцы, расходы и взаиморасчёт появятся здесь.'}</p></section>`;return}
@@ -876,7 +879,7 @@ document.addEventListener('click',e=>{
   const id=a.dataset.id;
   ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,editPayment,exportXlsx,editTariffEntry})[a.dataset.act]?.(id);
 });
-$('#monthSel').addEventListener('change',e=>{cur=e.target.value;if(!['util','exp','pay'].includes(tab))tab='month';render()});
+$('#monthSel').addEventListener('change',e=>{cur=e.target.value;if(!['util','exp','pay'].includes(tab))tab=role==='accountant'?'util':'month';render()});
 document.addEventListener('change',e=>{if(e.target.id==='utilPointSel'){utilPoint=e.target.value;render()}});
 $('#newMonthBtn').addEventListener('click',newMonth);
 
@@ -887,6 +890,7 @@ $('#newMonthBtn').addEventListener('click',newMonth);
     if(!db){fatal='Нет связи с базой. Проверьте интернет и обновите страницу.';render();return}
     const user=await window.claude.use('user');
     if(user){userApi=user;try{const cw=await user.can('data.write');if(cw===false)canWrite=false}catch(_){}try{me=await user.id()}catch(_){}}
+    if(window.WL_ROLE==='accountant'){role='accountant';tab='util'}
     const timer=setTimeout(()=>{stale=true;render()},10000);
     for(const c of COLS){
       db.collection(c).onSnapshot(snap=>{
