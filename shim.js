@@ -90,6 +90,23 @@
     const b=document.createElement('button');b.id='logoutBtn';b.type='button';b.className='btn sm';b.textContent='Выйти';b.title=session?session.user.email:'';
     b.onclick=async()=>{await sb.auth.signOut();location.reload()};row.appendChild(b)}
 
+
+  /* ---------- auto-update: GitHub Pages caches pages ~10 min ---------- */
+  (function(){
+    const meta=document.querySelector('meta[name=wl-build]'); if(!meta)return; const mine=meta.content; let shown=false;
+    async function check(){ if(shown)return;
+      try{const r=await fetch(location.pathname+'?_='+Date.now(),{cache:'reload'});const t=await r.text();
+        const m=/name="wl-build" content="([^"]+)"/.exec(t);
+        if(m&&m[1]!==mine){shown=true;
+          const busy=document.querySelector('#modal .sheet');
+          if(!busy){location.reload();return}
+          const b=document.createElement('button');b.type='button';b.textContent='Есть новая версия — обновить';
+          b.style.cssText='position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:9998;background:#11233f;color:#fff;border:0;border-radius:20px;padding:10px 18px;font:inherit;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';
+          b.onclick=()=>location.reload();document.body.appendChild(b)}}catch(_){}
+    }
+    setTimeout(check,3000); setInterval(check,120000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
+  })();
   let started=false, role='owner'; const ACCT_COLS=['points','util','pay','tariffs'];
   function denied(email){const d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:#f4f8fc;font-family:Arimo,Arial,sans-serif';
