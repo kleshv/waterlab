@@ -88,7 +88,12 @@
     b.onclick=async()=>{await sb.auth.signOut();location.reload()};row.appendChild(b)}
 
   let started=false;
+  function denied(email){const d=document.createElement('div');
+    d.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:#f4f8fc;font-family:Arimo,Arial,sans-serif';
+    d.innerHTML='<div style="max-width:380px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 20px rgba(17,35,63,.12);color:#11233f"><b style="font-size:18px">Нет доступа</b><p style="margin:12px 0 18px;line-height:1.45">Учётная запись <b></b> ещё не добавлена в список доступа WaterLab. Попросите Влада добавить её и затем обновите страницу.</p><button type="button" style="background:#11233f;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer">Выйти</button></div>';
+    d.querySelector('p b').textContent=email||'';d.querySelector('button').onclick=async()=>{await sb.auth.signOut();location.reload()};document.body.appendChild(d)}
   async function start(){if(started)return;started=true;hideLogin();addLogout();
+    try{const {data:ok,error}=await sb.rpc('is_allowed');if(!error&&ok===false){denied(session&&session.user.email);return}}catch(_){}
     try{await loadAll()}catch(e){Object.values(errs).flat().forEach(f=>f&&f({code:'unavailable',message:e.message}))}
     readyResolve()}
   sb.auth.onAuthStateChange((ev,s)=>{session=s;if(ev==='PASSWORD_RECOVERY'){show('newpass');return}if(s&&ev!=='SIGNED_OUT')start()});
