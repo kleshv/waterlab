@@ -26,13 +26,13 @@
       login:`<form class="lg" id="lgf" novalidate>${logoSvg()}<h1>Лабораторія води · фінанси</h1>
         <label for="lg_e">Email</label><input id="lg_e" type="email" autocomplete="username" required>
         <label for="lg_p">Пароль</label><input id="lg_p" type="password" autocomplete="current-password" required>
-        <button type="submit" id="lg_b">Войти</button><button type="button" class="lnk" id="lg_f">Забыли пароль?</button><div class="msg" id="lg_m"></div></form>`,
-      reset:`<form class="lg" id="lgf" novalidate>${logoSvg()}<h1>Восстановление пароля</h1>
+        <button type="submit" id="lg_b">Увійти</button><button type="button" class="lnk" id="lg_f">Забули пароль?</button><div class="msg" id="lg_m"></div></form>`,
+      reset:`<form class="lg" id="lgf" novalidate>${logoSvg()}<h1>Відновлення пароля</h1>
         <label for="lg_e">Email</label><input id="lg_e" type="email" autocomplete="username" required>
-        <button type="submit" id="lg_b">Отправить ссылку</button><button type="button" class="lnk" id="lg_back">Назад ко входу</button><div class="msg" id="lg_m"></div></form>`,
-      newpass:`<form class="lg" id="lgf" novalidate>${logoSvg()}<h1>Новый пароль</h1>
-        <label for="lg_p">Новый пароль (не короче 10 символов)</label><input id="lg_p" type="password" autocomplete="new-password" required>
-        <button type="submit" id="lg_b">Сохранить</button><div class="msg" id="lg_m"></div></form>`};
+        <button type="submit" id="lg_b">Надіслати посилання</button><button type="button" class="lnk" id="lg_back">Назад до входу</button><div class="msg" id="lg_m"></div></form>`,
+      newpass:`<form class="lg" id="lgf" novalidate>${logoSvg()}<h1>Новий пароль</h1>
+        <label for="lg_p">Новий пароль (не менше 10 символів)</label><input id="lg_p" type="password" autocomplete="new-password" required>
+        <button type="submit" id="lg_b">Зберегти</button><div class="msg" id="lg_m"></div></form>`};
     w.innerHTML=forms[mode]; w.hidden=false;
     const f=document.getElementById('lgf'), m=document.getElementById('lg_m'), b=document.getElementById('lg_b');
     const msg=(t,ok)=>{m.textContent=t;m.className='msg'+(ok?' ok':'')};
@@ -42,9 +42,9 @@
     f.onsubmit=async e=>{e.preventDefault();b.disabled=true;msg('');
       try{
         if(mode==='login'){const {error}=await sb.auth.signInWithPassword({email:lg_e.value.trim(),password:lg_p.value});if(error)throw error}
-        if(mode==='reset'){const {error}=await sb.auth.resetPasswordForEmail(lg_e.value.trim(),{redirectTo:location.origin+location.pathname});if(error)throw error;msg('Если такой email есть, письмо со ссылкой уже отправлено.',true)}
-        if(mode==='newpass'){if(lg_p.value.length<10)throw {message:'Пароль должен быть не короче 10 символов.'};const {error}=await sb.auth.updateUser({password:lg_p.value});if(error)throw error;w.hidden=true;start()}
-      }catch(err){msg(/Invalid login/i.test(err.message||'')?'Неверный email или пароль.':(err.message||'Не получилось, попробуйте ещё раз.'))}
+        if(mode==='reset'){const {error}=await sb.auth.resetPasswordForEmail(lg_e.value.trim(),{redirectTo:location.origin+location.pathname});if(error)throw error;msg('Якщо такий email є, лист із посиланням уже надіслано.',true)}
+        if(mode==='newpass'){if(lg_p.value.length<10)throw {message:'Пароль має бути не менше 10 символів.'};const {error}=await sb.auth.updateUser({password:lg_p.value});if(error)throw error;w.hidden=true;start()}
+      }catch(err){msg(/Invalid login/i.test(err.message||'')?'Невірний email або пароль.':(err.message||'Не вийшло, спробуйте ще раз.'))}
       b.disabled=false};
   }
   function hideLogin(){const w=document.getElementById('lgw');if(w)w.hidden=true}
@@ -69,7 +69,7 @@
       async set(data){if(role==='accountant'&&!ACCT_COLS.includes(col)){(store[col]=store[col]||{})[id]=data;emit(col);return}
         const {error}=await sb.from('docs').upsert({col,id,data});if(error)throw {code:error.code==='42501'?'invalid_argument':'unavailable',message:error.message};(store[col]=store[col]||{})[id]=data;emit(col)},
       async update(data){const cur=(store[col]||{})[id];if(!cur)throw {code:'invalid_argument',message:'not found'};return this.set({...cur,...data})},
-      async delete(){if(role==='accountant'&&!ACCT_COLS.includes(col))throw {code:'invalid_argument',message:'Нет прав'};
+      async delete(){if(role==='accountant'&&!ACCT_COLS.includes(col))throw {code:'invalid_argument',message:'Немає прав'};
         const {error}=await sb.from('docs').delete().eq('col',col).eq('id',id);if(error)throw {code:'unavailable',message:error.message};if(store[col])delete store[col][id];emit(col)}};
   }
   const rid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -87,7 +87,7 @@
 
   /* ---------- logout button ---------- */
   function addLogout(){if(document.getElementById('logoutBtn'))return;const row=document.querySelector('header .hrow');if(!row)return;
-    const b=document.createElement('button');b.id='logoutBtn';b.type='button';b.className='btn sm';b.textContent='Выйти';b.title=session?session.user.email:'';
+    const b=document.createElement('button');b.id='logoutBtn';b.type='button';b.className='btn sm';b.textContent='Вийти';b.title=session?session.user.email:'';
     b.onclick=async()=>{await sb.auth.signOut();location.reload()};row.appendChild(b)}
 
 
@@ -100,7 +100,7 @@
         if(m&&m[1]!==mine){shown=true;
           const busy=document.querySelector('#modal .sheet');
           if(!busy){location.reload();return}
-          const b=document.createElement('button');b.type='button';b.textContent='Есть новая версия — обновить';
+          const b=document.createElement('button');b.type='button';b.textContent='Є нова версія — оновити';
           b.style.cssText='position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:9998;background:#11233f;color:#fff;border:0;border-radius:20px;padding:10px 18px;font:inherit;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer';
           b.onclick=()=>location.reload();document.body.appendChild(b)}}catch(_){}
     }
@@ -110,7 +110,7 @@
   let started=false, role='owner'; const ACCT_COLS=['points','util','pay','tariffs'];
   function denied(email){const d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:#f4f8fc;font-family:Arimo,Arial,sans-serif';
-    d.innerHTML='<div style="max-width:380px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 20px rgba(17,35,63,.12);color:#11233f"><b style="font-size:18px">Нет доступа</b><p style="margin:12px 0 18px;line-height:1.45">Учётная запись <b></b> ещё не добавлена в список доступа WaterLab. Попросите Влада добавить её и затем обновите страницу.</p><button type="button" style="background:#11233f;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer">Выйти</button></div>';
+    d.innerHTML='<div style="max-width:380px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 20px rgba(17,35,63,.12);color:#11233f"><b style="font-size:18px">Немає доступу</b><p style="margin:12px 0 18px;line-height:1.45">Обліковий запис <b></b> ще не додано до списку доступу WaterLab. Попросіть Влада додати його й потім оновіть сторінку.</p><button type="button" style="background:#11233f;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer">Вийти</button></div>';
     d.querySelector('p b').textContent=email||'';d.querySelector('button').onclick=async()=>{await sb.auth.signOut();location.reload()};document.body.appendChild(d)}
   async function start(){if(started)return;started=true;hideLogin();addLogout();
     try{const {data:ok,error}=await sb.rpc('is_allowed');if(!error&&ok===false){denied(session&&session.user.email);return}}catch(_){}
