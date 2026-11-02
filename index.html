@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611022346">
+<meta name="wl-build" content="202611022353">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -123,6 +123,10 @@ p.note{margin:6px 0 0}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 .form .segb,.form .chipb{display:block;position:relative;font-size:13px;color:var(--fg);gap:0}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg2{display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px}
+.seg2 button{border:0;background:none;padding:6px 16px;border-radius:6px;font:inherit;font-family:var(--f-display);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);cursor:pointer}
+.seg2 button.on{background:var(--accent);color:var(--accent-fg)}
+.blist.bill .brow,.blist.bill .bhead{grid-template-columns:minmax(0,130px) minmax(0,1fr) repeat(3,minmax(64px,104px))}
 .segb input,.chipb input{position:absolute;opacity:0;pointer-events:none}
 .segb span{display:block;text-align:center;padding:9px;border:1px solid var(--line);border-radius:6px;font-family:var(--f-display);font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
 .segb input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
@@ -187,9 +191,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611022346"></script>
+<script src="config.js?v=202611022353"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611022346"></script>
+<script src="shim.js?v=202611022353"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs'];
@@ -814,10 +818,11 @@ function who(id){if(!id)return '';if(names[id]!==undefined)return names[id]||'у
   if(userApi&&userApi.profiles){userApi.profiles([id]).then(ps=>{names[id]=(ps&&ps[id]&&ps[id].name)||'учасник';render()}).catch(()=>{names[id]='учасник'})}else names[id]='учасник';return 'учасник'}
 function payRow(m,pid){
   const r=S.pm[m+'_'+pid]||{}, py=S.pay[m+'_'+pid]||{}, u=S.util[m+'_'+pid]||{};
-  const utilCalc=Math.round(((+r.water||0)+(+r.elec||0))*100)/100, rentDue=+r.rent||0, utilDue=py.utilBill!=null?+py.utilBill:utilCalc;
+  const utilCalc=Math.round(((+r.water||0)+(+r.elec||0))*100)/100, rentDue=+r.rent||0;
+  const utilDue=py.utilBill!=null?+py.utilBill:utilCalc;
   const rentPaid=py.rentPaid!=null?+py.rentPaid:null;
   const utilPaid=py.utilPaid!=null?+py.utilPaid:(u.paid?+u.paid:null);
-  return {r,py,rentDue,utilDue,utilCalc,rentPaid,utilPaid,rentDate:py.rentDate||'',utilDate:py.utilPaid!=null?py.utilDate||'':(u.paidDate||'')};
+  return {r,py,u,rentDue,utilDue,utilCalc,rentPaid,utilPaid,rentDate:py.rentDate||'',utilDate:py.utilPaid!=null?py.utilDate||'':(u.paidDate||'')};
 }
 function stPill(paid,due){
   if(due<=0&&!paid) return '<span class="pill">немає</span>';
@@ -826,57 +831,103 @@ function stPill(paid,due){
   return '<span class="pill closed">сплачено</span>';
 }
 function payStart(){return (S.meta.settings&&S.meta.settings.payStart)||'2026-10'}
+let payMode='rent';
+function setPayMode(v){payMode=v==='util'?'util':'rent';render()}
+function prevBill(pid,m){ // readings of the previous bill for this point
+  const ms=Object.values(S.pay).filter(x=>x.point===pid&&x.month<m&&(x.bw1!=null||x.be1!=null)).sort((a,b)=>b.month.localeCompare(a.month));
+  return ms[0]||null;
+}
+function billPeriodTxt(py){return py.bFrom||py.bTo?`${py.bFrom?fmtD(py.bFrom):'…'}–${py.bTo?fmtD(py.bTo):'…'}`:(py.billPeriod||'')}
 function viewPayments(m){
   const ids=Object.values(S.pm).filter(r=>r.month===m).map(r=>r.point);
   const pts=pointsList().filter(p=>ids.includes(p.id));
-  let rD=0,rP=0,uD=0,uP=0,open=0,rows='';
+  const R=payMode==='rent';
+  let due=0,paid=0,open=0,rows='';
   for(const p of pts){
-    const x=payRow(m,p.id);
-    rD+=x.rentDue;rP+=x.rentPaid||0;uD+=x.utilDue;uP+=x.utilPaid||0;
-    const rOk=x.rentDue<=0||(x.rentPaid||0)+0.5>=x.rentDue, uOk=x.utilDue<=0||(x.utilPaid||0)+0.5>=x.utilDue;
-    if(!rOk||!uOk)open++;
-    const by=x.py.by?' · вніс '+esc(who(x.py.by)):'';
-    rows+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editPayment':''}" data-id="${p.id}"><td>${esc(p.name)}</td>
-      <td class="num">${x.rentPaid!=null?f0(x.rentPaid):'—'}<span class="mut"> / ${f0(x.rentDue)}</span><div>${stPill(x.rentPaid,x.rentDue)}${x.rentDate?` <span class="note">${esc(fmtD(x.rentDate))}</span>`:''}</div></td>
-      <td class="num">${x.utilPaid!=null?f0(x.utilPaid):'—'}<span class="mut"> / ${f0(x.utilDue)}</span>${x.py.utilBill!=null?`<div class="note">за рахунком${x.py.billPeriod?' '+esc(x.py.billPeriod):''}</div>`:''}<div>${stPill(x.utilPaid,x.utilDue)}${x.utilDate?` <span class="note">${esc(fmtD(x.utilDate))}</span>`:''}</div>${by?`<div class="note">${by.slice(3)}</div>`:''}</td></tr>`;
+    const x=payRow(m,p.id), d=R?x.rentDue:x.utilDue, pd=R?x.rentPaid:x.utilPaid, dt=R?x.rentDate:x.utilDate;
+    due+=d;paid+=pd||0; if(d>0.5&&(pd||0)+0.5<d)open++;
+    const by=x.py.by?'вніс '+esc(who(x.py.by)):'';
+    const sub=R?(p.payee?esc(p.payee):''):[x.py.utilBill!=null?'за рахунком'+(billPeriodTxt(x.py)?' '+esc(billPeriodTxt(x.py)):''):'',x.py.basis?'№ '+esc(x.py.basis):''].filter(Boolean).join(' · ');
+    rows+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?(R?'editRent':'editBill'):''}" data-id="${p.id}">
+      <td>${esc(p.name)}${sub?`<div class="note">${sub}</div>`:''}</td>
+      <td class="num">${f0(d)}</td>
+      <td class="num">${pd!=null?f0(pd):'<span class="mut">—</span>'}<div>${stPill(pd,d)}</div>${dt||by?`<div class="note">${[dt?esc(fmtD(dt)):'',by].filter(Boolean).join(' · ')}</div>`:''}</td></tr>`;
   }
-  let h=`<section class="card"><div class="shead"><h2>Оплати · ${mLabel(m)}</h2><span class="note">${canWrite?'натисніть точку, щоб відмітити оплату':''}</span></div>
-  <div class="tiles">
-    <div class="tile"><div class="l">Оренда</div><div class="v">${f0(rP)}</div><div class="s">з ${f0(rD)} · борг ${f0(Math.max(0,rD-rP))}</div></div>
-    <div class="tile"><div class="l">Комуналка</div><div class="v">${f0(uP)}</div><div class="s">з ${f0(uD)} · борг ${f0(Math.max(0,uD-uP))}</div></div>
+  let h=`<section class="card"><div class="shead"><h2>Оплати · ${mLabel(m)}</h2></div>
+  <div class="seg2" role="tablist"><button type="button" class="${R?'on':''}" data-act="setPayMode" data-id="rent">Оренда</button><button type="button" class="${R?'':'on'}" data-act="setPayMode" data-id="util">Комуналка</button></div>
+  <div class="tiles t3" style="margin-top:8px">
+    <div class="tile"><div class="l">Нараховано</div><div class="v">${f0(due)}</div><div class="s">${R?'оренда за місяць':'за рахунками / показниками'}</div></div>
+    <div class="tile"><div class="l">Сплачено</div><div class="v">${f0(paid)}</div><div class="s">борг ${f0(Math.max(0,due-paid))}</div></div>
     <div class="tile main"><div class="l">Не закрито</div><div class="v">${open}</div><div class="s">точок з ${pts.length}</div></div>
   </div>
-  <div class="tbl" style="margin-top:8px"><table><thead><tr><th>Точка</th><th class="num">Оренда</th><th class="num">Комуналка</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="note">У цьому місяці немає точок.</td></tr>'}</tbody></table></div>
-  <p class="note">«Сплачено / нараховано». Оренда нараховується з картки точки, комуналка — за показниками з вкладки «Комуналка».</p></section>`;
-  // debts in earlier months since payStart
+  <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Точка</th><th class="num">${R?'Оренда':'До сплати'}, ₴</th><th class="num">Сплачено, ₴</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="note">У цьому місяці немає точок.</td></tr>'}</tbody>
+  <tfoot><tr class="final"><td>Разом</td><td class="num">${f0(due)}</td><td class="num">${f0(paid)}<div class="note">борг ${f0(Math.max(0,due-paid))}</div></td></tr></tfoot></table></div>
+  <p class="note">${R?'Оренда нараховується з картки точки. Натисніть точку, щоб відмітити оплату.':'Натисніть точку, щоб внести рахунок: період, показники з рахунку і суму. Якщо рахунку ще немає, до сплати — сума за нашими показниками з вкладки «Комуналка».'}</p></section>`;
   const st=payStart(), debts=[];
   for(const mm of monthsList()) if(mm>=st&&mm<m) for(const p of pointsList()){ if(!S.pm[mm+'_'+p.id])continue;
-    const x=payRow(mm,p.id), rd=Math.max(0,x.rentDue-(x.rentPaid||0)), ud=Math.max(0,x.utilDue-(x.utilPaid||0));
-    if(rd>0.5||ud>0.5) debts.push(`<tr><td>${esc(p.name)}</td><td>${mLabel(mm)}</td><td class="num">${rd>0.5?f0(rd):'—'}</td><td class="num">${ud>0.5?f0(ud):'—'}</td></tr>`)}
-  if(debts.length) h+=`<section class="card"><h2>Борги за минулі місяці</h2><div class="tbl"><table><thead><tr><th>Точка</th><th>Місяць</th><th class="num">Оренда</th><th class="num">Комуналка</th></tr></thead><tbody>${debts.join('')}</tbody></table></div></section>`;
+    const x=payRow(mm,p.id), dd=R?Math.max(0,x.rentDue-(x.rentPaid||0)):Math.max(0,x.utilDue-(x.utilPaid||0));
+    if(dd>0.5) debts.push(`<tr><td>${esc(p.name)}</td><td>${mLabel(mm)}</td><td class="num">${f0(dd)}</td></tr>`)}
+  if(debts.length) h+=`<section class="card"><h2>Борги за минулі місяці · ${R?'оренда':'комуналка'}</h2><div class="tbl"><table><thead><tr><th>Точка</th><th>Місяць</th><th class="num">Борг, ₴</th></tr></thead><tbody>${debts.join('')}</tbody></table></div></section>`;
   return h;
 }
-function editPayment(pid){
-  const m=cur, id=m+'_'+pid, p=S.points[pid]||{}, x=payRow(m,pid), py=x.py;
-  const today=new Date(); const td=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-  const fields=`<div class="sub">Оренда · нараховано ${f0(x.rentDue)} грн</div>`+
-    fld('rentPaid','Сплачено, грн',py.rentPaid??'')+fld('rentDate','Дата',py.rentDate||'',{type:'date'})+
-    `<div class="full"><button type="button" class="btn sm" data-fill="rent">Сплачено повністю</button></div>`+
-    `<div class="sub">Комуналка · за нашими показниками ${f0(x.utilCalc)} грн</div>`+fld('utilBill','За рахунком, грн',py.utilBill??'')+fld('billPeriod','Період рахунку',py.billPeriod||'',{type:'text'})+`<p class="note full" style="margin:0">Якщо рахунок виставлено за інший період (напр. 25.10–25.11) — впишіть суму з рахунку, борг рахуватиметься від неї. Порожньо — береться сума за нашими показниками.</p>`+
-    fld('utilPaid','Сплачено, грн',py.utilPaid??'')+fld('utilDate','Дата',py.utilDate||'',{type:'date'})+
-    `<div class="full"><button type="button" class="btn sm" data-fill="util">Сплачено повністю</button></div>`+
-    fld('basis','Рахунок / акт №',py.basis||'',{type:'text',full:true})+fld('note','Коментар',py.note||'',{type:'text',full:true});
-  openSheet(p.name||pid,mLabel(m)+(p.payee?' · '+p.payee:'')+(p.contact?' · '+p.contact:''),fields,async fd=>{
-    const rp=parseNum(fd.rentPaid), up=parseNum(fd.utilPaid), ub=parseNum(fd.utilBill);
-    if(rp===null||up===null||ub===null)return 'Не зрозумів суму. Можна писати 2000 або 1500,50.';
-    const doc={month:m,point:pid,rentPaid:String(fd.rentPaid).trim()===''?null:rp,rentDate:fd.rentDate||'',utilPaid:String(fd.utilPaid).trim()===''?null:up,utilDate:fd.utilDate||'',utilBill:String(fd.utilBill??'').trim()===''?null:ub,billPeriod:fd.billPeriod||'',basis:fd.basis||'',note:fd.note||'',by:me||py.by||''};
-    if(!await w(()=>db.doc('pay/'+id).set(doc)))return 'Не збереглося';toast('Оплату збережено');
-  });
-  $('#sf').addEventListener('click',e=>{const b=e.target.closest('[data-fill]');if(!b)return;
-    if(b.dataset.fill==='rent'){$('#f_rentPaid').value=x.rentDue;if(!$('#f_rentDate').value)$('#f_rentDate').value=td}
-    else{const bv=$('#f_utilBill').value.trim();$('#f_utilPaid').value=bv?bv:x.utilCalc;if(!$('#f_utilDate').value)$('#f_utilDate').value=td}});
+function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+async function savePay(m,pid,patch){
+  const id=m+'_'+pid, py=S.pay[id]||{};
+  const doc={...py,month:m,point:pid,...patch,by:me||py.by||''};
+  if(!await w(()=>db.doc('pay/'+id).set(doc)))return false;
+  S.pay={...S.pay,[id]:doc};return true;
 }
-
+function editRent(pid){
+  const m=cur, p=S.points[pid]||{}, x=payRow(m,pid), py=x.py;
+  const fields=`<div class="calc full">Нараховано: <b>${f0(x.rentDue)} грн</b>${p.payee?' · отримувач: '+esc(p.payee):''}</div>`+
+    fld('rentPaid','Сплачено, грн',py.rentPaid??'')+fld('rentDate','Дата оплати',py.rentDate||'',{type:'date'})+
+    `<div class="full"><button type="button" class="btn sm" id="fillRent">Сплачено повністю сьогодні</button></div>`+
+    fld('rentNote','Коментар',py.rentNote||'',{type:'text',full:true});
+  openSheet('Оренда · '+(p.name||pid),mLabel(m)+(p.contact?' · '+p.contact:''),fields,async fd=>{
+    const rp=parseNum(fd.rentPaid); if(rp===null)return 'Не зрозумів суму. Можна писати 2000 або 1500,50.';
+    if(!await savePay(m,pid,{rentPaid:String(fd.rentPaid).trim()===''?null:rp,rentDate:fd.rentDate||'',rentNote:fd.rentNote||''}))return 'Не збереглося';
+    toast('Оплату оренди збережено');
+  });
+  $('#fillRent').onclick=()=>{$('#f_rentPaid').value=x.rentDue;if(!$('#f_rentDate').value)$('#f_rentDate').value=todayISO()};
+}
+function editBill(pid){
+  const m=cur, p=S.points[pid]||{}, x=payRow(m,pid), py=x.py, u=x.u, t=tariffOf(pid,m), pb=prevBill(pid,m)||{};
+  const num=v=>v==null||v===''?'':String(+v).replace('.',',');
+  const w0=py.bw0??pb.bw1??u.w0, e0=py.be0??pb.be1??u.e0;
+  const wT=py.bwT??u.wT??t.wT, eT=py.beT??u.eT??t.eT;
+  const fields=`<div class="calc full">За нашими показниками (1-ше–1-ше): <b>${f0(x.utilCalc)} грн</b></div>`+
+    fld('bFrom','Період рахунку з',py.bFrom||'',{type:'date'})+fld('bTo','по',py.bTo||'',{type:'date'})+
+    `<div class="full blist b4 bill"><div class="bhead"><span></span><span></span><span>Було</span><span>Стало</span><span>Тариф</span></div>
+      <div class="brow"><div class="bname">Вода, м³</div><div class="bc" id="bcw"></div><input name="bw0" id="f_bw0" inputmode="decimal" value="${num(w0)}"><input name="bw1" id="f_bw1" inputmode="decimal" value="${num(py.bw1)}"><input name="bwT" id="f_bwT" inputmode="decimal" value="${num(wT)}"></div>
+      <div class="brow"><div class="bname">Світло, кВт·год</div><div class="bc" id="bce"></div><input name="be0" id="f_be0" inputmode="decimal" value="${num(e0)}"><input name="be1" id="f_be1" inputmode="decimal" value="${num(py.be1)}"><input name="beT" id="f_beT" inputmode="decimal" value="${num(eT)}"></div></div>`+
+    fld('utilBill','Сума до сплати за рахунком, грн',py.utilBill??'')+fld('basis','Рахунок / акт №',py.basis||'',{type:'text'})+
+    `<p class="note full" style="margin:-4px 0 0">Сума рахується з показників автоматично; якщо в рахунку інша — впишіть її вручну.</p>`+
+    `<div class="sub">Оплата</div>`+fld('utilPaid','Сплачено, грн',py.utilPaid??'')+fld('utilDate','Дата оплати',py.utilDate||'',{type:'date'})+
+    `<div class="full"><button type="button" class="btn sm" id="fillUtil">Сплачено повністю сьогодні</button></div>`+
+    fld('utilNote','Коментар',py.utilNote||py.note||'',{type:'text',full:true});
+  let manual=py.utilBill!=null&&py.bw1==null&&py.be1==null;
+  const calc=()=>{const g=id=>$('#f_'+id).value.trim();
+    const cw=g('bw1')?calcFrom(g('bw0'),g('bw1'),g('bwT')):null, ce=g('be1')?calcFrom(g('be0'),g('be1'),g('beT')):null;
+    $('#bcw').textContent=cw?(cw.use<0?'перевірте':`${nf1.format(cw.use)} м³ = ${f0(cw.sum)} грн`):'';
+    $('#bce').textContent=ce?(ce.use<0?'перевірте':`${nf1.format(ce.use)} кВт·год = ${f0(ce.sum)} грн`):'';
+    return {cw,ce,sum:(cw&&cw.use>=0||ce&&ce.use>=0)?Math.round(((cw&&cw.use>=0?cw.sum:0)+(ce&&ce.use>=0?ce.sum:0))*100)/100:null}};
+  openSheet('Комуналка · '+(p.name||pid),mLabel(m)+(p.payee?' · '+p.payee:'')+(p.contact?' · '+p.contact:''),fields,async fd=>{
+    const c=calc();
+    if(c.cw&&c.cw.use<0||c.ce&&c.ce.use<0)return '«Стало» менше, ніж «Було».';
+    const nums=['bw0','bw1','bwT','be0','be1','beT','utilBill','utilPaid'].map(k=>[k,String(fd[k]??'').trim()]);
+    const o={};for(const [k,v] of nums){if(v===''){o[k]=null;continue}const n=parseNum(v);if(n===null)return 'Не зрозумів число. Можна писати 316, 316,5 або 316.5.';o[k]=n}
+    if(!await savePay(m,pid,{...o,bFrom:fd.bFrom||'',bTo:fd.bTo||'',basis:fd.basis||'',utilDate:fd.utilDate||'',utilNote:fd.utilNote||''}))return 'Не збереглося';
+    toast('Рахунок збережено');
+  });
+  $('#sf').classList.add('wide');
+  $('#sf').addEventListener('input',e=>{
+    if(e.target.id==='f_utilBill'){manual=e.target.value.trim()!=='';return}
+    const c=calc(); if(!manual&&c.sum!=null)$('#f_utilBill').value=String(c.sum).replace('.',',');
+  });
+  calc();
+  $('#fillUtil').onclick=()=>{const bv=$('#f_utilBill').value.trim();$('#f_utilPaid').value=bv?bv:String(x.utilCalc).replace('.',',');if(!$('#f_utilDate').value)$('#f_utilDate').value=todayISO()};
+}
+function editPayment(pid){payMode==='util'?editBill(pid):editRent(pid)}
 
 /* ---------- export ---------- */
 function loadXLSX(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';sc.onload=ok;sc.onerror=no;document.head.appendChild(sc)})}
@@ -894,7 +945,7 @@ async function exportXlsx(){
     const ex=Object.values(S.exp).sort((a,b)=>(a.month+(a.date||'')).localeCompare(b.month+(b.date||''))).map(e=>({'Місяць':e.month,'Дата':e.date||'','Стаття':e.article,'Тип':CATL[e.cat]||e.cat,'Хто платив':e.payer,'Сума':r2(e.amount),'Точка':e.point?P(e.point):'','Коментар':e.note||''}));
     const ut=Object.values(S.util).sort((a,b)=>(a.month+a.point).localeCompare(b.month+b.point)).map(u=>({'Місяць':u.month,'Точка':P(u.point),'Вода було':r2(u.w0),'Вода зараз':r2(u.w1),'Вода, м³':r2(u.wUse),'Тариф води':u.wT??'','Вода, грн':r2(u.wSum),'Ел. було':r2(u.e0),'Ел. зараз':r2(u.e1),'Ел., кВт·год':r2(u.eUse),'Тариф ел.':u.eT??'','Ел., грн':r2(u.eSum),'Не нараховуємо':u.noCharge?'так':'','Коментар':u.note||''}));
     const pay=[];for(const m of ms)for(const p of pointsList()){if(!S.pm[m+'_'+p.id])continue;const x=payRow(m,p.id);if(m<payStart()&&!S.pay[m+'_'+p.id])continue;
-      pay.push({'Місяць':m,'Точка':p.name,'Оренда нараховано':r2(x.rentDue),'Оренда сплачено':x.rentPaid??'','Дата оренди':x.rentDate,'Комуналка нараховано':r2(x.utilDue),'Комуналка сплачено':x.utilPaid??'','Дата комуналки':x.utilDate,'Рахунок':x.py.basis||'','Коментар':x.py.note||''})}
+      pay.push({'Місяць':m,'Точка':p.name,'Оренда нараховано':r2(x.rentDue),'Оренда сплачено':x.rentPaid??'','Дата оренди':x.rentDate,'Коментар оренди':x.py.rentNote||'','Комуналка за нашими показниками':r2(x.utilCalc),'Період рахунку':billPeriodTxt(x.py),'Вода було (рах.)':x.py.bw0??'','Вода стало (рах.)':x.py.bw1??'','Ел. було (рах.)':x.py.be0??'','Ел. стало (рах.)':x.py.be1??'','Комуналка до сплати':r2(x.utilDue),'Комуналка сплачено':x.utilPaid??'','Дата комуналки':x.utilDate,'Рахунок':x.py.basis||'','Коментар комуналки':x.py.utilNote||x.py.note||''})}
     const st=settleState();const se=st.items.map(it=>it.kind==='m'?{'Дата':it.key,'Операція':'Нараховано за '+mLabel(it.key).toLowerCase()+(it.pend?' (немає сум)':''),'Сума':r2(it.amount),'Борг Влада Даниїлу':r2(it.bal)}:{'Дата':it.p.date,'Операція':'Виплата '+it.p.from+(it.p.note?' — '+it.p.note:''),'Сума':r2(it.amount),'Борг Влада Даниїлу':r2(it.bal)});
     const pl=pointsList().map(p=>({'Точка':p.name,'Адреса':p.note||'','Оренда на місяць':r2(p.rent),'Тариф води':p.wT??'','Тариф ел.':p.eT??'','Кому платимо':p.payee||'','Контакт':p.contact||'','Статус':p.active===false?'не працює':'працює'}));
     const wb=XLSX.utils.book_new();
@@ -918,7 +969,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,editPayment,exportXlsx,editTariffEntry})[a.dataset.act]?.(id);
+  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,editPayment,exportXlsx,editTariffEntry,editRent,editBill,setPayMode})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;if(!['util','exp','pay'].includes(tab))tab=role==='accountant'?'util':'month';render()});
 document.addEventListener('change',e=>{if(e.target.id==='utilPointSel'){utilPoint=e.target.value;render()}});
