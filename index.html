@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611022359">
+<meta name="wl-build" content="202611030002">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -69,7 +69,7 @@ h2{font-family:var(--f-display);font-size:13px;font-weight:700;text-transform:up
 .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:-2px 0 8px}
 table.ut td.num .note{line-height:1.25}
 table.ut th{white-space:normal;vertical-align:bottom}
-@media (max-width:520px){table.ut td,table.ut th{padding-left:3px;padding-right:3px}table.ut td.num{white-space:normal}table.ut td.num .note{font-size:10.5px}table.ut td:first-child{font-size:12.5px}}
+@media (max-width:520px){table.ut td,table.ut th{padding-left:3px;padding-right:3px}table.ut td.num{white-space:normal}table.ut td.num .note{font-size:10.5px}table.ut td:first-child{font-size:12.5px}table.ut .hs{display:none}}
 table.ut td.num b{font-weight:600}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tbl{overflow-x:auto;margin:0 -12px;padding:0 12px}
@@ -193,9 +193,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611022359"></script>
+<script src="config.js?v=202611030002"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611022359"></script>
+<script src="shim.js?v=202611030002"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs'];
@@ -610,7 +610,7 @@ function viewUtil(m){
       if(lit){L+=lit;LW+=+u.wUse||0;LE+=+u.eUse||0}}
     const off=u&&u.noCharge;
     rows+=`<tr class="${ed?'click':''}${off?' mut':''}" data-act="${ed?'editUtil':''}" data-id="${p.id}"><td>${esc(p.name)}${off?' <span class="pill">не нараховуємо</span>':''}${u&&u.note&&u.note!=='не нараховуємо'?`<div class="note">${esc(u.note)}</div>`:''}</td>`+
-      (u?`<td class="num">${f0(u.wSum)}<div class="note">${nf1.format(u.wUse||0)} м³${lit?'<br>'+fmt1(perL(u.wUse,lit))+'&nbsp;л на&nbsp;1&nbsp;л':''}</div></td><td class="num">${f0(u.eSum)}<div class="note">${nf1.format(u.eUse||0)} кВт·год${lit?'<br>'+fmt1(perL(u.eUse,lit))+'&nbsp;Вт·год на&nbsp;1&nbsp;л':''}</div></td><td class="num"><b>${off?'0':f0((+u.wSum||0)+(+u.eSum||0))}</b></td>`
+      (u?`<td class="num">${f0(u.wSum)}<div class="note"><span class="hs">спожито </span>${nf1.format(u.wUse||0)}&nbsp;м³${lit?'<br>на&nbsp;1<span class="hs">&nbsp;проданий</span>&nbsp;л: '+fmt1(perL(u.wUse,lit))+'&nbsp;л':''}</div></td><td class="num">${f0(u.eSum)}<div class="note"><span class="hs">спожито </span>${nf1.format(u.eUse||0)}&nbsp;кВт·год${lit?'<br>на&nbsp;1<span class="hs">&nbsp;проданий</span>&nbsp;л: '+fmt1(perL(u.eUse,lit))+'&nbsp;Вт·год':''}</div></td><td class="num"><b>${off?'0':f0((+u.wSum||0)+(+u.eSum||0))}</b></td>`
          :`<td colspan="2"><span class="pill open">немає показників</span></td><td class="num mut">—</td>`)+`</tr>`;
   }
   const perLit=(v,l)=>l?' · '+fmt1(perL(v,l)):'';
@@ -621,7 +621,7 @@ function viewUtil(m){
     <div class="tile"><div class="l">Світло за місяць, ₴</div><div class="v">${f0(eS)}</div><div class="s">спожито ${nf1.format(Math.round(eU))} кВт·год${L?`<br>на 1 проданий л: ${fmt1(perL(LE,L))} Вт·год`:''}</div></div>
     <div class="tile main"><div class="l">Комуналка за місяць, ₴</div><div class="v">${f0(wS+eS)}</div><div class="s">${L?`на 1 проданий л: ${nf2.format((wS+eS)/L)} грн`:'вода + світло'}</div></div>
   </div>
-  <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Вода за міс., ₴</th><th class="num">Світло за міс., ₴</th><th class="num">Разом за міс., ₴</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="note">У цьому місяці немає точок.</td></tr>'}</tbody><tfoot><tr class="final"><td>Разом</td><td class="num">${f0(wS)}<div class="note">${nf1.format(Math.round(wU*10)/10)} м³</div></td><td class="num">${f0(eS)}<div class="note">${nf1.format(Math.round(eU))} кВт·год</div></td><td class="num">${f0(wS+eS)}</td></tr></tfoot></table></div>
+  <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Вода за міс., ₴</th><th class="num">Світло за міс., ₴</th><th class="num">Разом за міс., ₴</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="note">У цьому місяці немає точок.</td></tr>'}</tbody><tfoot><tr class="final"><td>Разом</td><td class="num">${f0(wS)}<div class="note"><span class="hs">спожито </span>${nf1.format(Math.round(wU*10)/10)}&nbsp;м³${L?`<br>на&nbsp;1<span class="hs">&nbsp;проданий</span>&nbsp;л: ${fmt1(perL(LW,L))}&nbsp;л`:''}</div></td><td class="num">${f0(eS)}<div class="note"><span class="hs">спожито </span>${nf1.format(Math.round(eU))}&nbsp;кВт·год${L?`<br>на&nbsp;1<span class="hs">&nbsp;проданий</span>&nbsp;л: ${fmt1(perL(LE,L))}&nbsp;Вт·год`:''}</div></td><td class="num">${f0(wS+eS)}${L?`<div class="note">на&nbsp;1<span class="hs">&nbsp;проданий</span>&nbsp;л: ${nf2.format((wS+eS)/L)}&nbsp;грн</div>`:''}</td></tr></tfoot></table></div>
   <p class="note">Натисніть точку, щоб виправити показники чи тариф. Суми одразу потрапляють у результат точки за місяць.${L?' Під сумою: скільки спожито за місяць і скільки води з водопроводу (л) та електроенергії (Вт·год) пішло на 1 проданий літр («на 1 л»).':''}</p></section>`;
   // history
   const all=pointsList(); if(!utilPoint||!S.points[utilPoint]) utilPoint=(pts[0]||all[0]||{}).id||'';
@@ -632,7 +632,7 @@ function viewUtil(m){
   <div class="tbl"><table class="ut"><thead><tr><th>Місяць</th><th class="num">Вода за міс., ₴</th><th class="num">Світло за міс., ₴</th><th class="num">Разом, ₴</th><th class="num hide-sm">Сплачено</th></tr></thead><tbody>`;
   for(const u of hist){
     const pm=S.pm[u.month+'_'+u.point], lit=pm?+pm.liters||0:0;
-    h+=`<tr><td>${mLabel(u.month)}<div class="note">${u.w1!=null?'вода '+nf1.format(u.w1):''}${u.e1!=null?' · ел. '+nf1.format(u.e1):''}${u.note?' · '+esc(u.note):''}</div></td><td class="num">${f0(u.wSum)}<div class="note">${nf1.format(u.wUse||0)} м³${lit?'<br>'+fmt1(perL(u.wUse,lit))+'&nbsp;л на&nbsp;1&nbsp;л':''}</div></td><td class="num">${f0(u.eSum)}<div class="note">${nf1.format(u.eUse||0)} кВт·год${lit?'<br>'+fmt1(perL(u.eUse,lit))+'&nbsp;Вт·год на&nbsp;1&nbsp;л':''}</div></td><td class="num"><b>${f0((+u.wSum||0)+(+u.eSum||0))}</b></td><td class="num hide-sm">${(()=>{const py=S.pay[u.month+'_'+u.point];const a=py&&py.utilPaid!=null?py.utilPaid:u.paid;const d=py&&py.utilPaid!=null?fmtD(py.utilDate):u.paidDate;return a?f0(a)+(d?`<div class="note">${esc(d)}</div>`:''):'<span class="mut">—</span>'})()}</td></tr>`;
+    h+=`<tr><td>${mLabel(u.month)}<div class="note">${u.w1!=null?'вода '+nf1.format(u.w1):''}${u.e1!=null?' · ел. '+nf1.format(u.e1):''}${u.note?' · '+esc(u.note):''}</div></td><td class="num">${f0(u.wSum)}<div class="note"><span class="hs">спожито </span>${nf1.format(u.wUse||0)}&nbsp;м³${lit?'<br>на&nbsp;1<span class="hs">&nbsp;проданий</span>&nbsp;л: '+fmt1(perL(u.wUse,lit))+'&nbsp;л':''}</div></td><td class="num">${f0(u.eSum)}<div class="note"><span class="hs">спожито </span>${nf1.format(u.eUse||0)}&nbsp;кВт·год${lit?'<br>на&nbsp;1<span class="hs">&nbsp;проданий</span>&nbsp;л: '+fmt1(perL(u.eUse,lit))+'&nbsp;Вт·год':''}</div></td><td class="num"><b>${f0((+u.wSum||0)+(+u.eSum||0))}</b></td><td class="num hide-sm">${(()=>{const py=S.pay[u.month+'_'+u.point];const a=py&&py.utilPaid!=null?py.utilPaid:u.paid;const d=py&&py.utilPaid!=null?fmtD(py.utilDate):u.paidDate;return a?f0(a)+(d?`<div class="note">${esc(d)}</div>`:''):'<span class="mut">—</span>'})()}</td></tr>`;
   }
   if(!hist.length) h+=`<tr><td colspan="5" class="note">Показників по цій точці поки немає.</td></tr>`;
   h+=`</tbody></table></div><p class="note">Витрата на літр рахується для місяців, де є продажі в літрах (з березня 2026).</p>${viewTariffHist(utilPoint)}</section>`;
