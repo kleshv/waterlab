@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611052336">
+<meta name="wl-build" content="202611052343">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -207,9 +207,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611052336"></script>
+<script src="config.js?v=202611052343"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611052336"></script>
+<script src="shim.js?v=202611052343"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv'];
@@ -630,8 +630,6 @@ function viewHome(m){
   if(!ed) return h+`<section class="card"><p class="note">Місяць закритий. Щоб щось змінити, відкрийте його у «Звіти → Фінрез по точках».</p></section>`;
   const t=homeTodo(m); let li='';
   const sumR=t.rent.reduce((a,x)=>a+x.amount,0), sumE=t.rec.reduce((a,x)=>a+(+x.amount||0),0);
-  if(t.rent.length){li+=`<li class="grp"><span class="tx">Оренда не нарахована · ${t.rent.length} точок</span><button class="btn sm pri" data-act="addAllRent" type="button">Нарахувати всю · ${f0(sumR)}</button></li>`;
-    for(const x of t.rent) li+=`<li><span class="tx">${esc(x.name)}</span><span class="am">${f0(x.amount)}</span><button class="btn sm" data-act="addRent" data-id="${x.pid}" type="button" aria-label="Додати оренду ${esc(x.name)}">+</button></li>`;}
   if(t.rec.length){li+=`<li class="grp"><span class="tx">Щомісячні витрати · як у ${mLabel(t.pm).toLowerCase()}</span><button class="btn sm pri" data-act="addAllRec" type="button">Додати всі · ${f0(sumE)}</button></li>`;
     for(const x of t.rec) li+=`<li><span class="tx">${esc(x.article)}<span class="note">платив ${esc(x.payer||'')}${x.note?' · '+esc(x.note):''}</span></span><span class="am">${f0(x.amount)}</span><button class="btn sm" data-act="addRec" data-id="${x.id}" type="button" aria-label="Додати ${esc(x.article)}">+</button></li>`;}
   if(t.noUtil.length) li+=`<li class="grp"><span class="tx">Показники комуналки</span></li><li><span class="tx">Не внесено: ${t.noUtil.length} точок<span class="note">${esc(t.noUtil.slice(0,6).join(', '))}${t.noUtil.length>6?'…':''}</span></span><button class="btn sm" data-act="bulkUtil" data-id="w" type="button">Вода</button><button class="btn sm" data-act="bulkUtil" data-id="e" type="button">Світло</button></li>`;
@@ -907,7 +905,7 @@ function monthPts(m){const ids=Object.values(S.pm).filter(r=>r.month===m).map(r=
 function debtsHtml(m,kind){
   const st=payStart(), debts=[];
   for(const mm of monthsList()) if(mm>=st&&mm<m) for(const p of pointsList()){ if(!S.pm[mm+'_'+p.id])continue;
-    const x=payRow(mm,p.id), dd=kind==='rent'?Math.max(0,x.rentAcc-(x.rentPaid||0)):Math.max(0,x.utilDue-(x.utilPaid||0));
+    const x=payRow(mm,p.id), dd=kind==='rent'?Math.max(0,x.rentPlan-(x.rentPaid||0)):Math.max(0,x.utilDue-(x.utilPaid||0));
     if(dd>0.5) debts.push(`<tr><td>${esc(p.name)}</td><td>${mLabel(mm)}</td><td class="num">${f0(dd)}</td></tr>`)}
   return debts.length?`<section class="card"><h2>Борги за минулі місяці · ${kind==='rent'?'оренда':'комуналка'}</h2><div class="tbl"><table><thead><tr><th>Точка</th><th>Місяць</th><th class="num">Борг, ₴</th></tr></thead><tbody>${debts.join('')}</tbody></table></div></section>`:'';
 }
@@ -969,27 +967,23 @@ function editBill(pid){
 }
 /* ---------- rent ---------- */
 function viewRent(m){
-  const pts=monthPts(m), md=S.months[m]||{}, ed=canWrite&&!md.closed;
-  let acc=0,plan=0,paid=0,open=0,notAcc=[],rows='';
+  const pts=monthPts(m);
+  let plan=0,paid=0,open=0,rows='';
   for(const p of pts){
-    const x=payRow(m,p.id); acc+=x.rentAcc; paid+=x.rentPaid||0;
-    if(!x.rentAcc&&x.rentPlan>0) notAcc.push(p.id);
-    if(x.rentDue>0.5&&(x.rentPaid||0)+0.5<x.rentDue) open++;
+    const x=payRow(m,p.id); plan+=x.rentPlan; paid+=x.rentPaid||0;
+    if(x.rentPlan>0.5&&(x.rentPaid||0)+0.5<x.rentPlan) open++;
     const by=x.py.by?'вніс '+esc(who(x.py.by)):'';
     rows+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editRent':''}" data-id="${p.id}"><td>${esc(p.name)}${p.payee?`<div class="note">${esc(p.payee)}</div>`:''}</td>
-      <td class="num">${x.rentAcc?f0(x.rentAcc):`<span class="mut">—</span><div class="note">за карткою ${f0(x.rentPlan)}</div>`}</td>
-      <td class="num">${x.rentPaid!=null?f0(x.rentPaid):'<span class="mut">—</span>'}<div>${stPill(x.rentPaid,x.rentDue)}</div>${x.rentDate||by?`<div class="note">${[x.rentDate?esc(fmtD(x.rentDate)):'',by].filter(Boolean).join(' · ')}</div>`:''}</td></tr>`;
+      <td class="num">${f0(x.rentPlan)}</td>
+      <td class="num">${x.rentPaid!=null?f0(x.rentPaid):'<span class="mut">—</span>'}<div>${stPill(x.rentPaid,x.rentPlan)}</div>${x.rentDate||by?`<div class="note">${[x.rentDate?esc(fmtD(x.rentDate)):'',by].filter(Boolean).join(' · ')}</div>`:''}</td></tr>`;
   }
-  const planSum=notAcc.reduce((a,id)=>a+(+(S.points[id]||{}).rent||0),0);
-  let h=`<section class="card"><div class="shead"><h2>Оренда · ${mLabel(m)}</h2><span class="note">не закрито ${open} з ${pts.length}</span></div>
-  ${ed&&notAcc.length?`<div class="bigacts one"><button class="btn pri main" data-act="addAllRent" type="button">Нарахувати оренду · ${notAcc.length} точок · ${f0(planSum)} грн</button></div>`:''}
-  <div class="tiles t3" style="margin-top:10px"><div class="tile"><div class="l">Нараховано</div><div class="v">${f0(acc)}</div><div class="s">${notAcc.length?`ще не нараховано: ${notAcc.length}`:'усі точки'}</div></div>
-    <div class="tile"><div class="l">Сплачено</div><div class="v">${f0(paid)}</div><div class="s">за ${mLabel(m).toLowerCase()}</div></div>
-    <div class="tile main"><div class="l">Борг</div><div class="v">${f0(Math.max(0,acc-paid))}</div><div class="s">від нарахованого</div></div></div>
-  <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Точка / отримувач</th><th class="num">Нараховано, ₴</th><th class="num">Сплачено, ₴</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="note">У цьому місяці немає точок.</td></tr>'}</tbody>
-  <tfoot><tr class="final"><td>Разом</td><td class="num">${f0(acc)}</td><td class="num">${f0(paid)}<div class="note">борг ${f0(Math.max(0,acc-paid))}</div></td></tr></tfoot></table></div>
-  <p class="note">Нарахована оренда одразу йде у фінрез місяця. Натисніть точку, щоб нарахувати або змінити суму і відмітити оплату.</p></section>`;
-  return h+debtsHtml(m,'rent');
+  return `<section class="card"><div class="shead"><h2>Оренда · ${mLabel(m)}</h2><span class="note">не сплачено ${open} з ${pts.length}</span></div>
+  <div class="tiles t3"><div class="tile"><div class="l">До сплати</div><div class="v">${f0(plan)}</div><div class="s">за картками точок</div></div>
+    <div class="tile"><div class="l">Сплачено</div><div class="v">${f0(paid)}</div><div class="s">іде у фінрез</div></div>
+    <div class="tile main"><div class="l">Не сплачено</div><div class="v">${f0(Math.max(0,plan-paid))}</div><div class="s">точок: ${open}</div></div></div>
+  <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Точка / отримувач</th><th class="num">До сплати, ₴</th><th class="num">Сплачено, ₴</th></tr></thead><tbody>${rows||'<tr><td colspan="3" class="note">У цьому місяці немає точок.</td></tr>'}</tbody>
+  <tfoot><tr class="final"><td>Разом</td><td class="num">${f0(plan)}</td><td class="num">${f0(paid)}<div class="note">не сплачено ${f0(Math.max(0,plan-paid))}</div></td></tr></tfoot></table></div>
+  <p class="note">Оренда нараховується за оплатою: сплачена сума одразу потрапляє у фінрез місяця. Натисніть точку, щоб відмітити оплату.</p></section>`+debtsHtml(m,'rent');
 }
 function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 async function savePayDoc(m,pid,patch){
@@ -1005,19 +999,17 @@ async function addRent(pid){const p=S.points[pid];if(!p)return;if(await accrueRe
 async function addAllRent(){let n=0;for(const p of monthPts(cur)){const x=payRow(cur,p.id);if(!x.rentAcc&&x.rentPlan>0&&await accrueRent(cur,p.id,x.rentPlan))n++}render();toast('Оренду нараховано: '+n+' точок')}
 function editRent(pid){
   const m=cur, p=S.points[pid]||{}, x=payRow(m,pid), py=x.py, closed=!!(S.months[m]||{}).closed;
-  const fields=(closed?`<div class="calc full">Нараховано: <b>${f0(x.rentAcc)} грн</b> (місяць закритий)</div>`:fld('rentAcc','Нараховано за місяць, грн',x.rentAcc||x.rentPlan))+
-    `<p class="note full" style="margin:-4px 0 0">${x.rentAcc?'Нараховано.':'Ще не нараховано — збереження нарахує цю суму.'} За карткою точки: ${f0(x.rentPlan)} грн${p.payee?' · отримувач: '+esc(p.payee):''}</p>`+
-    `<div class="sub">Оплата</div>`+fld('rentPaid','Сплачено, грн',py.rentPaid??'')+fld('rentDate','Дата оплати',py.rentDate||'',{type:'date'})+
+  const fields=`<div class="calc full">До сплати за карткою точки: <b>${f0(x.rentPlan)} грн</b>${p.payee?' · отримувач: '+esc(p.payee):''}</div>`+
+    fld('rentPaid','Сплачено, грн',py.rentPaid??'')+fld('rentDate','Дата оплати',py.rentDate||'',{type:'date'})+
     `<div class="full"><button type="button" class="btn sm" id="fillRent">Сплачено повністю сьогодні</button></div>`+
-    fld('rentNote','Коментар',py.rentNote||'',{type:'text',full:true});
+    fld('rentNote','Коментар',py.rentNote||'',{type:'text',full:true})+
+    `<p class="note full" style="margin:0">${closed?'Місяць закритий — оплата збережеться, але фінрез не зміниться.':'Сплачена сума одразу потрапить у фінрез місяця як оренда.'}</p>`;
   openSheet('Оренда · '+(p.name||pid),mLabel(m)+(p.contact?' · '+p.contact:''),fields,async fd=>{
-    const rp=parseNum(fd.rentPaid); if(rp===null)return 'Не зрозумів суму. Можна писати 2000 або 1500,50.';
-    const patch={rentPaid:String(fd.rentPaid).trim()===''?null:rp,rentDate:fd.rentDate||'',rentNote:fd.rentNote||''};
-    if(!closed){const ra=parseNum(fd.rentAcc);if(ra===null)return 'Не зрозумів суму нарахування.';patch.rentAcc=ra}
-    if(!await savePayDoc(m,pid,patch))return 'Не збереглося';
-    toast('Оренду збережено');
+    const raw=String(fd.rentPaid??'').trim(), rp=parseNum(raw); if(raw!==''&&rp===null)return 'Не зрозумів суму. Можна писати 2000 або 1500,50.';
+    if(!await savePayDoc(m,pid,{rentPaid:raw===''?null:rp,rentDate:fd.rentDate||'',rentNote:fd.rentNote||'',rentAcc:raw===''?0:rp}))return 'Не збереглося';
+    toast(closed?'Оплату збережено':'Оплату збережено, у фінрезі оренда '+f0(raw===''?0:rp));
   });
-  $('#fillRent').onclick=()=>{const a=$('#f_rentAcc');$('#f_rentPaid').value=a?a.value:x.rentAcc;if(!$('#f_rentDate').value)$('#f_rentDate').value=todayISO()};
+  $('#fillRent').onclick=()=>{$('#f_rentPaid').value=x.rentPlan;if(!$('#f_rentDate').value)$('#f_rentDate').value=todayISO()};
 }
 
 /* ---------- investments ---------- */
@@ -1059,9 +1051,9 @@ function reconData(){
   let open=0; const rows=[];
   for(const m of ms){ if(m>reconTo)break;
     for(const pid of pids){ if(!S.pm[m+'_'+pid])continue; const x=payRow(m,pid);
-      const acc=(R?x.rentAcc:0)+(U?x.utilDue:0), paid=(R?(x.rentPaid||0):0)+(U?(x.utilPaid||0):0);
+      const acc=(R?x.rentPlan:0)+(U?x.utilDue:0), paid=(R?(x.rentPaid||0):0)+(U?(x.utilPaid||0):0);
       if(m<reconFrom){open+=acc-paid;continue}
-      rows.push({m,pid,rA:R?x.rentAcc:0,uA:U?x.utilDue:0,rP:R?(x.rentPaid||0):0,uP:U?(x.utilPaid||0):0,dates:[R&&x.rentDate?'оренда '+fmtD(x.rentDate):'',U&&x.utilDate?'комуналка '+fmtD(x.utilDate):''].filter(Boolean).join(', ')})}}
+      rows.push({m,pid,rA:R?x.rentPlan:0,uA:U?x.utilDue:0,rP:R?(x.rentPaid||0):0,uP:U?(x.utilPaid||0):0,dates:[R&&x.rentDate?'оренда '+fmtD(x.rentDate):'',U&&x.utilDate?'комуналка '+fmtD(x.utilDate):''].filter(Boolean).join(', ')})}}
   return {cps,pids,open,rows,ms,R,U};
 }
 function viewRecon(){
