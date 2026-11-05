@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611052348">
+<meta name="wl-build" content="202611052350">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -207,9 +207,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611052348"></script>
+<script src="config.js?v=202611052350"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611052348"></script>
+<script src="shim.js?v=202611052350"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv'];
@@ -638,9 +638,21 @@ function viewHome(m){
   </div>
   ${ed?`<div class="bigacts one"><button class="btn pri main" data-act="addExp" type="button">+ Витрата</button></div>`:''}
   </section>`;
+  {const unpaid=monthPts(m).map(p=>({p,x:payRow(m,p.id)})).filter(o=>!o.x.rentAcc&&o.x.rentPlan>0&&!(o.x.rentPaid>0));
+   const uSum=unpaid.reduce((a,o)=>a+o.x.rentPlan,0), sumA=a=>c.exps.filter(e=>e.article===a).reduce((t,e)=>t+(+e.amount||0),0);
+   const fee=c.exps.filter(e=>e.auto==='bank13').reduce((t,e)=>t+(+e.amount||0),0);
+   const g=[['Оренда',c.rent,uSum?`ще не сплачено ${f0(uSum)} (${unpaid.length} точок) — не у фінрезі`:'уся у фінрезі'],
+     ['Комуналка',c.water+c.elec,`вода ${f0(c.water)} · світло ${f0(c.elec)}`],
+     ['Обслуговування мережі',c.toir,''],
+     ['Податки і банк',c.fa,fee?`з них комісія банку 1,3%: ${f0(fee)}`:''],
+     ['Разом операційні',c.opex,'входять в операційний прибуток'],
+     ['Капвкладення',c.capex,'не входять в опер. прибуток, зменшують розподіл']];
+   h+=`<section class="card"><div class="shead"><h2>Витрати за місяць по групах</h2><button class="btn sm" data-act="goTab" data-id="exp" type="button">Усі витрати</button></div><div class="tbl"><table class="ut"><tbody>${g.map(([l,v,n],i)=>`<tr class="${i===4?'final':''}"><td>${l}${n?`<div class="note">${n}</div>`:''}</td><td class="num">${f0(v)}</td></tr>`).join('')}</tbody></table></div></section>`;}
   if(!ed) return h+`<section class="card"><p class="note">Місяць закритий. Щоб щось змінити, відкрийте його у «Звіти → Фінрез по точках».</p></section>`;
   const t=homeTodo(m); let li='';
   const sumR=t.rent.reduce((a,x)=>a+x.amount,0), sumE=t.rec.reduce((a,x)=>a+(+x.amount||0),0);
+  {const unpaid=monthPts(m).map(p=>({p,x:payRow(m,p.id)})).filter(o=>!o.x.rentAcc&&o.x.rentPlan>0&&!(o.x.rentPaid>0));
+   if(unpaid.length) li+=`<li class="grp"><span class="tx">Оренда</span></li><li><span class="tx">Не сплачена: ${unpaid.length} точок · ${f0(unpaid.reduce((a,o)=>a+o.x.rentPlan,0))} грн<span class="note">у фінрез потрапить після оплати: ${esc(unpaid.slice(0,5).map(o=>o.p.name).join(', '))}${unpaid.length>5?'…':''}</span></span><button class="btn sm" data-act="goTab" data-id="rent" type="button">Оренда</button></li>`;}
   if(t.rec.length){li+=`<li class="grp"><span class="tx">Щомісячні витрати · як у ${mLabel(t.pm).toLowerCase()}</span><button class="btn sm pri" data-act="addAllRec" type="button">Додати всі · ${f0(sumE)}</button></li>`;
     for(const x of t.rec) li+=`<li><span class="tx">${esc(x.article)}<span class="note">платив ${esc(x.payer||'')}${x.note?' · '+esc(x.note):''}</span></span><span class="am">${f0(x.amount)}</span><button class="btn sm" data-act="addRec" data-id="${x.id}" type="button" aria-label="Додати ${esc(x.article)}">+</button></li>`;}
   if(t.noUtil.length) li+=`<li class="grp"><span class="tx">Показники комуналки</span></li><li><span class="tx">Не внесено: ${t.noUtil.length} точок<span class="note">${esc(t.noUtil.slice(0,6).join(', '))}${t.noUtil.length>6?'…':''}</span></span><button class="btn sm" data-act="bulkUtil" data-id="w" type="button">Вода</button><button class="btn sm" data-act="bulkUtil" data-id="e" type="button">Світло</button></li>`;
