@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611062320">
+<meta name="wl-build" content="202611062333">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -216,9 +216,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611062320"></script>
+<script src="config.js?v=202611062333"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611062320"></script>
+<script src="shim.js?v=202611062333"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv'];
@@ -610,10 +610,10 @@ function addPay(){openSheet('Виплата прибутку','Зменшує б
 function editPay(id){openSheet('Виплата','',payForm(S.settle[id]),savePay(id),async()=>{const ok=await w(()=>db.doc('settle/'+id).delete());return ok})}
 
 function pointForm(p){return fld('name','Адреса / назва',p.name||'',{type:'text',full:true})+fld('rent','Оренда на місяць',p.rent??0)+
-  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Не працює']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
+  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Не працює']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
 function savePoint(id,base){return async fd=>{const r=parseNum(fd.rent);if(r===null)return 'Не зрозумів суму оренди';if(!fd.name.trim())return 'Вкажіть адресу';
   const order=base.order??(Math.max(0,...Object.values(S.points).map(p=>p.order||0))+1);
-  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',note:fd.note||'',payee:fd.payee||'',contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
+  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
 function addPoint(){openSheet('Нова точка','',pointForm({}),savePoint(db.collection('points').doc().id,{}))}
 function editPoint(id){openSheet('Точка','',pointForm(S.points[id]),savePoint(id,S.points[id]))}
 
@@ -942,7 +942,7 @@ function who(id){if(!id)return '';if(names[id]!==undefined)return names[id]||'у
 function payRow(m,pid){
   const r=S.pm[m+'_'+pid]||{}, py=S.pay[m+'_'+pid]||{}, u=S.util[m+'_'+pid]||{};
   const utilCalc=Math.round(((+r.water||0)+(+r.elec||0))*100)/100;
-  const rentAcc=+r.rent||0, rentPlan=+(S.points[pid]||{}).rent||0, rentDue=rentAcc||rentPlan;
+  const rentAcc=+r.rent||0, rentPlan=+(S.points[pid]||{}).rent||0, rentDue=isClosed(m)?rentAcc:(rentAcc||rentPlan);
   const utilDue=py.utilBill!=null?+py.utilBill:utilCalc;
   const rentPaid=py.rentPaid!=null?+py.rentPaid:null;
   const utilPaid=py.utilPaid!=null?+py.utilPaid:(u.paid?+u.paid:null);
@@ -964,7 +964,7 @@ function monthPts(m){const ids=Object.values(S.pm).filter(r=>r.month===m).map(r=
 function debtsHtml(m,kind){
   const st=payStart(), debts=[];
   for(const mm of monthsList()) if(mm>=st&&mm<m) for(const p of pointsList()){ if(!S.pm[mm+'_'+p.id])continue;
-    const x=payRow(mm,p.id), dd=kind==='rent'?Math.max(0,x.rentPlan-(x.rentPaid||0)):Math.max(0,x.utilDue-(x.utilPaid||0));
+    const x=payRow(mm,p.id), dd=kind==='rent'?Math.max(0,x.rentDue-(x.rentPaid||0)):Math.max(0,x.utilDue-(x.utilPaid||0));
     if(dd>0.5) debts.push(`<tr><td>${esc(p.name)}</td><td>${mLabel(mm)}</td><td class="num">${f0(dd)}</td></tr>`)}
   return debts.length?`<section class="card"><h2>Борги за минулі місяці · ${kind==='rent'?'оренда':'комуналка'}</h2><div class="tbl"><table><thead><tr><th>Точка</th><th>Місяць</th><th class="num">Борг, ₴</th></tr></thead><tbody>${debts.join('')}</tbody></table></div></section>`:'';
 }
@@ -1029,12 +1029,12 @@ function viewRent(m){
   const pts=monthPts(m);
   let plan=0,paid=0,open=0,rows='';
   for(const p of pts){
-    const x=payRow(m,p.id); plan+=x.rentPlan; paid+=x.rentPaid||0;
-    if(x.rentPlan>0.5&&(x.rentPaid||0)+0.5<x.rentPlan) open++;
+    const x=payRow(m,p.id); plan+=x.rentDue; paid+=x.rentPaid||0;
+    if(x.rentDue>0.5&&(x.rentPaid||0)+0.5<x.rentDue) open++;
     const by=x.py.by?'вніс '+esc(who(x.py.by)):'';
     rows+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editRent':''}" data-id="${p.id}"><td>${esc(p.name)}${p.payee?`<div class="note">${esc(p.payee)}</div>`:''}</td>
-      <td class="num">${f0(x.rentPlan)}</td>
-      <td class="num">${x.rentPaid!=null?f0(x.rentPaid):'<span class="mut">—</span>'}<div>${stPill(x.rentPaid,x.rentPlan)}</div>${x.rentDate||by?`<div class="note">${[x.rentDate?esc(fmtD(x.rentDate)):'',by].filter(Boolean).join(' · ')}</div>`:''}</td></tr>`;
+      <td class="num">${f0(x.rentDue)}</td>
+      <td class="num">${x.rentPaid!=null?f0(x.rentPaid):'<span class="mut">—</span>'}<div>${stPill(x.rentPaid,x.rentDue)}</div>${x.py.rentNote?`<div class="note">${esc(x.py.rentNote)}</div>`:''}${x.rentDate||by?`<div class="note">${[x.rentDate?esc(fmtD(x.rentDate)):'',by].filter(Boolean).join(' · ')}</div>`:''}</td></tr>`;
   }
   return `<section class="card"><div class="shead"><h2>Оренда · ${mLabel(m)}</h2><span class="note">не сплачено ${open} з ${pts.length}</span></div>
   <div class="tiles t3"><div class="tile"><div class="l">До сплати</div><div class="v">${f0(plan)}</div><div class="s">за картками точок</div></div>
@@ -1103,15 +1103,16 @@ let reconCp='', reconFrom='', reconTo='', reconKind='all';
 function counterparties(){const m=new Map();for(const p of pointsList()){if(p.id==='p00'||p.active===false)continue;const k=(p.payee||'').trim()||p.name;if(!m.has(k))m.set(k,[]);m.get(k).push(p.id)}return [...m.entries()].sort((a,b)=>a[0].localeCompare(b[0],'uk'))}
 function setRecon(v){const [k,val]=v.split('|');if(k==='cp')reconCp=val;if(k==='kind')reconKind=val;render()}
 function monthEnd(m){const [y,mm]=m.split('-').map(Number);return m+'-'+String(new Date(y,mm,0).getDate()).padStart(2,'0')}
+const isDocRef=b=>!!b&&/№|акт|рах/i.test(b);
 function reconData(){
   const cps=counterparties(); if(!reconCp||!cps.find(c=>c[0]===reconCp)) reconCp=(cps[0]||[''])[0];
   const pids=(cps.find(c=>c[0]===reconCp)||[0,[]])[1], st=payStart();
   if(!reconFrom) reconFrom=st+'-01'; if(!reconTo) reconTo=todayISO(); if(reconFrom<st+'-01') reconFrom=st+'-01';
   const R=reconKind!=='util', U=reconKind!=='rent', ev=[];
   for(const m of monthsList()) if(m>=st) for(const pid of pids){ if(!S.pm[m+'_'+pid])continue; const x=payRow(m,pid), me_=monthEnd(m), nm=S.points[pid]?.name||pid;
-    if(R&&x.rentPlan) ev.push({d:me_,doc:'Оренда за '+mLabel(m).toLowerCase(),pid,acc:x.rentPlan,paid:0,k:'r'});
+    if(R&&x.rentDue) ev.push({d:me_,doc:'Оренда за '+mLabel(m).toLowerCase(),pid,acc:x.rentDue,paid:0,k:'r'});
     if(R&&x.rentPaid) ev.push({d:x.rentDate||me_,doc:'Оплата оренди за '+mLabel(m).toLowerCase(),pid,acc:0,paid:x.rentPaid,k:'r'});
-    if(U&&x.utilDue) ev.push({d:x.py.bTo||me_,doc:(x.py.utilBill!=null?'Рахунок'+(x.py.basis?' № '+x.py.basis:'')+(billPeriodTxt(x.py)?' за '+billPeriodTxt(x.py):''):'Комуналка за показниками')+' · '+mLabel(m).toLowerCase(),pid,acc:x.utilDue,paid:0,k:'u'});
+    if(U&&x.utilDue) ev.push({d:x.py.bTo||me_,doc:'Комуналка за '+mLabel(m).toLowerCase()+(x.py.utilBill!=null?(isDocRef(x.py.basis)?' · '+x.py.basis.trim():'')+(billPeriodTxt(x.py)?' · період '+billPeriodTxt(x.py):''):' (за показниками)'),pid,acc:x.utilDue,paid:0,k:'u'});
     if(U&&x.utilPaid) ev.push({d:x.utilDate||me_,doc:'Оплата комуналки за '+mLabel(m).toLowerCase(),pid,acc:0,paid:x.utilPaid,k:'u'});}
   ev.sort((a,b)=>a.d.localeCompare(b.d)||(b.acc-a.acc));
   let open=0; const rows=[];
@@ -1128,7 +1129,7 @@ function viewRecon(){
   const p0=S.points[d.pids[0]]||{};
   return `<section class="card"><div class="shead"><h2>Звірка з контрагентом</h2><button class="btn sm" data-act="reconXlsx" type="button" id="reconBtn">Excel</button></div>
   <div class="form" style="margin-bottom:10px">
-    <label class="full">Контрагент<select id="rc_cp">${d.cps.map(([k,ids])=>opt(k,k+(ids.length>1?` (${ids.length} точки)`:''),reconCp)).join('')}</select></label>
+    <label class="full">Контрагент<select id="rc_cp">${d.cps.map(([k,ids])=>opt(k,k+(ids.length>1?` (${ids.length} точки)`:''),reconCp)).join('')}</select>${p0.contract||d.pids.length?`<span class="note">${esc([p0.contract?'Договір '+p0.contract:'',d.pids.map(i=>S.points[i]?.name||i).join(', ')].filter(Boolean).join(' · '))}</span>`:''}</label>
     <label>З дати<input type="date" id="rc_from" value="${reconFrom}" min="${payStart()}-01"></label>
     <label>По дату<input type="date" id="rc_to" value="${reconTo}"></label>
   </div>
@@ -1145,7 +1146,7 @@ function viewRecon(){
 async function reconXlsx(){
   const dl=await window.claude?.use?.('downloads'); if(!dl){toast('Вивантаження недоступне');return}
   try{await loadXLSX();const d=reconData();let bal=d.open;const r2=v=>Math.round(v*100)/100;
-    const rows=[{'Дата':dmy(reconFrom),'Документ':'Сальдо на початок періоду','Точка':'','Нараховано':'','Сплачено':'','Сальдо':r2(d.open)}];
+    const pc=S.points[d.pids[0]]||{};const rows=[{'Дата':'','Документ':reconCp+(pc.contract?' · договір '+pc.contract:''),'Точка':'','Нараховано':'','Сплачено':'','Сальдо':''},{'Дата':dmy(reconFrom),'Документ':'Сальдо на початок періоду','Точка':'','Нараховано':'','Сплачено':'','Сальдо':r2(d.open)}];
     for(const r of d.rows){bal+=r.acc-r.paid;rows.push({'Дата':dmy(r.d),'Документ':r.doc,'Точка':S.points[r.pid]?.name||r.pid,'Нараховано':r.acc?r2(r.acc):'','Сплачено':r.paid?r2(r.paid):'','Сальдо':r2(bal)})}
     rows.push({'Дата':dmy(reconTo),'Документ':'Сальдо на кінець періоду','Точка':'','Нараховано':'','Сплачено':'','Сальдо':r2(bal)});
     const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=[{wch:12},{wch:48},{wch:26},{wch:13},{wch:13},{wch:13}];
@@ -1174,7 +1175,7 @@ async function exportXlsx(){
     const pay=[];for(const m of ms)for(const p of pointsList()){if(!S.pm[m+'_'+p.id])continue;const x=payRow(m,p.id);if(m<payStart()&&!S.pay[m+'_'+p.id])continue;
       pay.push({'Місяць':m,'Точка':p.name,'Оренда нараховано':r2(x.rentAcc),'Оренда сплачено':x.rentPaid??'','Дата оренди':x.rentDate,'Коментар оренди':x.py.rentNote||'','Комуналка за нашими показниками':r2(x.utilCalc),'Період рахунку':billPeriodTxt(x.py),'Вода було (рах.)':x.py.bw0??'','Вода стало (рах.)':x.py.bw1??'','Ел. було (рах.)':x.py.be0??'','Ел. стало (рах.)':x.py.be1??'','Комуналка до сплати':r2(x.utilDue),'Комуналка сплачено':x.utilPaid??'','Дата комуналки':x.utilDate,'Рахунок':x.py.basis||'','Коментар комуналки':x.py.utilNote||x.py.note||''})}
     const st=settleState();const se=st.items.map(it=>it.kind==='m'?{'Дата':it.key,'Операція':'Нараховано за '+mLabel(it.key).toLowerCase()+(it.pend?' (немає сум)':''),'Сума':r2(it.amount),'Борг Влада Даниїлу':r2(it.bal)}:{'Дата':it.p.date,'Операція':'Виплата '+it.p.from+(it.p.note?' — '+it.p.note:''),'Сума':r2(it.amount),'Борг Влада Даниїлу':r2(it.bal)});
-    const pl=pointsList().map(p=>({'Точка':p.name,'Адреса':p.note||'','Оренда на місяць':r2(p.rent),'Тариф води':p.wT??'','Тариф ел.':p.eT??'','Кому платимо':p.payee||'','Контакт':p.contact||'','Статус':p.active===false?'не працює':'працює'}));
+    const pl=pointsList().map(p=>({'Точка':p.name,'Адреса':p.note||'','Оренда на місяць':r2(p.rent),'Тариф води':p.wT??'','Тариф ел.':p.eT??'','Кому платимо':p.payee||'','Договір':p.contract||'','Контакт':p.contact||'','Статус':p.active===false?'не працює':'працює'}));
     const wb=XLSX.utils.book_new();
     const add=(rows,name)=>{const ws=XLSX.utils.json_to_sheet(rows.length?rows:[{'Немає даних':''}]);const keys=Object.keys(rows[0]||{});ws['!cols']=keys.map(k=>({wch:Math.min(40,Math.max(k.length+2,...rows.slice(0,200).map(r=>String(r[k]??'').length+1)))}));XLSX.utils.book_append_sheet(wb,ws,name)};
     add(sum,'Зведення');add(pts,'Точки по місяцях');add(ex,'Витрати');add(ut,'Комуналка');add(pay,'Оплати');const th=Object.values(S.tariffs).sort((a,b)=>(a.point+a.from).localeCompare(b.point+b.from)).map(t=>({'Точка':P(t.point),'З місяця':t.from,'Вода було':t.prevWT??'','Вода':t.wT??'','Ел. було':t.prevET??'','Ел.':t.eT??''}));
