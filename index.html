@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611062333">
+<meta name="wl-build" content="202611062336">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -68,6 +68,10 @@ h2{font-family:var(--f-display);font-size:13px;font-weight:700;text-transform:up
 .tile.main .l,.tile.main .s{color:var(--hi-mut)}
 .tile.main .v{color:var(--hi-fg)}
 .tiles.t3{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.tiles.t4{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.tiles.t4 .tile{padding:6px 8px}.tiles.t4 .v{font-size:17px}.tiles.t4 .s{font-size:11px;line-height:1.3}
+@media(max-width:600px){.tiles.t4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.opdot{color:var(--warn,#c98a00);font-weight:700}
+@media(max-width:600px){table.ut.yt th,table.ut.yt td{font-size:12px;padding-left:3px;padding-right:3px}.pl.yt tfoot tr.final td{font-size:12px}.pl.yt tfoot tr.final td:first-child{padding-left:6px}.pl.yt tfoot tr.final td:last-child{padding-right:6px}}
 .tiles.t3 .tile{padding:6px 8px}.tiles.t3 .v{font-size:17px}.tiles.t3 .s{font-size:11px;line-height:1.3}
 .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:-2px 0 8px}
 table.ut td.num .note{line-height:1.25}
@@ -216,9 +220,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611062333"></script>
+<script src="config.js?v=202611062336"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611062333"></script>
+<script src="shim.js?v=202611062336"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv'];
@@ -476,7 +480,7 @@ function viewSettle(){
 }
 
 function viewTrend(){
-  const ms=monthsList(); const cs=ms.map(m=>({m,...calc(m)}));
+  const all_=monthsList(), Y=(cur||all_[all_.length-1]||'').slice(0,4), ms=all_.filter(m=>m.startsWith(Y)); const cs=ms.map(m=>({m,...calc(m)}));
   if(!ms.length) return `<section class="card"><p class="note">Даних поки немає.</p></section>`;
   const W=640,H=230,pl=44,pb=26,pt=12,pr=8;
   const mx=Math.max(...cs.map(c=>c.R))*1.08||1;
@@ -484,28 +488,24 @@ function viewTrend(){
   const y=v=>pt+(H-pt-pb)*(1-v/mx);
   const ticks=[0,.25,.5,.75,1].map(t=>Math.round(mx*t/50000)*50000).filter((v,i,a)=>a.indexOf(v)===i&&v<=mx);
   let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Виручка й операційний прибуток по місяцях">`;
-  for(const t of ticks) svg+=`<line x1="${pl}" x2="${W-pr}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${t/1000}до</text>`;
+  for(const t of ticks) svg+=`<line x1="${pl}" x2="${W-pr}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${t/1000} тис</text>`;
   cs.forEach((c,i)=>{const x=pl+step*i+step/2;
     svg+=`<rect x="${x-bw/2}" y="${y(c.R)}" width="${bw}" height="${y(0)-y(c.R)}" rx="3" fill="var(--cyan)" stroke="var(--line)"/>`;
     svg+=`<rect x="${x-bw/2+5}" y="${y(Math.max(c.op,0))}" width="${bw-10}" height="${y(0)-y(Math.max(c.op,0))}" rx="2" fill="var(--link)"/>`;
     svg+=`<text x="${x}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)">${mShort(c.m)}</text>`;});
   svg+=`</svg>`;
   let h=`<section class="card"><div class="shead"><h2>Резервна копія</h2><button class="btn sm pri" data-act="exportXlsx" type="button" id="xlsxBtn">Завантажити все в Excel</button></div></section>`;
-  h+=`<section class="card chart"><h2>Виручка й операційний прибуток</h2>${svg}<div class="legend"><span><i style="background:var(--cyan);border:1px solid var(--line)"></i>виручка</span><span><i style="background:var(--link)"></i>операційний прибуток</span></div></section>`;
-  const tr=(lab,x,cls='')=>`<tr class="${cls}"><td>${lab}</td><td class="num hide-sm">${f0(x.L)}</td><td class="num hide-sm">${x.L?nf2.format(x.R/x.L):'—'}</td><td class="num">${f0(x.R)}</td><td class="num hide-sm">${f0(x.opex)}</td><td class="num ${sgn(x.op)}">${f0(x.op)}</td><td class="num hide-sm">${x.R?(x.op/x.R*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="num hide-sm">${x.capex?f0(x.capex):'—'}</td><td class="num ${sgn(x.net)}">${f0(x.net)}</td></tr>`;
+  h+=`<section class="card chart"><h2>Виручка й операційний прибуток · ${Y}</h2>${svg}<div class="legend"><span><i style="background:var(--cyan);border:1px solid var(--line)"></i>виручка</span><span><i style="background:var(--link)"></i>операційний прибуток</span></div></section>`;
+  const tr=(lab,x,cls='')=>`<tr class="${cls}"><td>${lab}</td><td class="num hide-sm">${f0(x.L)}</td><td class="num hide-sm">${x.L?nf2.format(x.R/x.L):'—'}</td><td class="num">${f0(x.R)}</td><td class="num hide-sm">${f0(x.opex)}</td><td class="num ${sgn(x.op)}">${f0(x.op)}</td><td class="num">${x.R?(x.op/x.R*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="num hide-sm">${x.capex?f0(x.capex):'—'}</td><td class="num ${sgn(x.net)}">${f0(x.net)}</td></tr>`;
   const Z=()=>({L:0,R:0,opex:0,op:0,capex:0,net:0});
   const byY={};for(const c of cs){const t=monthTable(c);const y=c.m.slice(0,4);(byY[y]=byY[y]||[]).push({m:c.m,L:t.T.L,R:t.T.rv,opex:t.opex,op:t.op,capex:t.capex,net:t.net})}
-  h+=`<section class="card"><h2>По місяцях</h2><div class="tbl"><table class="pl"><thead><tr><th>Місяць</th><th class="num hide-sm">Літри</th><th class="num hide-sm">Ціна/л</th><th class="num">Виручка</th><th class="num hide-sm">Опер. витрати</th><th class="num">Опер. прибуток</th><th class="num hide-sm">Маржа</th><th class="num hide-sm">Капвкл.</th><th class="num">До розпод.</th></tr></thead><tbody>`;
-  const all=Z();
-  for(const y of Object.keys(byY).sort().reverse()){
-    const ys=Z();
-    for(const x of byY[y].slice().reverse()){h+=tr(mLabel(x.m),x);for(const k in ys){ys[k]+=x[k];all[k]+=x[k]}}
-    h+=tr('Разом '+y,ys,'ysub');
-  }
-  h+=`</tbody><tfoot>${tr('Разом за весь час',all,'final')}</tfoot></table></div></section>`;
+  h+=`<section class="card"><h2>${Y} рік по місяцях</h2><div class="tbl"><table class="pl ut yt"><thead><tr><th>Місяць</th><th class="num hide-sm">Літри</th><th class="num hide-sm">Ціна/л</th><th class="num">Виручка</th><th class="num hide-sm">Опер. витрати</th><th class="num">Опер. прибуток</th><th class="num">%</th><th class="num hide-sm">Капвкл.</th><th class="num">До розпод.</th></tr></thead><tbody>`;
+  const ys=Z();
+  for(const x of (byY[Y]||[])){h+=tr(cap(MN[+x.m.slice(5)-1]),x);for(const k in ys)ys[k]+=x[k]}
+  h+=`</tbody><tfoot>${tr('Разом '+Y,ys,'final')}</tfoot></table></div></section>`;
   // points x months result
-  const last=ms.slice(-6);
-  h+=`<section class="card"><h2>Результат точок, останні ${last.length} міс.</h2><div class="tbl"><table class="pl"><thead><tr><th>Точка</th>${last.map(m=>`<th class="num">${mShort(m)}</th>`).join('')}</tr></thead><tbody>`;
+  const last=ms;
+  h+=`<section class="card"><h2>Результат точок · ${Y}</h2><div class="tbl"><table class="pl"><thead><tr><th>Точка</th>${last.map(m=>`<th class="num">${mShort(m)}</th>`).join('')}</tr></thead><tbody>`;
   const lastCalc=last.map(m=>calc(m));
   for(const p of pointsList()){
     const cells=lastCalc.map(c=>{const r=c.rows.find(r=>r.point===p.id);return r?`<td class="num ${sgn(r.res)}">${f0(r.res)}</td>`:'<td class="num mut">—</td>'});
@@ -647,9 +647,9 @@ function yearTable(m){
   const Z={L:0,R:0,opex:0,op:0,capex:0,net:0}; let rows='';
   for(const x of ms){const t=monthTable(calc(x)),o={L:t.T.L,R:t.T.rv,opex:t.opex,op:t.op,capex:t.capex,net:t.net},cl=(S.months[x]||{}).closed;
     for(const k in Z)Z[k]+=o[k];
-    rows+=`<tr class="click${x===m?' cur':''}" data-act="selMonth" data-id="${x}"><td>${cap(MN[+x.slice(5)-1])}${cl?'':' <span class="pill open">відкр.</span>'}</td><td class="num hide-sm">${f0(o.L)}</td><td class="num">${f0(o.R)}</td><td class="num hide-sm">${f0(o.opex)}</td><td class="num ${sgn(o.op)}">${f0(o.op)}</td><td class="num hide-sm">${o.R?(o.op/o.R*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="num hide-sm">${f0(o.capex)}</td><td class="num"><b>${f0(o.net)}</b></td></tr>`}
-  return `<section class="card"><h2>${y} рік по місяцях</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Місяць</th><th class="num hide-sm">Літри</th><th class="num">Виручка</th><th class="num hide-sm">Опер. витрати</th><th class="num">Опер. прибуток</th><th class="num hide-sm">Маржа</th><th class="num hide-sm">Капвкл.</th><th class="num">До розпод.</th></tr></thead><tbody>${rows}</tbody>
-  <tfoot><tr class="final"><td>Разом ${y}</td><td class="num hide-sm">${f0(Z.L)}</td><td class="num">${f0(Z.R)}</td><td class="num hide-sm">${f0(Z.opex)}</td><td class="num ${sgn(Z.op)}">${f0(Z.op)}</td><td class="num hide-sm">${Z.R?(Z.op/Z.R*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="num hide-sm">${f0(Z.capex)}</td><td class="num">${f0(Z.net)}</td></tr></tfoot></table></div>
+    rows+=`<tr class="click${x===m?' cur':''}" data-act="selMonth" data-id="${x}"><td>${cap(MN[+x.slice(5)-1])}${cl?'':' <span class="opdot" title="відкритий">•</span>'}</td><td class="num hide-sm">${f0(o.L)}</td><td class="num">${f0(o.R)}</td><td class="num hide-sm">${f0(o.opex)}</td><td class="num ${sgn(o.op)}">${f0(o.op)}</td><td class="num">${o.R?(o.op/o.R*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="num hide-sm">${f0(o.capex)}</td><td class="num"><b>${f0(o.net)}</b></td></tr>`}
+  return `<section class="card"><h2>${y} рік по місяцях</h2><div class="tbl"><table class="pl ut yt"><thead><tr><th>Місяць</th><th class="num hide-sm">Літри</th><th class="num">Виручка</th><th class="num hide-sm">Опер. витрати</th><th class="num">Опер. прибуток</th><th class="num">%</th><th class="num hide-sm">Капвкл.</th><th class="num">До розпод.</th></tr></thead><tbody>${rows}</tbody>
+  <tfoot><tr class="final"><td>Разом ${y}</td><td class="num hide-sm">${f0(Z.L)}</td><td class="num">${f0(Z.R)}</td><td class="num hide-sm">${f0(Z.opex)}</td><td class="num ${sgn(Z.op)}">${f0(Z.op)}</td><td class="num">${Z.R?(Z.op/Z.R*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="num hide-sm">${f0(Z.capex)}</td><td class="num">${f0(Z.net)}</td></tr></tfoot></table></div>
   </section>`;
 }
 function setRep(v){repSub=['fin','trend','settle'].includes(v)?v:'fin';render()}
@@ -670,12 +670,14 @@ function homeTodo(m){
   const md=S.months[m]||{}, noMoney=!(+md.bank)&&!(+md.cash);
   return {rent,noRev,noUtil,rec,noMoney,pm};
 }
+const pct=(a,b)=>b?(a/b*100).toFixed(1).replace('.',',')+'%':'—';
 function viewHome(m){
   const c=calc(m), mt=monthTable(c), md=S.months[m]||{}, ed=canWrite&&!md.closed;
   let h=`<section class="card"><div class="shead"><h2>${mLabel(m)}</h2><span class="pill ${md.closed?'closed':'open'}">${md.closed?'закритий':'відкритий'}</span></div>
-  <div class="tiles t3">
+  <div class="tiles t4">
     <div class="tile"><div class="l">Виручка</div><div class="v">${f0(mt.T.rv)}</div><div class="s">${nf1.format(Math.round(mt.T.L))} л продано</div></div>
     <div class="tile"><div class="l">Опер. прибуток</div><div class="v">${f0(mt.op)}</div><div class="s">витрати ${f0(mt.opex)}</div></div>
+    <div class="tile"><div class="l">Прибуток, %</div><div class="v ${sgn(mt.op)}">${pct(mt.op,mt.T.rv)}</div><div class="s">до розподілу ${pct(mt.net,mt.T.rv)}</div></div>
     <div class="tile main"><div class="l">До розподілу</div><div class="v">${f0(mt.net)}</div><div class="s">по ${f0(mt.net/2)} кожному</div></div>
   </div>
   ${ed?`<div class="bigacts one"><button class="btn pri main" data-act="addExp" type="button">+ Витрата</button></div>`:''}
