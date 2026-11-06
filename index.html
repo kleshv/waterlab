@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611062314">
+<meta name="wl-build" content="202611062317">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -146,6 +146,7 @@ p.note{margin:6px 0 0}
 .pl tr.cur td{background:var(--hi-soft,rgba(199,228,247,.35))}
 .owebtn{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;width:100%;text-align:left;border:0;cursor:pointer;font:inherit}
 .owebtn .go{margin-left:auto;font-family:var(--f-display);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em;text-decoration:underline}
+.pst{margin-top:6px;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;background:var(--chip);color:var(--fg)}.pst.ok{background:#e3f4ea;color:#1f6b3f}.pst.part{background:#fff4d6;color:#7a5600}.pst.no{background:#fde8e8;color:#9b1c1c}
 .done-ok{color:var(--good,#2f855a);font-weight:600}
 .blist.bill .brow,.blist.bill .bhead{grid-template-columns:minmax(0,130px) minmax(0,1fr) repeat(3,minmax(64px,104px))}
 .segb input,.chipb input{position:absolute;opacity:0;pointer-events:none}
@@ -215,9 +216,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611062314"></script>
+<script src="config.js?v=202611062317"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611062314"></script>
+<script src="shim.js?v=202611062317"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv'];
@@ -295,6 +296,21 @@ function settleState(){
   items.sort((a,b)=>a.date.localeCompare(b.date));
   let bal=+st.opening||0;for(const it of items){bal+=it.amount;it.bal=bal}
   return {start,opening:+st.opening||0,items,bal};
+}
+
+function payoutStatus(m){
+  const st=settleState(), it=st.items.find(i=>i.kind==='m'&&i.key===m);
+  if(!it) return `<div class="pst ok">✓ Прибуток за цей місяць виплачено (взаєморозрахунок обнулено, облік з ${mGen(st.start)})</div>`;
+  if(it.pend) return `<div class="pst">Виплата ще не рахується: внесіть банк і готівку за місяць</div>`;
+  const owed=it.amount; if(Math.abs(owed)<0.5) return `<div class="pst ok">✓ Розрахунок за місяць закритий: ніхто нікому не винен</div>`;
+  let before=st.opening, P=0, last='';
+  for(const i of st.items){ if(i.kind==='m'&&i.key<m) before+=i.amount; if(i.kind==='p'){P+=-i.amount; last=i.date>last?i.date:last} }
+  const sgn=owed>0?1:-1, need=Math.abs(owed);
+  const paidTo=Math.min(need,Math.max(0,sgn*(P-before))); // payments go to the oldest debt first
+  const who=owed>0?'Влад → Даниїл':'Даниїл → Влад';
+  if(paidTo>=need-0.5) return `<div class="pst ok">✓ Виплачено повністю: ${who} ${f0(need)}${last?` · остання виплата ${fmtD(last)}`:''}</div>`;
+  if(paidTo>0.5) return `<div class="pst part">Виплачено частково: ${f0(paidTo)} з ${f0(need)} · залишилось ${f0(need-paidTo)} (${who})</div>`;
+  return `<div class="pst no">Ще не виплачено: ${who} ${f0(need)}</div>`;
 }
 
 /* ---------- writes ---------- */
@@ -413,7 +429,7 @@ function viewMonth(m){
       <div class="row"><span>Сплатив витрат</span><span>−${f0(c.danExp)}</span></div>
       <div class="row tot"><span>Залишок у Даниїла</span><span>${f0(c.danNet)}</span></div></div>
   </div>
-  <button type="button" class="owe owebtn" data-act="goTab" data-id="rep:settle">Кожному по ${f0(c.total/2)}. ${c.owed>=0?`Влад → Даниїл: <b>${f0(c.owed)}</b>`:`Даниїл → Влад: <b>${f0(-c.owed)}</b>`}<span class="go">Виплати 50/50 →</span></button>
+  <button type="button" class="owe owebtn" data-act="goTab" data-id="rep:settle">Кожному по ${f0(c.total/2)}. ${c.owed>=0?`Влад → Даниїл: <b>${f0(c.owed)}</b>`:`Даниїл → Влад: <b>${f0(-c.owed)}</b>`}<span class="go">Виплати 50/50 →</span></button>${payoutStatus(m)}
   <p class="note">Ділиться грошовий результат: операційний прибуток мінус капвкладення. Натисніть на суму, щоб перейти до виплат і боргу наростаючим підсумком (Звіти → Взаєморозрахунок 50/50).</p></section>`;
   return h;
 }
