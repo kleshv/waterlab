@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611070039">
+<meta name="wl-build" content="202611070044">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -221,9 +221,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611070039"></script>
+<script src="config.js?v=202611070044"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611070039"></script>
+<script src="shim.js?v=202611070044"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -1104,10 +1104,11 @@ function editInv(id){const i=S.inv[id];if(!i)return;openSheet('Внесок',i.d
 
 /* ---------- balance & cash flow ---------- */
 const ACC={bank:'Рахунок ФОП Влада',cash:'Готівка Даниїла',vlad:'Влад особисто',dan:'Даниїл особисто',ext:'Інше / зовні'};
-const BAL_START='2026-01';
+const balStart=()=>((S.meta.settings||{}).balStart)||'2026-11';
+const balStartTxt=()=>'01.'+balStart().slice(5)+'.'+balStart().slice(0,4);
 function balOpen(){const o=(S.meta.settings||{}).balOpen;return o||null}
 function balState(){
-  const ms=monthsList().filter(m=>m>=BAL_START), op=balOpen()||{bank:0,cash:0}, st={bank:[],cash:[]};
+  const ms=monthsList().filter(m=>m>=balStart()), op=balOpen()||{bank:0,cash:0}, st={bank:[],cash:[]};
   const inM=(d,m)=>(d||'').slice(0,7)===m;
   let cur_={bank:+op.bank||0,cash:+op.cash||0};
   for(const m of ms){
@@ -1131,16 +1132,17 @@ function balState(){
   }
   return st;
 }
+function balSub(r){if(!r)return '';if(r.fact!=null)return 'факт на кінець '+mLabel(r.m).toLowerCase();if(!isClosed(r.m)&&!r.rev)return mLabel(r.m).toLowerCase()+': виручку ще не внесено, лише оплати';return 'розрахунок на кінець '+mLabel(r.m).toLowerCase()}
 function viewBal(){
   const st=balState(), op=balOpen(), Y=(cur||'').slice(0,4)||String(new Date().getFullYear());
   const last=k=>{const a=st[k];return a.filter(r=>r.fact!=null).pop()||a.filter(r=>r.rev>0).pop()||a[a.length-1]||null};
-  const endV=r=>r?(r.fact??r.close):0;
+  const endV=(r,k)=>r?(r.fact??r.close):(op?+op[k]||0:0);
   const lb=last('bank'), lc=last('cash');
   let h=`<section class="card"><div class="shead"><h2>Баланс і рух коштів</h2>${canWrite?`<button class="btn sm pri" data-act="addMov" type="button">+ Рух коштів</button>`:''}</div>
-  ${!op?`<div class="calc">Не внесено залишки на 01.01.2026 — розрахунок іде від нуля.${canWrite?` <button class="btn sm" data-act="editBalOpen" type="button">Внести залишки</button>`:''}</div>`:''}
-  <div class="tiles t3"><div class="tile"><div class="l">${ACC.bank}</div><div class="v">${f0(endV(lb))}</div><div class="s">${lb?(lb.fact!=null?'факт':'розрахунок')+' на кінець '+mLabel(lb.m).toLowerCase():''}</div></div>
-    <div class="tile"><div class="l">${ACC.cash}</div><div class="v">${f0(endV(lc))}</div><div class="s">${lc?(lc.fact!=null?'факт':'розрахунок')+' на кінець '+mLabel(lc.m).toLowerCase():''}</div></div>
-    <div class="tile main"><div class="l">Разом</div><div class="v">${f0(endV(lb)+endV(lc))}</div><div class="s">${op?'залишки на 01.01: '+f0(+op.bank||0)+' / '+f0(+op.cash||0):'без початкових залишків'}</div></div></div>${op&&canWrite?`<div style="margin-top:8px"><button class="btn sm" data-act="editBalOpen" type="button">Залишки на 01.01</button></div>`:''}
+  ${!op?`<div class="calc">Не внесено залишки на ${balStartTxt()} — розрахунок іде від нуля.${canWrite?` <button class="btn sm" data-act="editBalOpen" type="button">Внести залишки</button>`:''}</div>`:''}
+  <div class="tiles t3"><div class="tile"><div class="l">${ACC.bank}</div><div class="v">${f0(endV(lb,'bank'))}</div><div class="s">${balSub(lb)}</div></div>
+    <div class="tile"><div class="l">${ACC.cash}</div><div class="v">${f0(endV(lc,'cash'))}</div><div class="s">${balSub(lc)}</div></div>
+    <div class="tile main"><div class="l">Разом</div><div class="v">${f0(endV(lb,'bank')+endV(lc,'cash'))}</div><div class="s">${op?'залишки на '+balStartTxt()+': '+f0(+op.bank||0)+' / '+f0(+op.cash||0):'без початкових залишків'}</div></div></div>${op&&canWrite?`<div style="margin-top:8px"><button class="btn sm" data-act="editBalOpen" type="button">Залишки на ${balStartTxt()}</button></div>`:''}
   </section>`;
   for(const k of ['bank','cash']){
     const rows=st[k].filter(r=>r.m.startsWith(Y)); if(!rows.length)continue;
@@ -1149,7 +1151,7 @@ function viewBal(){
     h+=`<section class="card"><h2>${ACC[k]} · ${Y}</h2><div class="tbl"><table class="pl ut yt"><thead><tr><th>Місяць</th><th class="num hide-sm">На початок</th><th class="num hide-sm">Надійшло</th><th class="num hide-sm">Списано</th><th class="num">На кінець</th><th class="num">Факт</th><th class="num">Різниця</th></tr></thead><tbody>${body}</tbody></table></div>
       <p class="note">${k==='bank'?'Надходить: оплати карткою. Списується: витрати, які платив Влад (зокрема комісія банку й податки), оренда й комуналка за датою оплати, вивід прибутку (рух коштів). Виплати Даниїлу 50/50 сюди не входять — вони з особистих коштів.':'Надходить: готівка з автоматів. Списується: витрати, які платив Даниїл.'} Натисніть місяць, щоб побачити розшифровку й внести фактичний залишок.</p></section>`;
   }
-  const mv=Object.entries(S.mov).filter(([,x])=>(x.date||'').startsWith(Y)).sort((a,b)=>b[1].date.localeCompare(a[1].date));
+  const mv=Object.entries(S.mov).filter(([,x])=>(x.date||'').startsWith(Y)&&(x.date||'')>=balStart()).sort((a,b)=>b[1].date.localeCompare(a[1].date));
   h+=`<section class="card"><h2>Інший рух коштів · ${Y}</h2>${mv.length?`<div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Звідки → куди</th><th class="num">Сума</th></tr></thead><tbody>${mv.map(([id,x])=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editMov':''}" data-id="${id}"><td>${dmy(x.date)}</td><td>${esc(ACC[x.from]||x.from)} → ${esc(ACC[x.to]||x.to)}${x.note?`<div class="note">${esc(x.note)}</div>`:''}</td><td class="num">${f0(x.amount)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Тут записуються зняття собі, внесення, перекази між рахунком і готівкою, інші надходження.</p>'}</section>`;
   return h;
 }
@@ -1179,7 +1181,7 @@ function saveMov(id){return async fd=>{const a=parseNum(fd.amount);if(a===null||
 function addMov(){openSheet('Рух коштів','Зняття собі, внесення, переказ між рахунком і готівкою',movForm({}),saveMov(db.collection('mov').doc().id))}
 function editMov(id){openSheet('Рух коштів','',movForm(S.mov[id]||{}),saveMov(id),async()=>await w(()=>db.doc('mov/'+id).delete()))}
 function editBalOpen(){const o=balOpen()||{};
-  openSheet('Залишки на 01.01.2026','З цих сум починається розрахунок балансу',fld('bank',ACC.bank,o.bank??'')+fld('cash',ACC.cash,o.cash??''),async fd=>{
+  openSheet('Залишки на '+balStartTxt(),'З цих сум починається розрахунок балансу',fld('bank',ACC.bank,o.bank??'')+fld('cash',ACC.cash,o.cash??''),async fd=>{
     const b=parseNum(fd.bank||'0'),c=parseNum(fd.cash||'0');if(b===null||c===null)return 'Не зрозумів суму';
     if(!await w(()=>db.doc('meta/settings').set({...(S.meta.settings||{}),balOpen:{bank:b,cash:c}})))return 'Не збереглося';toast('Збережено')})}
 
