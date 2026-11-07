@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611071913">
+<meta name="wl-build" content="202611071932">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -221,9 +221,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611071913"></script>
+<script src="config.js?v=202611071932"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611071913"></script>
+<script src="shim.js?v=202611071932"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -422,7 +422,7 @@ function viewMonth(m){
   <thead><tr><th>Стаття</th><th>Тип</th><th class="hide-sm">Хто платив</th><th class="num">Сума</th></tr></thead><tbody>`;
   for(const e of ex){
     const pn=e.point&&S.points[e.point]?` · ${esc(S.points[e.point].name)}`:'';
-    h+=`<tr class="${ed?'click':''}" data-act="${ed?'editExp':''}" data-id="${e.id}"><td>${esc(e.article)}${e.recurring?' <span class="mut" title="щомісяця">↻</span>':''}<div class="note">${esc(e.note||'')}${pn}</div></td><td><span class="pill ${e.cat==='ТОіР'?'toir':e.cat==='Розвиток'?'capex':''}">${CATL[e.cat]||e.cat}</span></td><td class="hide-sm">${esc(e.payer)}</td><td class="num">${f0(e.amount)}</td></tr>`;
+    h+=`<tr class="${ed?'click':''}" data-act="${ed?'editExp':''}" data-id="${e.id}"><td>${esc(e.article)}${e.recurring?' <span class="mut" title="щомісяця">↻</span>':''}<div class="note">${esc([e.purpose,e.note].filter(Boolean).join(' · '))}${pn}</div></td><td><span class="pill ${e.cat==='ТОіР'?'toir':e.cat==='Розвиток'?'capex':''}">${CATL[e.cat]||e.cat}</span></td><td class="hide-sm">${esc(e.payer)}</td><td class="num">${f0(e.amount)}</td></tr>`;
   }
   if(!ex.length) h+=`<tr><td colspan="4" class="note">Витрат поки немає.</td></tr>`;
   h+=`</tbody><tfoot><tr><td colspan="3">обслуговування ${f0(c.toir)} · податки і банк ${f0(c.fa)} · капвкладення ${f0(c.capex)}</td><td class="num">${f0(c.toir+c.fa+c.capex)}</td></tr></tfoot></table></div></section>`;
@@ -460,7 +460,7 @@ function viewExp(m){
   for(const e of list){
     const pn=e.point&&S.points[e.point]?S.points[e.point].name:'';
     const d=e.date?e.date.slice(8,10)+'.'+e.date.slice(5,7):'—';
-    h+=`<tr class="${ed?'click':''}" data-act="${ed?'editExp':''}" data-id="${e.id}"><td class="${e.date?'':'mut'}">${d}</td><td>${esc(e.article)}<div class="note">${[esc(e.note||''),esc(pn),e.by?'вніс '+esc(who(e.by)):''].filter(Boolean).join(' · ')}</div></td><td class="hide-sm"><span class="pill ${e.cat==='ТОіР'?'toir':e.cat==='Розвиток'?'capex':''}">${CATL[e.cat]||e.cat}</span></td><td class="hide-sm">${esc(e.payer)}</td><td class="num">${f0(e.amount)}</td></tr>`;
+    h+=`<tr class="${ed?'click':''}" data-act="${ed?'editExp':''}" data-id="${e.id}"><td class="${e.date?'':'mut'}">${d}</td><td>${e.purpose?`<b>${esc(e.purpose)}</b><div class="note">${esc(e.article)}</div>`:esc(e.article)}<div class="note">${[esc(e.note||''),esc(pn),e.by?'вніс '+esc(who(e.by)):''].filter(Boolean).join(' · ')}</div></td><td class="hide-sm"><span class="pill ${e.cat==='ТОіР'?'toir':e.cat==='Розвиток'?'capex':''}">${CATL[e.cat]||e.cat}</span></td><td class="hide-sm">${esc(e.payer)}</td><td class="num">${f0(e.amount)}</td></tr>`;
   }
   if(!list.length) h+=`<tr><td colspan="5" class="note">Витрат поки немає. Натисніть «+ Витрата», щоб внести першу.</td></tr>`;
   h+=`</tbody><tfoot><tr><td colspan="4">Разом${expFilter==='all'?'':' · '+esc(expFilter)}</td><td class="num">${f0(list.reduce((s,e)=>s+(+e.amount||0),0))}</td></tr></tfoot></table></div>
@@ -587,6 +587,7 @@ function expForm(e){
   return `<div class="full"><div class="glabel">Хто платив</div><div class="seg">${['Даниїл','Влад'].map(p=>`<label class="segb"><input type="radio" name="payer" value="${p}" ${p===payer?'checked':''}><span>${p}</span></label>`).join('')}</div></div>`+
     arts+
     `<label class="full amount">Сума, грн<input id="f_amount" name="amount" value="${esc(e.amount??'')}" inputmode="decimal" autocomplete="off" placeholder="0"></label>`+
+    `<label class="full">Призначення платежу<input id="f_purpose" name="purpose" value="${esc(e.purpose||'')}" autocomplete="off" placeholder="напр.: мембрани Vatron 6 шт · ремонт купюроприймача · пальне 40 л"></label>`+
     sel('point','Точка',e.point||'',popts)+
     fld('date','Дата',e.date||defDate(),{type:'date'})+
     fld('note','Коментар',e.note||'',{type:'text',full:true});
@@ -597,7 +598,7 @@ function saveExp(id,base){return async fd=>{
   let month=base.month||cur;
   if(fd.date){const dm=fd.date.slice(0,7);if(dm!==month){if(!S.months[dm])return 'Місяця '+mLabel(dm).toLowerCase()+' ще немає. Створіть його або оберіть дату в '+mLabel(month).toLowerCase()+'.';if(isClosed(dm))return mLabel(dm)+' закритий. Відкрийте його або оберіть іншу дату.';month=dm}}
   const known=artCat(fd.article);
-  const doc={...base,by:base.by||me||'',month,date:fd.date||'',article:fd.article,amount:a,cat:known||base.cat||'ТОіР',payer:fd.payer||'Даниїл',point:fd.point||'',note:fd.note||'',recurring:known?REC.has(fd.article):!!base.recurring};
+  const doc={...base,by:base.by||me||'',month,date:fd.date||'',article:fd.article,amount:a,cat:known||base.cat||'ТОіР',payer:fd.payer||'Даниїл',point:fd.point||'',purpose:(fd.purpose||'').trim(),note:fd.note||'',recurring:known?REC.has(fd.article):!!base.recurring};
   ls.set('wl_payer',doc.payer);
   if(!await w(()=>db.doc('exp/'+id).set(doc)))return 'Не збереглося';toast('Збережено')}}
 function defDate(){const t=new Date();const ts=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');if(ts.slice(0,7)===cur)return ts;const[y,mm]=cur.split('-').map(Number);return cur+'-'+String(new Date(y,mm,0).getDate()).padStart(2,'0')}
@@ -1300,7 +1301,7 @@ async function exportXlsx(){
     const ms=monthsList();
     const sum=ms.map(m=>{const c=calc(m);return {'Місяць':m,'Літри':r2(c.L),'Виручка':r2(c.R),'Оренда':r2(c.rent),'Вода':r2(c.water),'Електро':r2(c.elec),'Обслуговування':r2(c.toir),'Податки і банк':r2(c.fa),'Опер. витрати':r2(c.opex),'Опер. прибуток':r2(c.op),'Капвкладення':r2(c.capex),'До розподілу':r2(c.net),'Банк':r2(c.bank),'Готівка':r2(c.cash),'Checkbox':r2(c.chk),'Влад → Даниїл':r2(c.owed),'Закритий':S.months[m].closed?'так':'немає'}});
     const pts=[];for(const m of ms){const c=calc(m);for(const r of c.rows)pts.push({'Місяць':m,'Точка':P(r.point),'Літри':r2(r.liters),'Виручка':r2(r.revenue),'Оренда':r2(r.rent),'Вода':r2(r.water),'Електро':r2(r.elec),'Інше по точці':r2(r.other),'Результат':r2(r.res)})}
-    const ex=Object.values(S.exp).sort((a,b)=>(a.month+(a.date||'')).localeCompare(b.month+(b.date||''))).map(e=>({'Місяць':e.month,'Дата':e.date||'','Стаття':e.article,'Тип':CATL[e.cat]||e.cat,'Хто платив':e.payer,'Сума':r2(e.amount),'Точка':e.point?P(e.point):'','Коментар':e.note||''}));
+    const ex=Object.values(S.exp).sort((a,b)=>(a.month+(a.date||'')).localeCompare(b.month+(b.date||''))).map(e=>({'Місяць':e.month,'Дата':e.date||'','Стаття':e.article,'Тип':CATL[e.cat]||e.cat,'Хто платив':e.payer,'Сума':r2(e.amount),'Призначення платежу':e.purpose||'','Точка':e.point?P(e.point):'','Коментар':e.note||''}));
     const ut=Object.values(S.util).sort((a,b)=>(a.month+a.point).localeCompare(b.month+b.point)).map(u=>({'Місяць':u.month,'Точка':P(u.point),'Вода було':r2(u.w0),'Вода зараз':r2(u.w1),'Вода, м³':r2(u.wUse),'Тариф води':u.wT??'','Вода, грн':r2(u.wSum),'Ел. було':r2(u.e0),'Ел. зараз':r2(u.e1),'Ел., кВт·год':r2(u.eUse),'Тариф ел.':u.eT??'','Ел., грн':r2(u.eSum),'Не нараховуємо':u.noCharge?'так':'','Коментар':u.note||''}));
     const pay=[];for(const m of ms)for(const p of pointsList()){if(!S.pm[m+'_'+p.id])continue;const x=payRow(m,p.id);if(m<payStart()&&!S.pay[m+'_'+p.id])continue;
       pay.push({'Місяць':m,'Точка':p.name,'Оренда нараховано':r2(x.rentAcc),'Оренда сплачено':x.rentPaid??'','Дата оренди':x.rentDate,'Коментар оренди':x.py.rentNote||'','Комуналка за нашими показниками':r2(x.utilCalc),'Період рахунку':billPeriodTxt(x.py),'Вода було (рах.)':x.py.bw0??'','Вода стало (рах.)':x.py.bw1??'','Ел. було (рах.)':x.py.be0??'','Ел. стало (рах.)':x.py.be1??'','Комуналка до сплати':r2(x.utilDue),'Комуналка сплачено':x.utilPaid??'','Дата комуналки':x.utilDate,'Рахунок':x.py.basis||'','Коментар комуналки':x.py.utilNote||x.py.note||''})}
