@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611062357">
+<meta name="wl-build" content="202611070033">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -221,12 +221,12 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611062357"></script>
+<script src="config.js?v=202611070033"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611062357"></script>
+<script src="shim.js?v=202611070033"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
-const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv'];
+const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
 const ARTS=[
  {g:'Обслуговування мережі',cat:'ТОіР',items:['Сервіс і заміна фільтрів','Фільтри та мембрани','Ремонт і запчастини','Електрика та монтаж','Інкасація','Пальне','Зв’язок, SIM, CRM','Господарські витрати й прибирання','Доставка','Інше']},
  {g:'Податки і банк',cat:'ФА',items:['Єдиний податок','Військовий збір','Банк і РКО','Комісія банку 1,3%','Checkbox','Бухгалтер / юрист']},
@@ -234,7 +234,7 @@ const ARTS=[
 const REC=new Set(['Єдиний податок','Військовий збір','Банк і РКО','Checkbox','Бухгалтер / юрист']);
 const CATL={'ТОіР':'обслуговування','ФА':'податки і банк','Розвиток':'капвкладення'};
 const artCat=a=>{for(const g of ARTS) if(g.items.includes(a)) return g.cat; return null};
-const S={points:{},months:{},pm:{},exp:{},settle:{},meta:{},util:{},pay:{},tariffs:{},inv:{}};
+const S={points:{},months:{},pm:{},exp:{},settle:{},meta:{},util:{},pay:{},tariffs:{},inv:{},bal:{},mov:{}};
 let me=null, userApi=null; const names={};
 const loaded=new Set();
 let role='owner'; const ACCT_TABS=['util','rent','recon','points'];
@@ -352,8 +352,8 @@ function render(){
   if(tab==='month'||tab==='settle'||tab==='trend'){repSub=tab==='month'?'fin':tab;tab='reports'}
   const noMonth=`<section class="card"><h2>Місяців поки немає</h2><p class="note">Додайте точки у вкладці «Точки», потім натисніть «+ Місяць».</p></section>`;
   if(tab==='home') h+=cur?viewHome(cur):noMonth;
-  if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['settle','Взаєморозрахунок 50/50']].map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
-    if(repSub==='fin') h+=cur?viewMonth(cur):noMonth; if(repSub==='trend') h+=viewTrend(); if(repSub==='settle') h+=viewSettle();}
+  if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['settle','Взаєморозрахунок 50/50'],['bal','Баланс']].map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
+    if(repSub==='fin') h+=cur?viewMonth(cur):noMonth; if(repSub==='trend') h+=viewTrend(); if(repSub==='settle') h+=viewSettle(); if(repSub==='bal') h+=viewBal();}
   if(tab==='exp') h+=cur?viewExp(cur):'';
   if(tab==='util') h+=cur?viewUtil(cur):'';
   if(tab==='rent') h+=cur?viewRent(cur):'';
@@ -653,7 +653,7 @@ function yearTable(m){
   <tfoot><tr class="final"><td>Разом ${y}</td><td class="num hide-sm">${f0(Z.L)}</td><td class="num">${f0(Z.R)}</td><td class="num hide-sm">${f0(Z.opex)}</td><td class="num ${sgn(Z.op)}">${f0(Z.op)}</td><td class="num">${Z.R?(Z.op/Z.R*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="num hide-sm">${f0(Z.capex)}</td><td class="num">${f0(Z.net)}</td></tr></tfoot></table></div>
   </section>`;
 }
-function setRep(v){repSub=['fin','trend','settle'].includes(v)?v:'fin';render()}
+function setRep(v){repSub=['fin','trend','settle','bal'].includes(v)?v:'fin';render()}
 function goTab(v){if(v.startsWith('rep:')){tab='reports';repSub=v.slice(4)}else tab=v;render();window.scrollTo(0,0)}
 function prevMonthOf(m){const ms=monthsList();const i=ms.indexOf(m);return i>0?ms[i-1]:null}
 function homeTodo(m){
@@ -1101,6 +1101,88 @@ function saveInv(id){return async fd=>{const h=parseNum(fd.hrn),u=parseNum(fd.us
 function addInv(){openSheet('Новий внесок','',invForm({pct:5}),saveInv(db.collection('inv').doc().id))}
 function editInv(id){const i=S.inv[id];if(!i)return;openSheet('Внесок',i.date?fmtD(i.date):'',invForm(i),saveInv(id),async()=>{if(await w(()=>db.doc('inv/'+id).delete()))toast('Видалено')})}
 
+
+/* ---------- balance & cash flow ---------- */
+const ACC={bank:'Рахунок ФОП Влада',cash:'Готівка Даниїла',vlad:'Влад особисто',dan:'Даниїл особисто',ext:'Інше / зовні'};
+const BAL_START='2026-01';
+function balOpen(){const o=(S.meta.settings||{}).balOpen;return o||null}
+function balState(){
+  const ms=monthsList().filter(m=>m>=BAL_START), op=balOpen()||{bank:0,cash:0}, st={bank:[],cash:[]};
+  const inM=(d,m)=>(d||'').slice(0,7)===m;
+  let cur_={bank:+op.bank||0,cash:+op.cash||0};
+  for(const m of ms){
+    const md=S.months[m]||{};
+    const ex={bank:0,cash:0};for(const e of Object.values(S.exp))if(e.month===m){if(e.payer==='Даниїл')ex.cash+=+e.amount||0;else ex.bank+=+e.amount||0}
+    let rent=0,util=0;
+    for(const p of Object.values(S.pay)){
+      if(p.rentPaid){const d=p.rentDate||monthEnd(p.month);if(inM(d,m))rent+=+p.rentPaid}
+      if(p.utilPaid){const d=p.utilDate||monthEnd(p.month);if(inM(d,m))util+=+p.utilPaid}}
+    const pay={bank:0,cash:0};for(const x of Object.values(S.settle))if(inM(x.date,m)){if(x.from==='Даниїл')pay.cash+=+x.amount||0;else pay.bank+=+x.amount||0}
+    const mv={bank:{in:0,out:0,list:[]},cash:{in:0,out:0,list:[]}};
+    for(const [id,x] of Object.entries(S.mov))if(inM(x.date,m)){const a=+x.amount||0;
+      if(mv[x.to]){mv[x.to].in+=a;mv[x.to].list.push({id,...x,sgn:1})} if(mv[x.from]){mv[x.from].out+=a;mv[x.from].list.push({id,...x,sgn:-1})}}
+    for(const k of ['bank','cash']){
+      const rev=+(k==='bank'?md.bank:md.cash)||0, ru=k==='bank'?rent+util:0;
+      const inc=rev+mv[k].in, out=ex[k]+(k==='bank'?rent+util:0)+pay[k]+mv[k].out;
+      const open=cur_[k], close=Math.round((open+inc-out)*100)/100, f=(S.bal[m+'_'+k]||{}).fact, fact=f==null||f===''?null:+f;
+      st[k].push({m,k,open,rev,mvIn:mv[k].in,mvOut:mv[k].out,mv:mv[k].list,exp:ex[k],rent:k==='bank'?rent:0,util:k==='bank'?util:0,pay:pay[k],inc,out,close,fact,diff:fact==null?null:Math.round((fact-close)*100)/100,note:(S.bal[m+'_'+k]||{}).note||''});
+      cur_[k]=fact??close;
+    }
+  }
+  return st;
+}
+function viewBal(){
+  const st=balState(), op=balOpen(), Y=(cur||'').slice(0,4)||String(new Date().getFullYear());
+  const last=k=>{const a=st[k];return a[a.length-1]||null};
+  const endV=r=>r?(r.fact??r.close):0;
+  const lb=last('bank'), lc=last('cash');
+  let h=`<section class="card"><div class="shead"><h2>Баланс і рух коштів</h2>${canWrite?`<button class="btn sm pri" data-act="addMov" type="button">+ Рух коштів</button>`:''}</div>
+  ${!op?`<div class="calc">Не внесено залишки на 01.01.2026 — розрахунок іде від нуля.${canWrite?` <button class="btn sm" data-act="editBalOpen" type="button">Внести залишки</button>`:''}</div>`:''}
+  <div class="tiles t3"><div class="tile"><div class="l">${ACC.bank}</div><div class="v">${f0(endV(lb))}</div><div class="s">${lb?(lb.fact!=null?'факт':'розрахунок')+' на кінець '+mLabel(lb.m).toLowerCase():''}</div></div>
+    <div class="tile"><div class="l">${ACC.cash}</div><div class="v">${f0(endV(lc))}</div><div class="s">${lc?(lc.fact!=null?'факт':'розрахунок')+' на кінець '+mLabel(lc.m).toLowerCase():''}</div></div>
+    <div class="tile main"><div class="l">Разом</div><div class="v">${f0(endV(lb)+endV(lc))}</div><div class="s">${op?'залишки на 01.01: '+f0(+op.bank||0)+' / '+f0(+op.cash||0):'без початкових залишків'}</div></div></div>${op&&canWrite?`<div style="margin-top:8px"><button class="btn sm" data-act="editBalOpen" type="button">Залишки на 01.01</button></div>`:''}
+  </section>`;
+  for(const k of ['bank','cash']){
+    const rows=st[k].filter(r=>r.m.startsWith(Y)); if(!rows.length)continue;
+    let body='';
+    for(const r of rows) body+=`<tr class="click" data-act="balInfo" data-id="${r.m}|${k}"><td>${cap(MN[+r.m.slice(5)-1])}</td><td class="num hide-sm">${f0(r.open)}</td><td class="num hide-sm">${f0(r.inc)}</td><td class="num hide-sm">${f0(r.out)}</td><td class="num"><b>${f0(r.close)}</b></td><td class="num">${r.fact!=null?f0(r.fact):'<span class="mut">—</span>'}</td><td class="num ${r.diff!=null&&Math.abs(r.diff)>1?'neg':''}">${r.diff==null?'<span class="mut">—</span>':Math.abs(r.diff)<=1?'<span class="pill closed">✓</span>':f0(r.diff)}</td></tr>`;
+    h+=`<section class="card"><h2>${ACC[k]} · ${Y}</h2><div class="tbl"><table class="pl ut yt"><thead><tr><th>Місяць</th><th class="num hide-sm">На початок</th><th class="num hide-sm">Надійшло</th><th class="num hide-sm">Списано</th><th class="num">На кінець</th><th class="num">Факт</th><th class="num">Різниця</th></tr></thead><tbody>${body}</tbody></table></div>
+      <p class="note">${k==='bank'?'Надходить: оплати карткою. Списується: витрати, які платив Влад (зокрема комісія банку й податки), оренда й комуналка за датою оплати, виплати Даниїлу.':'Надходить: готівка з автоматів. Списується: витрати, які платив Даниїл.'} Натисніть місяць, щоб побачити розшифровку й внести фактичний залишок.</p></section>`;
+  }
+  const mv=Object.entries(S.mov).filter(([,x])=>(x.date||'').startsWith(Y)).sort((a,b)=>b[1].date.localeCompare(a[1].date));
+  h+=`<section class="card"><h2>Інший рух коштів · ${Y}</h2>${mv.length?`<div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Звідки → куди</th><th class="num">Сума</th></tr></thead><tbody>${mv.map(([id,x])=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editMov':''}" data-id="${id}"><td>${dmy(x.date)}</td><td>${esc(ACC[x.from]||x.from)} → ${esc(ACC[x.to]||x.to)}${x.note?`<div class="note">${esc(x.note)}</div>`:''}</td><td class="num">${f0(x.amount)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Тут записуються зняття собі, внесення, перекази між рахунком і готівкою, інші надходження.</p>'}</section>`;
+  return h;
+}
+function balInfo(v){
+  const [m,k]=v.split('|'), r=balState()[k].find(x=>x.m===m); if(!r)return;
+  const kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`;
+  let h=kv('На початок місяця',f0(r.open));
+  h+=kv(k==='bank'?'+ Оплати карткою':'+ Готівка з автоматів',f0(r.rev));
+  if(r.mvIn)h+=kv('+ Інші надходження',f0(r.mvIn));
+  h+=kv(k==='bank'?'− Витрати (платив Влад)':'− Витрати (платив Даниїл)',f0(-r.exp));
+  if(k==='bank'){h+=kv('− Оренда (за датою оплати)',f0(-r.rent));h+=kv('− Комуналка (за датою оплати)',f0(-r.util))}
+  if(r.pay)h+=kv(k==='bank'?'− Виплати Даниїлу':'− Виплати Владу',f0(-r.pay));
+  if(r.mvOut)h+=kv('− Інший рух (зняття, перекази)',f0(-r.mvOut));
+  h+=kv('= На кінець (розрахунок)','<b>'+f0(r.close)+'</b>');
+  for(const x of r.mv)h+=`<div class="note">${dmy(x.date)} · ${esc(ACC[x.from]||x.from)} → ${esc(ACC[x.to]||x.to)} · ${f0(x.amount)}${x.note?' · '+esc(x.note):''}</div>`;
+  const fields=`<div class="info full">${h}</div>`+fld('fact','Фактичний залишок на кінець місяця',r.fact??'')+fld('note','Коментар',r.note||'',{type:'text',full:true})+
+    (r.diff!=null&&Math.abs(r.diff)>1?`<p class="note full">Різниця ${f0(r.diff)}: якщо це зняття собі чи переказ, додайте його в «+ Рух коштів».</p>`:'');
+  if(!canWrite){infoSheet(ACC[k]+' · '+mLabel(m),'',`<div class="info">${h}</div>`);return}
+  openSheet(ACC[k]+' · '+mLabel(m),'Розшифровка й фактичний залишок',fields,async fd=>{
+    const t=String(fd.fact||'').trim(); let f=null; if(t!==''){f=parseNum(t);if(f===null)return 'Не зрозумів суму залишку'}
+    if(!await w(()=>db.doc('bal/'+m+'_'+k).set({month:m,acc:k,fact:f,note:fd.note||''})))return 'Не збереглося';toast('Збережено')});
+}
+function movForm(x){const today=new Date().toISOString().slice(0,10), o=Object.entries(ACC);
+  return fld('date','Дата',x.date||today,{type:'date'})+fld('amount','Сума, грн',x.amount??'')+sel('from','Звідки',x.from||'bank',o)+sel('to','Куди',x.to||'vlad',o)+fld('note','Коментар',x.note||'',{type:'text',full:true})}
+function saveMov(id){return async fd=>{const a=parseNum(fd.amount);if(a===null||a<=0)return 'Вкажіть суму';if(fd.from===fd.to)return '«Звідки» і «Куди» однакові';if(!fd.date)return 'Вкажіть дату';
+  if(!await w(()=>db.doc('mov/'+id).set({date:fd.date,amount:a,from:fd.from,to:fd.to,note:fd.note||''})))return 'Не збереглося';toast('Збережено')}}
+function addMov(){openSheet('Рух коштів','Зняття собі, внесення, переказ між рахунком і готівкою',movForm({}),saveMov(db.collection('mov').doc().id))}
+function editMov(id){openSheet('Рух коштів','',movForm(S.mov[id]||{}),saveMov(id),async()=>await w(()=>db.doc('mov/'+id).delete()))}
+function editBalOpen(){const o=balOpen()||{};
+  openSheet('Залишки на 01.01.2026','З цих сум починається розрахунок балансу',fld('bank',ACC.bank,o.bank??'')+fld('cash',ACC.cash,o.cash??''),async fd=>{
+    const b=parseNum(fd.bank||'0'),c=parseNum(fd.cash||'0');if(b===null||c===null)return 'Не зрозумів суму';
+    if(!await w(()=>db.doc('meta/settings').set({...(S.meta.settings||{}),balOpen:{bank:b,cash:c}})))return 'Не збереглося';toast('Збережено')})}
+
 /* ---------- reconciliation by counterparty ---------- */
 let reconRows=[], reconCp='', reconFrom='', reconTo='', reconKind='all';
 function counterparties(){const m=new Map();for(const p of pointsList()){if(p.id==='p00'||p.active===false)continue;const k=(p.payee||'').trim()||p.name;if(!m.has(k))m.set(k,[]);m.get(k).push(p.id)}return [...m.entries()].sort((a,b)=>a[0].localeCompare(b[0],'uk'))}
@@ -1239,7 +1321,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo})[a.dataset.act]?.(id);
+  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
