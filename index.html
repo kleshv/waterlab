@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611071933">
+<meta name="wl-build" content="202611071940">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -221,9 +221,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611071933"></script>
+<script src="config.js?v=202611071940"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611071933"></script>
+<script src="shim.js?v=202611071940"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -294,8 +294,8 @@ function calc(m){
   return {md,rows,exps,L,R,rent,water,elec,other,toir,fa,capex,central,opex,op,net,vladExp,danExp,bank,cash,chk,vladNet,danNet,total,owed,price:L?R/L:0};
 }
 function settleState(){
-  const st=S.meta.settings||{start:'2026-08',opening:0};
-  const start=st.start||'2026-08';
+  const st=S.meta.settings||{};
+  const start=st.settleStart||st.start||'2026-10';
   const items=[];
   for(const m of monthsList()) if(m>=start){const c=calc(m);const pend=!(c.bank||c.cash);items.push({kind:'m',key:m,date:m+'-99',amount:pend?0:c.owed,closed:!!S.months[m].closed,pend})}
   for(const [id,p] of Object.entries(S.settle)) if((p.date||'')>=start+'-01') items.push({kind:'p',id,date:p.date,amount:-(p.from==='Даниїл'?-1:1)*(+p.amount||0),p});
@@ -717,7 +717,7 @@ function tariffHist(pid){return Object.entries(S.tariffs).map(([id,t])=>({id,...
 function tariffOf(pid,m){
   const h=tariffHist(pid).filter(t=>t.from<=m); const t=h[h.length-1];
   if(t) return {wT:t.wT??null,eT:t.eT??null,from:t.from};
-  const p=S.points[pid]||{},pv=utilPrev(pid,m)||{};return {wT:p.wT??pv.wT??null,eT:p.eT??pv.eT??null,from:null};
+  const pv=utilPrev(pid,m)||{};return {wT:pv.wT??null,eT:pv.eT??null,from:null};
 }
 function tariffSince(pid,m){const t=tariffOf(pid,m);return t.from?'з '+mGen(t.from):''}
 const perL=(use,liters)=>use!=null&&liters?use*1000/liters:null;
@@ -826,8 +826,6 @@ function bulkUtil(kind){
         const doc={point:pid,from:m,wT:W?tv:(old.wT??null),eT:W?(old.eT??null):tv,prevWT:old.from===m?(old.prevWT??null):(old.wT??null),prevET:old.from===m?(old.prevET??null):(old.eT??null),by:me||'',at:today};
         if(!await w(()=>db.doc('tariffs/'+tid).set(doc)))return fail('Тариф не зберігся.');
         S.tariffs={...S.tariffs,[tid]:doc};
-        const hist=tariffHist(pid), latest=hist[hist.length-1];
-        if(latest&&latest.from===m){const pp=S.points[pid];if(pp){const {id,...rest}=pp;await w(()=>db.doc('points/'+pid).set({...rest,wT:doc.wT,eT:doc.eT}))}}
       }
       for(const [pid,doc] of todo) if(!await saveUtilDoc(m,pid,doc))return fail('Не все збереглося, спробуйте ще раз.');
       let rec=0; for(const [pid] of tch){const r=await recalcFrom(pid,m);rec+=r.done}
@@ -872,8 +870,6 @@ function editTariffs(){
         const tid=p.id+'_'+from, doc={point:p.id,from,wT:nw,eT:ne,prevWT:old.wT??null,prevET:old.eT??null,by:me||'',at:today};
         if(!await w(()=>db.doc('tariffs/'+tid).set(doc))){$('#saveBtn').disabled=false;return 'Не все збереглося.'}
         S.tariffs={...S.tariffs,[tid]:doc};
-        const hist=tariffHist(p.id); const latest=hist[hist.length-1];
-        if(latest&&latest.from===from){const {id,...rest}=p;await w(()=>db.doc('points/'+p.id).set({...rest,wT:nw,eT:ne}))}
         const r=await recalcFrom(p.id,from); rec+=r.done; skipped+=r.closed;
       }
       toast(`Тарифи з ${mGen(from)}: ${ch.length}. Перераховано місяців: ${rec}${skipped?`, закритих не змінено: ${skipped}`:''}`);
@@ -894,8 +890,6 @@ async function delTariff(id){
   const t=S.tariffs[id]; if(!t)return;
   if(!await w(()=>db.doc('tariffs/'+id).delete()))return;
   const nt={...S.tariffs}; delete nt[id]; S.tariffs=nt;
-  const h=tariffHist(t.point), last=h[h.length-1];
-  if(last){const p=S.points[t.point];await w(()=>db.doc('points/'+t.point).set({...p,wT:last.wT,eT:last.eT}))}
   const r=await recalcFrom(t.point,t.from);
   toast(`Зміну тарифу видалено. Перераховано місяців: ${r.done}`);
 }
@@ -1306,7 +1300,7 @@ async function exportXlsx(){
     const pay=[];for(const m of ms)for(const p of pointsList()){if(!S.pm[m+'_'+p.id])continue;const x=payRow(m,p.id);if(m<payStart()&&!S.pay[m+'_'+p.id])continue;
       pay.push({'Місяць':m,'Точка':p.name,'Оренда нараховано':r2(x.rentAcc),'Оренда сплачено':x.rentPaid??'','Дата оренди':x.rentDate,'Коментар оренди':x.py.rentNote||'','Комуналка за нашими показниками':r2(x.utilCalc),'Період рахунку':billPeriodTxt(x.py),'Вода було (рах.)':x.py.bw0??'','Вода стало (рах.)':x.py.bw1??'','Ел. було (рах.)':x.py.be0??'','Ел. стало (рах.)':x.py.be1??'','Комуналка до сплати':r2(x.utilDue),'Комуналка сплачено':x.utilPaid??'','Дата комуналки':x.utilDate,'Рахунок':x.py.basis||'','Коментар комуналки':x.py.utilNote||x.py.note||''})}
     const st=settleState();const se=st.items.map(it=>it.kind==='m'?{'Дата':it.key,'Операція':'Нараховано за '+mLabel(it.key).toLowerCase()+(it.pend?' (немає сум)':''),'Сума':r2(it.amount),'Борг Влада Даниїлу':r2(it.bal)}:{'Дата':it.p.date,'Операція':'Виплата '+it.p.from+(it.p.note?' — '+it.p.note:''),'Сума':r2(it.amount),'Борг Влада Даниїлу':r2(it.bal)});
-    const pl=pointsList().map(p=>({'Точка':p.name,'Адреса':p.note||'','Оренда на місяць':r2(p.rent),'Тариф води':p.wT??'','Тариф ел.':p.eT??'','Кому платимо':p.payee||'','Договір':p.contract||'','Контакт':p.contact||'','Статус':p.active===false?'не працює':'працює'}));
+    const pl=pointsList().map(p=>({'Точка':p.name,'Адреса':p.note||'','Оренда на місяць':r2(p.rent),'Тариф води':tariffOf(p.id,'9999-12').wT??'','Тариф ел.':tariffOf(p.id,'9999-12').eT??'','Кому платимо':p.payee||'','Договір':p.contract||'','Контакт':p.contact||'','Статус':p.active===false?'не працює':'працює'}));
     const wb=XLSX.utils.book_new();
     const add=(rows,name)=>{const ws=XLSX.utils.json_to_sheet(rows.length?rows:[{'Немає даних':''}]);const keys=Object.keys(rows[0]||{});ws['!cols']=keys.map(k=>({wch:Math.min(40,Math.max(k.length+2,...rows.slice(0,200).map(r=>String(r[k]??'').length+1)))}));XLSX.utils.book_append_sheet(wb,ws,name)};
     add(sum,'Зведення');add(pts,'Точки по місяцях');add(ex,'Витрати');add(ut,'Комуналка');add(pay,'Оплати');const th=Object.values(S.tariffs).sort((a,b)=>(a.point+a.from).localeCompare(b.point+b.from)).map(t=>({'Точка':P(t.point),'З місяця':t.from,'Вода було':t.prevWT??'','Вода':t.wT??'','Ел. було':t.prevET??'','Ел.':t.eT??''}));
