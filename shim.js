@@ -117,6 +117,7 @@
     try{const {data:r}=await sb.rpc('my_role');role=r||'owner'}catch(_){}
     window.WL_ROLE=role;
     try{await loadAll()}catch(e){Object.values(errs).flat().forEach(f=>f&&f({code:'unavailable',message:e.message}))}
+    window.WL_NAME=names[((session&&session.user.email)||'').toLowerCase()]||'';
     readyResolve()}
   sb.auth.onAuthStateChange((ev,s)=>{session=s;if(ev==='PASSWORD_RECOVERY'){show('newpass');return}if(s&&ev!=='SIGNED_OUT')start()});
   sb.auth.getSession().then(({data})=>{session=data.session;if(location.hash.includes('type=recovery'))return;if(session)start();else show('login')});

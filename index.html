@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611070044">
+<meta name="wl-build" content="202611071910">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -221,9 +221,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611070044"></script>
+<script src="config.js?v=202611071910"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611070044"></script>
+<script src="shim.js?v=202611071910"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -238,6 +238,7 @@ const S={points:{},months:{},pm:{},exp:{},settle:{},meta:{},util:{},pay:{},tarif
 let me=null, userApi=null; const names={};
 const loaded=new Set();
 let role='owner'; const ACCT_TABS=['util','rent','recon','points'];
+const isDan=()=>window.WL_NAME==='Даниїл'; let danOrdered=false;
 let repSub='fin';
 let db=null, canWrite=true, tab='home', cur=null, stale=false, fatal='', expFilter='all', utilPoint='';
 const ls={get(k){try{return localStorage.getItem(k)}catch(_){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(_){}}};
@@ -340,10 +341,13 @@ function render(){
   ysel.innerHTML=years.map(y=>`<option value="${y}" ${y===cy?'selected':''}>${y}</option>`).join('')||'<option>—</option>';
   sel.innerHTML=ms.filter(m=>m.startsWith(cy)).reverse().map(m=>`<option value="${m}" ${m===cur?'selected':''}>${cap(MN[+m.slice(5)-1])}${S.months[m].closed?'':' •'}</option>`).join('')||'<option>немає місяців</option>';
   sel.disabled=ysel.disabled=!ms.length;
-  const acct=role==='accountant';
+  const acct=role==='accountant', dan=isDan();
   if(acct&&!ACCT_TABS.includes(tab)) tab='util';
+  if(dan&&tab==='home') tab='exp';
+  if(dan&&repSub==='bal') repSub='fin';
+  if(dan&&!danOrdered){const e=document.querySelector('.tab[data-tab=exp]'),r=document.querySelector('.tab[data-tab=reports]');if(e&&r)r.before(e);danOrdered=true}
   $('#newMonthBtn').hidden=acct||!canWrite||!Object.keys(S.points).length;
-  document.querySelectorAll('.tab').forEach(t=>{t.hidden=acct&&!ACCT_TABS.includes(t.dataset.tab);t.setAttribute('aria-selected',t.dataset.tab===tab)});
+  document.querySelectorAll('.tab').forEach(t=>{t.hidden=(acct&&!ACCT_TABS.includes(t.dataset.tab))||(dan&&t.dataset.tab==='home');t.setAttribute('aria-selected',t.dataset.tab===tab)});
   const main=$('#main');
   if(fatal){main.innerHTML=`<div class="banner warn">${esc(fatal)}</div>`;return}
   if(loaded.size<COLS.length){main.innerHTML=`<section class="card"><h2>Завантаження</h2><p class="note">${stale?'База поки не відповідає. Дані з’являться, щойно з’єднання відновиться.':'Підключаюся до бази: точки, місяці, витрати й взаєморозрахунок з’являться тут.'}</p></section>`;return}
@@ -352,7 +356,7 @@ function render(){
   if(tab==='month'||tab==='settle'||tab==='trend'){repSub=tab==='month'?'fin':tab;tab='reports'}
   const noMonth=`<section class="card"><h2>Місяців поки немає</h2><p class="note">Додайте точки у вкладці «Точки», потім натисніть «+ Місяць».</p></section>`;
   if(tab==='home') h+=cur?viewHome(cur):noMonth;
-  if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['settle','Взаєморозрахунок 50/50'],['bal','Баланс']].map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
+  if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['settle','Взаєморозрахунок 50/50'],['bal','Баланс']].filter(([k])=>!(isDan()&&k==='bal')).map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
     if(repSub==='fin') h+=cur?viewMonth(cur):noMonth; if(repSub==='trend') h+=viewTrend(); if(repSub==='settle') h+=viewSettle(); if(repSub==='bal') h+=viewBal();}
   if(tab==='exp') h+=cur?viewExp(cur):'';
   if(tab==='util') h+=cur?viewUtil(cur):'';
