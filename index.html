@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611071932">
+<meta name="wl-build" content="202611071933">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -221,9 +221,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611071932"></script>
+<script src="config.js?v=202611071933"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611071932"></script>
+<script src="shim.js?v=202611071933"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -460,7 +460,7 @@ function viewExp(m){
   for(const e of list){
     const pn=e.point&&S.points[e.point]?S.points[e.point].name:'';
     const d=e.date?e.date.slice(8,10)+'.'+e.date.slice(5,7):'—';
-    h+=`<tr class="${ed?'click':''}" data-act="${ed?'editExp':''}" data-id="${e.id}"><td class="${e.date?'':'mut'}">${d}</td><td>${e.purpose?`<b>${esc(e.purpose)}</b><div class="note">${esc(e.article)}</div>`:esc(e.article)}<div class="note">${[esc(e.note||''),esc(pn),e.by?'вніс '+esc(who(e.by)):''].filter(Boolean).join(' · ')}</div></td><td class="hide-sm"><span class="pill ${e.cat==='ТОіР'?'toir':e.cat==='Розвиток'?'capex':''}">${CATL[e.cat]||e.cat}</span></td><td class="hide-sm">${esc(e.payer)}</td><td class="num">${f0(e.amount)}</td></tr>`;
+    h+=`<tr class="${ed?'click':''}" data-act="${ed?'editExp':''}" data-id="${e.id}"><td class="${e.date?'':'mut'}">${d}</td><td>${esc(e.article)}<div class="note">${[esc(e.purpose||''),esc(e.note||''),esc(pn),e.by?'вніс '+esc(who(e.by)):''].filter(Boolean).join(' · ')}</div></td><td class="hide-sm"><span class="pill ${e.cat==='ТОіР'?'toir':e.cat==='Розвиток'?'capex':''}">${CATL[e.cat]||e.cat}</span></td><td class="hide-sm">${esc(e.payer)}</td><td class="num">${f0(e.amount)}</td></tr>`;
   }
   if(!list.length) h+=`<tr><td colspan="5" class="note">Витрат поки немає. Натисніть «+ Витрата», щоб внести першу.</td></tr>`;
   h+=`</tbody><tfoot><tr><td colspan="4">Разом${expFilter==='all'?'':' · '+esc(expFilter)}</td><td class="num">${f0(list.reduce((s,e)=>s+(+e.amount||0),0))}</td></tr></tfoot></table></div>
