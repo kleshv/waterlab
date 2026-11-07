@@ -1133,7 +1133,7 @@ function balState(){
 }
 function viewBal(){
   const st=balState(), op=balOpen(), Y=(cur||'').slice(0,4)||String(new Date().getFullYear());
-  const last=k=>{const a=st[k];return a[a.length-1]||null};
+  const last=k=>{const a=st[k];return a.filter(r=>r.fact!=null).pop()||a.filter(r=>r.rev>0).pop()||a[a.length-1]||null};
   const endV=r=>r?(r.fact??r.close):0;
   const lb=last('bank'), lc=last('cash');
   let h=`<section class="card"><div class="shead"><h2>Баланс і рух коштів</h2>${canWrite?`<button class="btn sm pri" data-act="addMov" type="button">+ Рух коштів</button>`:''}</div>
