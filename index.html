@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080725">
+<meta name="wl-build" content="202611080728">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,6 +70,7 @@ h2{font-family:var(--f-display);font-size:13px;font-weight:700;text-transform:up
 .tiles.t3{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .tiles.t4{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.tiles.t4 .tile{padding:6px 8px}.tiles.t4 .v{font-size:17px}.tiles.t4 .s{font-size:11px;line-height:1.3}
 @media(max-width:600px){.tiles.t4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pl td.tap{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
 .bi{padding:9px 0;border-bottom:1px solid var(--line)}.bi:last-child{border-bottom:0}
 .opdot{color:var(--warn,#c98a00);font-weight:700}
 @media(max-width:600px){table.ut.yt th,table.ut.yt td{font-size:12px;padding-left:3px;padding-right:3px}.pl.yt tfoot tr.final td{font-size:12px}.pl.yt tfoot tr.final td:first-child{padding-left:6px}.pl.yt tfoot tr.final td:last-child{padding-right:6px}}
@@ -222,9 +223,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080725"></script>
+<script src="config.js?v=202611080728"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080725"></script>
+<script src="shim.js?v=202611080728"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -383,6 +384,35 @@ function monthTable(c){
   const capex=R(c.capex), net=R(c.net), op=net+capex, opex=T.rv-op, central=opex-T.ex;
   return {rows,T,central,opex,op,capex,net};
 }
+
+function pmInfo(v){
+  const [id,k]=v.split('|'), r=S.pm[id]||{}, m=r.month||id.slice(0,7), pid=r.point||id.slice(8), p=S.points[pid]||{}, u=S.util[id]||{};
+  const kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`, rv=+r.revenue||0, L=+r.liters||0;
+  let h='';
+  if(k==='rv'){
+    h+=kv('Продано літрів',nf1.format(L)+' л');
+    h+=kv('Середня ціна',L?nf2.format(rv/L)+' грн/л':'—');
+    h+=kv('Виручка','<b>'+f0(rv)+' грн</b>');
+    const prev=monthsList().filter(x=>x<m).pop(), pr=prev?S.pm[prev+'_'+pid]:null;
+    if(pr&&+pr.liters)h+=`<div class="note">${mLabel(prev)}: ${nf1.format(+pr.liters)} л по ${nf2.format((+pr.revenue||0)/(+pr.liters))} грн/л · ${f0(+pr.revenue||0)} грн</div>`;
+    infoSheet('Виручка · '+(p.name||pid),mLabel(m),h);return;
+  }
+  const exps=Object.values(S.exp).filter(e=>e.month===m&&e.point===pid);
+  const wUse=u.w1!=null&&u.w0!=null?u.w1-u.w0:null, eUse=u.e1!=null&&u.e0!=null?u.e1-u.e0:null;
+  h+=kv('Оренда',f0(+r.rent||0));
+  h+=kv('Вода'+(wUse!=null&&u.wT?`<div class="note">${nf1.format(wUse)} м³ × ${String(u.wT).replace('.',',')} грн</div>`:''),f0(+r.water||0));
+  h+=kv('Електро'+(eUse!=null&&u.eT?`<div class="note">${nf1.format(eUse)} кВт·год × ${String(u.eT).replace('.',',')} грн</div>`:''),f0(+r.elec||0));
+  for(const e of exps)h+=kv(esc(e.article)+(e.purpose||e.note?`<div class="note">${esc([e.purpose,e.note].filter(Boolean).join(' · '))}</div>`:''),f0(+e.amount||0));
+  const tot=(+r.rent||0)+(+r.water||0)+(+r.elec||0)+exps.reduce((a,e)=>a+(+e.amount||0),0);
+  h+=kv('Разом','<b>'+f0(tot)+'</b>');
+  if(L)h+=`<div class="note">${nf2.format(tot/L)} грн на 1 л · результат ${f0(rv-tot)} грн</div>`;
+  infoSheet('Витрати · '+(p.name||pid),mLabel(m),h);
+}
+function centralInfo(m){
+  const L=Object.values(S.exp).filter(e=>e.month===m&&!e.point&&e.cat!=='Розвиток').sort((a,b)=>(+b.amount||0)-(+a.amount||0));
+  const kv=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
+  infoSheet('Загальні витрати мережі',mLabel(m),L.map(e=>kv(esc(e.article)+`<div class="note">${esc([e.purpose,e.note,e.payer].filter(Boolean).join(' · '))}</div>`,f0(+e.amount||0))).join('')+kv('Разом','<b>'+f0(L.reduce((a,e)=>a+(+e.amount||0),0))+'</b>'));
+}
 function viewMonth(m){
   const c=calc(m), closed=isClosed(m), ed=editable(m), t=monthTable(c);
   const margin=t.T.rv?t.op/t.T.rv*100:0;
@@ -402,13 +432,13 @@ function viewMonth(m){
   <thead><tr><th>Точка</th><th class="num hide-sm">Літри</th><th class="num">Виручка</th><th class="num hide-sm">Оренда</th><th class="num hide-sm">Вода</th><th class="num hide-sm">Електро</th><th class="num hide-sm">Інше</th><th class="num">Витрати</th><th class="num">Результат</th></tr></thead><tbody>`;
   for(const o of t.rows){
     const p=S.points[o.point];
-    h+=`<tr class="${ed?'click':''}" data-act="${ed?'editPM':''}" data-id="${o.id}"><td>${esc(p?p.name:o.point)}</td><td class="num hide-sm">${f0(o.L)}</td><td class="num">${f0(o.rv)}</td><td class="num hide-sm">${n(o.rn)}</td><td class="num hide-sm">${n(o.wa)}</td><td class="num hide-sm">${n(o.el)}</td><td class="num hide-sm">${n(o.ot)}</td><td class="num">${f0(o.ex)}</td><td class="num ${sgn(o.res)}">${f0(o.res)}</td></tr>`;
+    h+=`<tr class="${ed?'click':''}" data-act="${ed?'editPM':''}" data-id="${o.id}"><td>${esc(p?p.name:o.point)}</td><td class="num hide-sm">${f0(o.L)}</td><td class="num tap" data-act="pmInfo" data-id="${o.id}|rv">${f0(o.rv)}</td><td class="num hide-sm">${n(o.rn)}</td><td class="num hide-sm">${n(o.wa)}</td><td class="num hide-sm">${n(o.el)}</td><td class="num hide-sm">${n(o.ot)}</td><td class="num tap" data-act="pmInfo" data-id="${o.id}|ex">${f0(o.ex)}</td><td class="num ${sgn(o.res)}">${f0(o.res)}</td></tr>`;
   }
   if(!t.rows.length) h+=`<tr><td colspan="9" class="note">У цьому місяці немає точок.</td></tr>`;
   const T=t.T, e='<td class="num hide-sm"></td>';
   h+=`</tbody><tfoot>
   <tr class="key"><td>Разом по точках</td><td class="num hide-sm">${f0(T.L)}</td><td class="num">${f0(T.rv)}</td><td class="num hide-sm">${f0(T.rn)}</td><td class="num hide-sm">${f0(T.wa)}</td><td class="num hide-sm">${f0(T.el)}</td><td class="num hide-sm">${f0(T.ot)}</td><td class="num">${f0(T.ex)}</td><td class="num">${f0(T.res)}</td></tr>
-  <tr class="tsub"><td>Загальні витрати мережі<div class="note">обслуговування, податки, банк без прив’язки до точки</div></td>${e}<td class="num"></td>${e}${e}${e}<td class="num hide-sm">${f0(t.central)}</td><td class="num">${f0(t.central)}</td><td class="num neg">${f0(-t.central)}</td></tr>
+  <tr class="tsub"><td>Загальні витрати мережі<div class="note">обслуговування, податки, банк без прив’язки до точки</div></td>${e}<td class="num"></td>${e}${e}${e}<td class="num hide-sm">${f0(t.central)}</td><td class="num tap" data-act="centralInfo" data-id="${m}">${f0(t.central)}</td><td class="num neg">${f0(-t.central)}</td></tr>
   <tr class="key"><td>Операційний прибуток</td><td class="num hide-sm">${f0(T.L)}</td><td class="num">${f0(T.rv)}</td><td class="num hide-sm">${f0(T.rn)}</td><td class="num hide-sm">${f0(T.wa)}</td><td class="num hide-sm">${f0(T.el)}</td><td class="num hide-sm">${f0(T.ot+t.central)}</td><td class="num">${f0(t.opex)}</td><td class="num ${sgn(t.op)}">${f0(t.op)}</td></tr>
   <tr class="tsub"><td>Капвкладення</td>${e}<td class="num"></td>${e}${e}${e}${e}<td class="num">${n(t.capex)}</td><td class="num ${t.capex?'neg':''}">${t.capex?f0(-t.capex):dash}</td></tr>
   <tr class="final"><td>До розподілу</td>${e}<td class="num"></td>${e}${e}${e}${e}<td class="num"></td><td class="num">${f0(t.net)}</td></tr>
@@ -1517,7 +1547,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj})[a.dataset.act]?.(id);
+  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
