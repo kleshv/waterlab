@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080054">
+<meta name="wl-build" content="202611080725">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -222,9 +222,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080054"></script>
+<script src="config.js?v=202611080725"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080054"></script>
+<script src="shim.js?v=202611080725"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -979,14 +979,14 @@ function billIssues(m){
   for(const [id,py] of Object.entries(S.pay)){
     if(py.month!==m||py.utilBill==null||py.billOk)continue;
     const r=S.pm[m+'_'+py.point]||{}, est=Math.round(((+r.water||0)+(+r.elec||0))*100)/100, bill=+py.utilBill, d=Math.round((bill-est)*100)/100;
-    if(Math.abs(d)>=0.01) out.push({id,pid:py.point,m,est,bill,d,basis:py.basis||''});
+    if(Math.abs(d)>5) out.push({id,pid:py.point,m,est,bill,d,basis:py.basis||''});
   }
   return out.sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
 }
 function billIssuesHtml(m){
   const L=billIssues(m); if(!L.length)return '';
   return `<section class="card"><h2>Рахунки розходяться з нарахуванням · ${mLabel(m).toLowerCase()}</h2>
-  <p class="note">У фінрезі комуналка нарахована за показниками й тарифом. Тут усі точки, де рахунок або акт відрізняється від нарахування.${isClosed(m)?' Місяць закритий: різницю можна додати в наступний відкритий місяць як «Коригування комуналки» по точці.':' Місяць відкритий: перевірте показники й тариф або прийміть рахунок.'}</p>
+  <p class="note">У фінрезі комуналка нарахована за показниками й тарифом. Тут точки, де рахунок або акт відрізняється від нарахування більше ніж на 5 грн.${isClosed(m)?' Місяць закритий: різницю можна додати в наступний відкритий місяць як «Коригування комуналки» по точці.':' Місяць відкритий: перевірте показники й тариф або прийміть рахунок.'}</p>
   ${L.map(x=>`<div class="kv bi"><span>${esc((S.points[x.pid]||{}).name||x.pid)}<div class="note">нараховано ${f0(x.est)} · за рахунком ${f0(x.bill)}${x.basis?' · '+esc(x.basis):''}</div></span><b class="${x.d>0?'neg':''}">${x.d>0?'+':''}${f0(x.d)}</b>${role==='owner'?billBtns(x):''}</div>`).join('')}</section>`;
 }
 function billGo(m){if(S.months[m])cur=m;tab='util';render();window.scrollTo(0,0)}
