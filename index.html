@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080728">
+<meta name="wl-build" content="202611080730">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -223,9 +223,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080728"></script>
+<script src="config.js?v=202611080730"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080728"></script>
+<script src="shim.js?v=202611080730"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -408,6 +408,11 @@ function pmInfo(v){
   if(L)h+=`<div class="note">${nf2.format(tot/L)} грн на 1 л · результат ${f0(rv-tot)} грн</div>`;
   infoSheet('Витрати · '+(p.name||pid),mLabel(m),h);
 }
+function capexInfo(m){
+  const L=Object.values(S.exp).filter(e=>e.month===m&&e.cat==='Розвиток').sort((a,b)=>(+b.amount||0)-(+a.amount||0));
+  const kv=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
+  infoSheet('Капвкладення',mLabel(m),L.map(e=>kv(esc(e.article)+`<div class="note">${esc([e.purpose,e.note,e.point?(S.points[e.point]||{}).name:'',e.payer].filter(Boolean).join(' · '))}</div>`,f0(+e.amount||0))).join('')+kv('Разом','<b>'+f0(L.reduce((a,e)=>a+(+e.amount||0),0))+'</b>'));
+}
 function centralInfo(m){
   const L=Object.values(S.exp).filter(e=>e.month===m&&!e.point&&e.cat!=='Розвиток').sort((a,b)=>(+b.amount||0)-(+a.amount||0));
   const kv=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
@@ -440,7 +445,7 @@ function viewMonth(m){
   <tr class="key"><td>Разом по точках</td><td class="num hide-sm">${f0(T.L)}</td><td class="num">${f0(T.rv)}</td><td class="num hide-sm">${f0(T.rn)}</td><td class="num hide-sm">${f0(T.wa)}</td><td class="num hide-sm">${f0(T.el)}</td><td class="num hide-sm">${f0(T.ot)}</td><td class="num">${f0(T.ex)}</td><td class="num">${f0(T.res)}</td></tr>
   <tr class="tsub"><td>Загальні витрати мережі<div class="note">обслуговування, податки, банк без прив’язки до точки</div></td>${e}<td class="num"></td>${e}${e}${e}<td class="num hide-sm">${f0(t.central)}</td><td class="num tap" data-act="centralInfo" data-id="${m}">${f0(t.central)}</td><td class="num neg">${f0(-t.central)}</td></tr>
   <tr class="key"><td>Операційний прибуток</td><td class="num hide-sm">${f0(T.L)}</td><td class="num">${f0(T.rv)}</td><td class="num hide-sm">${f0(T.rn)}</td><td class="num hide-sm">${f0(T.wa)}</td><td class="num hide-sm">${f0(T.el)}</td><td class="num hide-sm">${f0(T.ot+t.central)}</td><td class="num">${f0(t.opex)}</td><td class="num ${sgn(t.op)}">${f0(t.op)}</td></tr>
-  <tr class="tsub"><td>Капвкладення</td>${e}<td class="num"></td>${e}${e}${e}${e}<td class="num">${n(t.capex)}</td><td class="num ${t.capex?'neg':''}">${t.capex?f0(-t.capex):dash}</td></tr>
+  <tr class="tsub"><td>Капвкладення</td>${e}<td class="num"></td>${e}${e}${e}${e}<td class="num ${t.capex?'tap':''}" ${t.capex?`data-act="capexInfo" data-id="${m}"`:''}>${n(t.capex)}</td><td class="num ${t.capex?'neg':''}">${t.capex?f0(-t.capex):dash}</td></tr>
   <tr class="final"><td>До розподілу</td>${e}<td class="num"></td>${e}${e}${e}${e}<td class="num"></td><td class="num">${f0(t.net)}</td></tr>
   </tfoot></table></div>
   ${ed?`<div class="actions"><button class="btn sm" data-act="addPM" type="button">+ Точка в цей місяць</button></div>`:''}</section>`;
@@ -1547,7 +1552,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo})[a.dataset.act]?.(id);
+  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
