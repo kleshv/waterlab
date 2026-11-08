@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080038">
+<meta name="wl-build" content="202611080043">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -221,9 +221,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080038"></script>
+<script src="config.js?v=202611080043"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080038"></script>
+<script src="shim.js?v=202611080043"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -285,10 +285,9 @@ function calc(m){
   const toir=by('ТОіР'), fa=by('ФА'), capex=by('Розвиток');
   const central=toir+fa-other;
   const opex=rent+water+elec+toir+fa;
-  const op=R-opex, net=op; /* капвкладення окремо: не зменшують прибуток до розподілу */
-  const opx=e=>e.cat!=='Розвиток';
-  const vladExp=rent+water+elec+exps.filter(e=>opx(e)&&e.payer!=='Даниїл').reduce((s,e)=>s+(+e.amount||0),0);
-  const danExp=exps.filter(e=>opx(e)&&e.payer==='Даниїл').reduce((s,e)=>s+(+e.amount||0),0);
+  const op=R-opex, net=op-capex;
+  const vladExp=rent+water+elec+exps.filter(e=>e.payer==='Влад').reduce((s,e)=>s+(+e.amount||0),0);
+  const danExp=exps.filter(e=>e.payer==='Даниїл').reduce((s,e)=>s+(+e.amount||0),0);
   const bank=+md.bank||0, cash=+md.cash||0, chk=+md.checkbox||0;
   const vladNet=bank-vladExp, danNet=cash-danExp, total=vladNet+danNet;
   const owed=vladNet-total/2;
@@ -380,7 +379,7 @@ function monthTable(c){
   const rc={};for(const k of cols) rc[k]=roundTo(c.rows.map(r=>+r[k]||0));
   const rows=c.rows.map((r,i)=>{const o={id:r.id,point:r.point,L:rc.liters[i],rv:rc.revenue[i],rn:rc.rent[i],wa:rc.water[i],el:rc.elec[i],ot:rc.other[i]};o.ex=o.rn+o.wa+o.el+o.ot;o.res=o.rv-o.ex;return o});
   const T={L:0,rv:0,rn:0,wa:0,el:0,ot:0,ex:0,res:0};for(const o of rows)for(const k in T)T[k]+=o[k];
-  const capex=R(c.capex), net=R(c.net), op=net, opex=T.rv-op, central=opex-T.ex;
+  const capex=R(c.capex), net=R(c.net), op=net+capex, opex=T.rv-op, central=opex-T.ex;
   return {rows,T,central,opex,op,capex,net};
 }
 function viewMonth(m){
@@ -393,7 +392,7 @@ function viewMonth(m){
     <div class="tile"><div class="l">Виручка</div><div class="v">${f0(t.T.rv)}</div><div class="s">${f0(t.T.L)} л · ${nf2.format(t.T.L?t.T.rv/t.T.L:0)} грн/л</div></div>
     <div class="tile"><div class="l">Операційні витрати</div><div class="v">${f0(t.opex)}</div><div class="s">${nf2.format(t.T.L?t.opex/t.T.L:0)} грн/л</div></div>
     <div class="tile main"><div class="l">Операційний прибуток</div><div class="v ${sgn(t.op)}">${f0(t.op)}</div><div class="s">маржа ${margin.toFixed(1).replace('.',',')}%</div></div>
-    <div class="tile"><div class="l">До розподілу</div><div class="v ${sgn(t.net)}">${f0(t.net)}</div><div class="s">${t.capex?'капвкладення окремо: '+f0(t.capex):'по '+f0(t.net/2)+' кожному'}</div></div>
+    <div class="tile"><div class="l">До розподілу</div><div class="v ${sgn(t.net)}">${f0(t.net)}</div><div class="s">після капвкладень ${f0(t.capex)}</div></div>
   </div></section>`;
 
   // points
@@ -410,9 +409,9 @@ function viewMonth(m){
   <tr class="key"><td>Разом по точках</td><td class="num hide-sm">${f0(T.L)}</td><td class="num">${f0(T.rv)}</td><td class="num hide-sm">${f0(T.rn)}</td><td class="num hide-sm">${f0(T.wa)}</td><td class="num hide-sm">${f0(T.el)}</td><td class="num hide-sm">${f0(T.ot)}</td><td class="num">${f0(T.ex)}</td><td class="num">${f0(T.res)}</td></tr>
   <tr class="tsub"><td>Загальні витрати мережі<div class="note">обслуговування, податки, банк без прив’язки до точки</div></td>${e}<td class="num"></td>${e}${e}${e}<td class="num hide-sm">${f0(t.central)}</td><td class="num">${f0(t.central)}</td><td class="num neg">${f0(-t.central)}</td></tr>
   <tr class="key"><td>Операційний прибуток</td><td class="num hide-sm">${f0(T.L)}</td><td class="num">${f0(T.rv)}</td><td class="num hide-sm">${f0(T.rn)}</td><td class="num hide-sm">${f0(T.wa)}</td><td class="num hide-sm">${f0(T.el)}</td><td class="num hide-sm">${f0(T.ot+t.central)}</td><td class="num">${f0(t.opex)}</td><td class="num ${sgn(t.op)}">${f0(t.op)}</td></tr>
+  <tr class="tsub"><td>Капвкладення</td>${e}<td class="num"></td>${e}${e}${e}${e}<td class="num">${n(t.capex)}</td><td class="num ${t.capex?'neg':''}">${t.capex?f0(-t.capex):dash}</td></tr>
   <tr class="final"><td>До розподілу</td>${e}<td class="num"></td>${e}${e}${e}${e}<td class="num"></td><td class="num">${f0(t.net)}</td></tr>
   </tfoot></table></div>
-  ${t.capex?`<p class="note">Капвкладення ${f0(t.capex)} грн обліковуються окремо як інвестиції того, хто платив, і не зменшують прибуток до розподілу.</p>`:''}
   ${ed?`<div class="actions"><button class="btn sm" data-act="addPM" type="button">+ Точка в цей місяць</button></div>`:''}</section>`;
 
   // expenses
@@ -616,10 +615,10 @@ function addPay(){openSheet('Виплата прибутку','Зменшує б
 function editPay(id){openSheet('Виплата','',payForm(S.settle[id]),savePay(id),async()=>{const ok=await w(()=>db.doc('settle/'+id).delete());return ok})}
 
 function pointForm(p){return fld('name','Адреса / назва',p.name||'',{type:'text',full:true})+fld('rent','Оренда на місяць',p.rent??0)+
-  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Не працює']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
+  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Не працює']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('rentCash','З оренди щомісяця готівкою (ф2), грн',p.rentCash??'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
 function savePoint(id,base){return async fd=>{const r=parseNum(fd.rent);if(r===null)return 'Не зрозумів суму оренди';if(!fd.name.trim())return 'Вкажіть адресу';
   const order=base.order??(Math.max(0,...Object.values(S.points).map(p=>p.order||0))+1);
-  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
+  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',rentCash:parseNum(String(fd.rentCash||''))||0,contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
 function addPoint(){openSheet('Нова точка','',pointForm({}),savePoint(db.collection('points').doc().id,{}))}
 function editPoint(id){openSheet('Точка','',pointForm(S.points[id]),savePoint(id,S.points[id]))}
 
@@ -1081,13 +1080,14 @@ async function addAllRent(){let n=0;for(const p of monthPts(cur)){const x=payRow
 function editRent(pid,mm){
   const m=mm||cur, p=S.points[pid]||{}, x=payRow(m,pid), py=x.py, closed=!!(S.months[m]||{}).closed;
   const fields=`<div class="calc full">До сплати за карткою точки: <b>${f0(x.rentPlan)} грн</b>${p.payee?' · отримувач: '+esc(p.payee):''}</div>`+
-    fld('rentPaid','Сплачено, грн',py.rentPaid??'')+fld('rentDate','Дата оплати',py.rentDate||'',{type:'date'})+
+    fld('rentPaid','Сплачено, грн',py.rentPaid??'')+fld('rentDate','Дата оплати',py.rentDate||'',{type:'date'})+fld('rentCash','З них готівкою (ф2), грн',py.rentCash??(py.rentPaid==null&&p.rentCash?p.rentCash:''))+
     `<div class="full"><button type="button" class="btn sm" id="fillRent">Сплачено повністю сьогодні</button></div>`+
     fld('rentNote','Коментар',py.rentNote||'',{type:'text',full:true})+
     `<p class="note full" style="margin:0">Оренда у фінрезі нараховується за договором. Оплата потрапляє у звірки й баланс.</p>`;
   openSheet('Оренда · '+(p.name||pid),mLabel(m)+(p.contact?' · '+p.contact:''),fields,async fd=>{
     const raw=String(fd.rentPaid??'').trim(), rp=parseNum(raw); if(raw!==''&&rp===null)return 'Не зрозумів суму. Можна писати 2000 або 1500,50.';
-    if(!await savePayDoc(m,pid,{rentPaid:raw===''?null:rp,rentDate:fd.rentDate||'',rentNote:fd.rentNote||''}))return 'Не збереглося';
+    const rcRaw=String(fd.rentCash??'').trim(), rc=rcRaw===''?null:parseNum(rcRaw); if(rcRaw!==''&&rc===null)return 'Не зрозумів суму готівкою';
+    if(!await savePayDoc(m,pid,{rentPaid:raw===''?null:rp,rentCash:rc,rentDate:fd.rentDate||'',rentNote:fd.rentNote||''}))return 'Не збереглося';
     toast('Оплату збережено');
   });
   $('#fillRent').onclick=()=>{$('#f_rentPaid').value=x.rentPlan;if(!$('#f_rentDate').value)$('#f_rentDate').value=todayISO()};
@@ -1111,16 +1111,7 @@ function viewInv(){
     <div class="tile main"><div class="l">Нараховано %</div><div class="v">${fUsd(acc)}</div><div class="s">з дат початку по ${mLabel(nowYM()).toLowerCase()}</div></div></div>
   <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Внесок</th><th class="num">Сума</th><th class="num">% за рік</th><th class="num">Нараховано %</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="note">Внесків поки немає.</td></tr>'}</tbody>
   <tfoot><tr class="final"><td>Разом</td><td class="num">${fUsd(usd)}<div class="note">${f0(hrn)}&nbsp;грн</div></td><td class="num">${fUsd(yr)}</td><td class="num">${fUsd(acc)}</td></tr></tfoot></table></div>
-  </section>`+capexSection();
-}
-function capexSection(){
-  const st=(S.meta.settings||{}).settleStart||'2026-10';
-  const L=Object.entries(S.exp).map(([id,e])=>({id,...e})).filter(e=>e.cat==='Розвиток'&&e.month>=st).sort((a,b)=>((b.date||b.month)).localeCompare(a.date||a.month));
-  const by={};for(const e of L)by[e.payer||'—']=(by[e.payer||'—']||0)+(+e.amount||0);
-  return `<section class="card"><h2>Капвкладення з витрат · з ${mGen(st)}</h2>
-  <p class="note">Нові точки, обладнання, підключення. Не входять у прибуток до розподілу 50/50 — це вкладення того, хто платив.</p>
-  <div class="tiles t3">${['Влад','Даниїл'].map(p=>`<div class="tile"><div class="l">${p}</div><div class="v">${f0(by[p]||0)}</div><div class="s">грн</div></div>`).join('')}<div class="tile main"><div class="l">Разом</div><div class="v">${f0(L.reduce((a,e)=>a+(+e.amount||0),0))}</div><div class="s">грн</div></div></div>
-  ${L.length?`<div class="tbl"><table class="ut"><thead><tr><th>Дата</th><th>Стаття</th><th class="hide-sm">Хто</th><th class="num">Сума</th></tr></thead><tbody>${L.map(e=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editExp':''}" data-id="${e.id}"><td>${e.date?dmy(e.date):mLabel(e.month)}</td><td>${esc(e.article)}${e.purpose||e.note?`<div class="note">${esc([e.purpose,e.note].filter(Boolean).join(' · '))}</div>`:''}</td><td class="hide-sm">${esc(e.payer||'')}</td><td class="num">${f0(e.amount)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Поки немає.</p>'}</section>`;
+  </section>`;
 }
 function invForm(i){return fld('date','Дата внеску',i.date||'',{type:'date'})+fld('purpose','Призначення',i.purpose||'',{type:'text',full:true})+fld('hrn','Сума, грн',i.hrn??'')+fld('usd','Сума, $',i.usd??'')+fld('pct','% річних',i.pct??5)+fld('from','Відсотки з місяця',i.from||'',{type:'month'})+sel('investor','Інвестор',i.investor||'Влад',[['Влад','Влад'],['Даниїл','Даниїл']])+fld('note','Примітка',i.note||'',{type:'text',full:true})}
 function saveInv(id){return async fd=>{const h=parseNum(fd.hrn),u=parseNum(fd.usd),pc=parseNum(fd.pct);if(h===null||u===null||pc===null)return 'Перевірте числа';if(!fd.purpose)return 'Вкажіть призначення';
@@ -1142,9 +1133,9 @@ function balState(){
   for(const m of ms){
     const md=S.months[m]||{};
     const ex={bank:0,cash:0};for(const e of Object.values(S.exp))if(e.month===m){if(e.payer==='Даниїл')ex.cash+=+e.amount||0;else ex.bank+=+e.amount||0}
-    let rent=0,util=0;
+    let rent=0,util=0,rentCashOut=0;
     for(const p of Object.values(S.pay)){
-      if(p.rentPaid){const d=p.rentDate||monthEnd(p.month);if(inM(d,m))rent+=+p.rentPaid}
+      if(p.rentPaid){const d=p.rentDate||monthEnd(p.month);if(inM(d,m)){rent+=(+p.rentPaid)-(+p.rentCash||0);rentCashOut+=(+p.rentCash||0)}}
       if(p.utilPaid){const d=p.utilDate||monthEnd(p.month);if(inM(d,m))util+=+p.utilPaid}}
     const pay={bank:0,cash:0}; /* виплати 50/50 ідуть з особистих коштів, не з рахунку ФОП */
     const mv={bank:{in:0,out:0,list:[]},cash:{in:0,out:0,list:[]}};
@@ -1152,9 +1143,9 @@ function balState(){
       if(mv[x.to]){mv[x.to].in+=a;mv[x.to].list.push({id,...x,sgn:1})} if(mv[x.from]){mv[x.from].out+=a;mv[x.from].list.push({id,...x,sgn:-1})}}
     for(const k of ['bank','cash']){
       const rev=+(k==='bank'?md.bank:md.cash)||0, ru=k==='bank'?rent+util:0;
-      const inc=rev+mv[k].in, out=ex[k]+(k==='bank'?rent+util:0)+pay[k]+mv[k].out;
+      const inc=rev+mv[k].in, out=ex[k]+(k==='bank'?rent+util:rentCashOut)+pay[k]+mv[k].out;
       const open=cur_[k], close=Math.round((open+inc-out)*100)/100, f=(S.bal[m+'_'+k]||{}).fact, fact=f==null||f===''?null:+f;
-      st[k].push({m,k,open,rev,mvIn:mv[k].in,mvOut:mv[k].out,mv:mv[k].list,exp:ex[k],rent:k==='bank'?rent:0,util:k==='bank'?util:0,pay:pay[k],inc,out,close,fact,diff:fact==null?null:Math.round((fact-close)*100)/100,note:(S.bal[m+'_'+k]||{}).note||''});
+      st[k].push({m,k,open,rev,mvIn:mv[k].in,mvOut:mv[k].out,mv:mv[k].list,exp:ex[k],rent:k==='bank'?rent:rentCashOut,util:k==='bank'?util:0,pay:pay[k],inc,out,close,fact,diff:fact==null?null:Math.round((fact-close)*100)/100,note:(S.bal[m+'_'+k]||{}).note||''});
       cur_[k]=fact??close;
     }
   }
@@ -1191,7 +1182,7 @@ function balInfo(v){
   h+=kv(k==='bank'?'+ Оплати карткою':'+ Готівка з автоматів',f0(r.rev));
   if(r.mvIn)h+=kv('+ Інші надходження',f0(r.mvIn));
   h+=kv(k==='bank'?'− Витрати (платив Влад)':'− Витрати (платив Даниїл)',f0(-r.exp));
-  if(k==='bank'){h+=kv('− Оренда (за датою оплати)',f0(-r.rent));h+=kv('− Комуналка (за датою оплати)',f0(-r.util))}
+  if(k==='bank'){h+=kv('− Оренда (за датою оплати)',f0(-r.rent));h+=kv('− Комуналка (за датою оплати)',f0(-r.util))}else if(r.rent)h+=kv('− Оренда готівкою (ф2)',f0(-r.rent));
   if(r.pay)h+=kv(k==='bank'?'− Виплати Даниїлу':'− Виплати Владу',f0(-r.pay));
   if(r.mvOut)h+=kv('− Інший рух (зняття, перекази)',f0(-r.mvOut));
   h+=kv('= На кінець (розрахунок)','<b>'+f0(r.close)+'</b>');
@@ -1272,7 +1263,7 @@ function payCheck(){
   for(const o of ops){if(skip(o))continue;const pids=cpPids(o.name);if(!pids.length){other.push(o);continue}
     const k=pids.join(',');(groups[k]||(groups[k]={pids,names:new Set(),bank:[],db:[]})).bank.push({date:o.date,amt:-o.amt,purp:o.purp});groups[k].names.add(o.name)}
   for(const [id,p] of Object.entries(S.pay)){
-    for(const [a,dt,kind] of [[p.rentPaid,p.rentDate,'оренда'],[p.utilPaid,p.utilDate,'комуналка']]){
+    for(const [a,dt,kind] of [[p.rentPaid!=null?(+p.rentPaid)-(+p.rentCash||0):null,p.rentDate,'оренда'],[p.utilPaid,p.utilDate,'комуналка']]){
       if(!a||!dt||dt<d0||dt>d1)continue;
       let g=Object.values(groups).find(g=>g.pids.includes(p.point));
       if(!g){const k=p.point;g=groups[k]||(groups[k]={pids:[p.point],names:new Set(),bank:[],db:[]})}
