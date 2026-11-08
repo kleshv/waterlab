@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080828">
+<meta name="wl-build" content="202611080836">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,6 +70,9 @@ h2{font-family:var(--f-display);font-size:13px;font-weight:700;text-transform:up
 .tiles.t3{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
 .tiles.t4{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.tiles.t4 .tile{padding:6px 8px}.tiles.t4 .v{font-size:17px}.tiles.t4 .s{font-size:11px;line-height:1.3}
 @media(max-width:600px){.tiles.t4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+a.lnk{color:var(--acc,#2a6fdb);text-decoration:underline;cursor:pointer}
+label.chk{display:inline-flex;align-items:center;gap:6px;margin:4px 12px 4px 0;font-size:14px}label.chk input{width:auto;min-height:0}
+.pbar{height:5px;border-radius:3px;background:var(--line);margin-top:4px;overflow:hidden}.pbar i{display:block;height:100%;background:#2e9e5b}.pbar i.soon{background:#e6a700}.pbar i.over{background:#d23c3c}
 td.hi-warn,.lg.hi-warn{background:rgba(240,170,0,.22)}td.hi-bad,.lg.hi-bad{background:rgba(220,50,50,.2)}.lg{display:inline-block;width:14px;border-radius:3px}
 td.tap{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
 button.tile.tapt{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%;background:transparent;appearance:none;-webkit-appearance:none}button.tile.tapt .l{color:var(--accent,inherit)}
@@ -215,6 +218,7 @@ p.note{margin:6px 0 0}
       <button class="tab" role="tab" data-tab="rent" aria-selected="false" type="button">Оренда</button>
       <button class="tab" role="tab" data-tab="recon" aria-selected="false" type="button">Звірки</button>
       <button class="tab" role="tab" data-tab="points" aria-selected="false" type="button">Точки</button>
+      <button class="tab" role="tab" data-tab="svc" aria-selected="false" type="button">Регламент</button>
       <button class="tab" role="tab" data-tab="myexp" aria-selected="false" type="button">Мої витрати</button>
       <button class="tab" role="tab" data-tab="inv" aria-selected="false" type="button">Інвестиції</button>
     </div>
@@ -226,12 +230,12 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080828"></script>
+<script src="config.js?v=202611080836"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080828"></script>
+<script src="shim.js?v=202611080836"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
-const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq'];
+const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc'];
 const ARTS=[
  {g:'Обслуговування мережі',cat:'ТОіР',items:['Сервіс і заміна фільтрів','Фільтри та мембрани','Ремонт і запчастини','Електрика та монтаж','Інкасація','Пальне','Зв’язок, SIM, CRM','Господарські витрати й прибирання','Доставка','Інше']},
  {g:'Податки і банк',cat:'ФА',items:['Єдиний податок','Військовий збір','Банк і РКО','Комісія банку 1,3%','Checkbox','Бухгалтер / юрист']},
@@ -239,7 +243,7 @@ const ARTS=[
 const REC=new Set(['Єдиний податок','Військовий збір','Банк і РКО','Checkbox','Бухгалтер / юрист']);
 const CATL={'ТОіР':'обслуговування','ФА':'податки і банк','Розвиток':'капвкладення'};
 const artCat=a=>{for(const g of ARTS) if(g.items.includes(a)) return g.cat; return null};
-const S={points:{},months:{},pm:{},exp:{},settle:{},meta:{},util:{},pay:{},tariffs:{},inv:{},bal:{},mov:{},radj:{},expreq:{}};
+const S={points:{},months:{},pm:{},exp:{},settle:{},meta:{},util:{},pay:{},tariffs:{},inv:{},bal:{},mov:{},radj:{},expreq:{},svc:{}};
 let me=null, userApi=null; const names={};
 const loaded=new Set();
 let role='owner'; const ACCT_TABS=['util','rent','recon','points','myexp'];
@@ -368,6 +372,7 @@ function render(){
   if(tab==='rent') h+=cur?viewRent(cur):'';
   if(tab==='inv') h+=viewInv();
   if(tab==='myexp') h+=viewMyExp();
+  if(tab==='svc') h+=viewSvc();
   if(tab==='recon') h+=viewRecon();
   if(tab==='points') h+=viewPoints();
   main.innerHTML=h;
@@ -500,6 +505,89 @@ function editReq(id){const r=S.expreq[id];if(!r)return;
   if(r.status==='ok'){infoSheet('Витрата підтверджена',dmy(r.date)+' · '+f0(r.amount)+' грн',`<div class="kv"><span>${esc(r.article)}</span><b>${f0(r.amount)}</b></div>`);return}
   openSheet('Моя витрата',r.status==='no'?'Була відхилена'+(r.reason?': '+r.reason:'')+' · після змін піде на підтвердження знову':'Очікує підтвердження',reqForm(r),saveReq(id,r),async()=>await w(()=>db.doc('expreq/'+id).delete()))}
 function reqList(filter){return Object.entries(S.expreq).map(([id,r])=>({id,...r})).filter(filter).sort((a,b)=>(b.date||'').localeCompare(a.date||''))}
+
+/* ---------- регламент заміни фільтрів ---------- */
+const SVC_T={in:'Вхідні фільтри',post:'Пост-фільтри',mem:'Мембрани',to:'ТО (конліфт, монетник)'};
+const todayISO2=()=>new Date().toISOString().slice(0,10);
+function svcEv(pid,t){return Object.entries(S.svc).map(([id,e])=>({id,...e})).filter(e=>e.point===pid&&(!t||e.type===t)).sort((a,b)=>a.date.localeCompare(b.date))}
+const mDays=m=>{const[y,mm]=m.split('-').map(Number);return new Date(y,mm,0).getDate()};
+const dayDiff=(a,b)=>Math.round((new Date(b+'T12:00:00Z')-new Date(a+'T12:00:00Z'))/864e5);
+function waterDaily(pid,upTo){ // середня вода (л/добу) за 2 останні місяці з показниками
+  const ms=monthsList().filter(x=>x<=upTo.slice(0,7)&&S.util[x+'_'+pid]&&+S.util[x+'_'+pid].wUse>0).slice(-2);let U=0,D=0;for(const x of ms){U+=+S.util[x+'_'+pid].wUse*1000;D+=mDays(x)}return D?U/D:null}
+function waterBetween(pid,d0,d1){ // літри води з водоміра між датами (пропорційно дням)
+  let L=0;const m0=d0.slice(0,7), m1=d1.slice(0,7);
+  for(const x of monthsList().filter(x=>x>=m0&&x<=m1)){const u=S.util[x+'_'+pid], D=mDays(x);
+    const a=x===m0?+d0.slice(8,10):1, b=x===m1?+d1.slice(8,10):D, days=Math.max(0,b-a+(x===m0?0:1));
+    let per=u&&+u.wUse>0?+u.wUse*1000/D:waterDaily(pid,x+'-01');if(per==null)per=0;L+=per*days}
+  // місяці, яких ще немає в обліку (поточний)
+  if(!monthsList().includes(m1)){const per=waterDaily(pid,d1)||0;L+=per*Math.min(dayDiff(d0,d1),+d1.slice(8,10))}
+  return L;
+}
+function svcK(pid){ // калібрування лічильника автомата до водоміра
+  const L=svcEv(pid,'in').filter(e=>e.reading!=null).slice(-4), ks=[];
+  for(let i=1;i<L.length;i++){const dr=L[i].reading-L[i-1].reading, w=waterBetween(pid,L[i-1].date,L[i].date);if(dr>0&&w>0){const k=dr/w;if(k>0.3&&k<2.5)ks.push(k)}}
+  return ks.length?ks.reduce((a,b)=>a+b,0)/ks.length:1;
+}
+function svcState(pid){
+  const today=todayISO2(), last=svcEv(pid,'in').pop()||svcEv(pid,'post').pop(), k=svcK(pid);
+  const memL=svcEv(pid,'mem').pop(), toL=svcEv(pid,'to').pop(), r={pid,k,last,memL,toL};
+  if(last){const prevI=svcEv(pid,'in').map(e=>e.interval).filter(Boolean);r.interval=last.interval||prevI.pop()||20000;
+    r.used=k*waterBetween(pid,last.date,today);r.rate=k*(waterDaily(pid,today)||0);
+    r.left=r.interval-r.used;r.days=r.rate?Math.round(r.left/r.rate):null;r.pct=r.used/r.interval;
+    r.st=r.left<=0?'over':(r.days!=null&&r.days<=14)||r.pct>=0.85?'soon':'ok';
+    r.due=r.rate&&r.left>0?new Date(Date.now()+r.left/r.rate*864e5).toISOString().slice(0,10):null}
+  if(memL)r.memUsed=k*waterBetween(pid,memL.date,today);
+  return r;
+}
+function svcAll(){return pointsList().filter(p=>p.id!=='p00'&&p.active!==false).map(p=>({p,...svcState(p.id)}))}
+function viewSvc(){
+  const L=svcAll(), ord={over:0,soon:1,ok:2,undefined:3};L.sort((a,b)=>(ord[a.st]-ord[b.st])||((a.days??1e9)-(b.days??1e9)));
+  const n=st=>L.filter(x=>x.st===st).length, mo=d=>{const m=Math.round(dayDiff(d,todayISO2())/30.4);return m<1?'цього місяця':m+' міс. тому'};
+  const rows=L.map(x=>{const bar=x.last?`<div class="pbar"><i style="width:${Math.min(100,Math.round(x.pct*100))}%" class="${x.st}"></i></div>`:'';
+    return `<tr class="click" data-act="svcPoint" data-id="${x.p.id}"><td>${esc(x.p.name)}<div class="note">${x.last?'заміна '+dmy(x.last.date):'немає даних'}</div></td>
+      <td class="num">${x.last?`${f0(x.used)} з ${f0(x.interval)} л${bar}<div class="note ${x.st==='over'?'neg':''}">${x.st==='over'?'прострочено на '+f0(-x.left)+' л':x.days!=null?'≈ '+x.days+' дн.'+(x.due?' · '+dmy(x.due):''):''}</div>`:'—'}</td>
+      <td class="num hide-sm">${x.memL?dmy(x.memL.date)+`<div class="note">${mo(x.memL.date)} · ${f0(x.memUsed||0)} л</div>`:'—'}</td>
+      <td class="num hide-sm">${x.toL?dmy(x.toL.date)+`<div class="note">${esc(x.toL.note||'')}</div>`:'—'}</td></tr>`}).join('');
+  return `<section class="card"><div class="shead"><h2>Регламент заміни фільтрів</h2></div>
+  ${canWrite?`<div class="bigacts one" style="margin:0 0 12px"><button class="btn pri main" data-act="addSvc" type="button">+ Заміна / ТО</button></div>`:''}
+  <div class="tiles t3"><div class="tile"><div class="l">Прострочено</div><div class="v ${n('over')?'neg':''}">${n('over')}</div><div class="s">точок</div></div><div class="tile"><div class="l">Скоро (до 14 днів)</div><div class="v">${n('soon')}</div><div class="s">точок</div></div><div class="tile"><div class="l">У нормі</div><div class="v">${n('ok')}</div><div class="s">точок</div></div></div>
+  <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Фільтри: пройшло</th><th class="num hide-sm">Мембрани</th><th class="num hide-sm">ТО</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="note">Скільки води пройшло через фільтри, рахується з водоміра точки від дати останньої заміни (з поправкою на лічильник автомата за попередніми замінами). Натисніть точку, щоб побачити історію.</p></section>`;
+}
+function svcPoint(pid){
+  const p=S.points[pid]||{}, x=svcState(pid), E=svcEv(pid).reverse();
+  const kv=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
+  let h=x.last?kv('Остання заміна фільтрів',dmy(x.last.date)+(x.last.reading!=null?' · лічильник '+f0(x.last.reading):''))+kv('Регламент',f0(x.interval)+' л')+kv('Пройшло',f0(x.used)+' л ('+Math.round(x.pct*100)+'%)')+kv('Наступна заміна',x.left<=0?'<span class="neg">прострочено</span>':(x.due?'≈ '+dmy(x.due)+' · через '+x.days+' дн.':'—'))+(x.last.reading!=null?kv('Лічильник зараз (оцінка)',f0(x.last.reading+x.used)):''):'';
+  if(x.memL)h+=kv('Мембрани',dmy(x.memL.date)+' · пройшло '+f0(x.memUsed||0)+' л');if(x.toL)h+=kv('ТО',dmy(x.toL.date)+(x.toL.note?' · '+esc(x.toL.note):''));
+  const SH={in:'вхідні',post:'пост',mem:'мембрани',to:'ТО'}, G=[];for(const e of E){const g=G.find(g=>g.date===e.date);if(g)g.L.push(e);else G.push({date:e.date,L:[e]})}
+  h+=`<div class="sub">Історія</div>`+G.slice(0,30).map(g=>{const o=['in','post','mem','to'], L=g.L.sort((a,b)=>o.indexOf(a.type)-o.indexOf(b.type)), rd=L.find(e=>e.reading!=null), iv=L.find(e=>e.interval&&e.type!=='mem'), nt=L.map(e=>e.note).filter(Boolean).join('; ');
+    return `<div class="kv bi"><span>${dmy(g.date)} · ${L.map(e=>canWrite?`<a class="lnk" data-act="editSvc" data-id="${e.id}">${SH[e.type]||e.type}</a>`:(SH[e.type]||e.type)).join(', ')}${nt?`<div class="note">${esc(nt)}</div>`:''}</span><b>${rd?f0(rd.reading):''}${iv?`<div class="note">наступна +${f0(iv.interval)} л</div>`:''}</b></div>`}).join('');
+  if(canWrite)h+=`<p class="note">Натисніть на тип заміни, щоб виправити або видалити запис.</p>`;
+  infoSheet('Регламент · '+(p.name||pid),'',h,canWrite?()=>addSvc(pid):null);
+  const b=document.getElementById('edBtn');if(b)b.textContent='+ Заміна';
+}
+function svcForm(pid,e){
+  const pts=pointsList().filter(p=>p.id!=='p00'&&p.active!==false), last=pid?svcEv(pid,'in').pop():null, ck=(n,l,on)=>`<label class="chk"><input type="checkbox" name="${n}" ${on?'checked':''}> ${l}</label>`;
+  const x=pid?svcState(pid):null;
+  return sel('point','Точка',pid||'',pts.map(p=>[p.id,p.name]),true)+fld('date','Дата',e?e.date:todayISO2(),{type:'date'})+
+    (e?sel('type','Що',e.type,Object.entries(SVC_T),true):`<div class="full">${ck('t_in','Вхідні фільтри',1)} ${ck('t_post','Пост-фільтри',1)} ${ck('t_mem','Мембрани',0)} ${ck('t_to','ТО',0)}</div>`)+
+    fld('reading','Лічильник на автоматі, л'+(!e&&x&&x.last&&x.last.reading!=null?' (орієнтовно '+f0(x.last.reading+x.used)+')':''),e?(e.reading??''):'')+fld('interval','Наступна заміна через, л',e?(e.interval??''):(x?x.interval:20000))+
+    fld('note','Коментар',e?(e.note||''):'',{type:'text',full:true});
+}
+function addSvc(pid){
+  openSheet('Заміна / ТО','Внесіть, що замінили. Лічильник — з табло автомата (якщо є).',svcForm(pid||'',null),async fd=>{
+    if(!fd.point)return 'Оберіть точку';if(!fd.date)return 'Вкажіть дату';
+    const types=['in','post','mem','to'].filter(t=>fd['t_'+t]);if(!types.length)return 'Позначте, що замінили';
+    const rd=String(fd.reading||'').trim()===''?null:parseNum(String(fd.reading)), iv=String(fd.interval||'').trim()===''?null:parseNum(String(fd.interval));
+    for(const t of types){const d={point:fd.point,type:t,date:fd.date,note:fd.note||'',by:me||''};if(t!=='to'){if(rd!=null)d.reading=rd;if(iv&&t!=='mem')d.interval=iv}
+      if(!await w(()=>db.doc('svc/'+db.collection('svc').doc().id).set(d)))return 'Не збереглося'}
+    toast('Записано')});
+}
+function editSvc(id){const e=S.svc[id];if(!e)return;
+  openSheet('Запис регламенту',(S.points[e.point]||{}).name||'',svcForm(e.point,e),async fd=>{
+    const rd=String(fd.reading||'').trim()===''?null:parseNum(String(fd.reading)), iv=String(fd.interval||'').trim()===''?null:parseNum(String(fd.interval));
+    const d={...e,point:fd.point,type:fd.type,date:fd.date,note:fd.note||''};delete d.id;if(rd!=null)d.reading=rd;else delete d.reading;if(iv)d.interval=iv;else delete d.interval;
+    if(!await w(()=>db.doc('svc/'+id).set(d)))return 'Не збереглося';toast('Збережено')},async()=>await w(()=>db.doc('svc/'+id).delete()))}
 function viewMyExp(){
   const L=reqList(()=>true), sum=st=>L.filter(r=>r.status===st).reduce((a,r)=>a+(+r.amount||0),0);
   return `<section class="card"><h2>Мої витрати</h2>
@@ -777,6 +865,7 @@ function viewHome(m){
   const sumR=t.rent.reduce((a,x)=>a+x.amount,0), sumE=t.rec.reduce((a,x)=>a+(+x.amount||0),0);
   {const unpaid=monthPts(m).map(p=>({p,x:payRow(m,p.id)})).filter(o=>o.x.rentDue>0&&(o.x.rentPaid||0)+0.5<o.x.rentDue);
    if(unpaid.length) li+=`<li class="grp"><span class="tx">Оренда</span></li><li><span class="tx">Не сплачена: ${unpaid.length} точок · ${f0(unpaid.reduce((a,o)=>a+o.x.rentDue-(o.x.rentPaid||0),0))} грн<span class="note">нараховано за договором, не сплачено: ${esc(unpaid.slice(0,5).map(o=>o.p.name).join(', '))}${unpaid.length>5?'…':''}</span></span><button class="btn sm" data-act="goTab" data-id="rent" type="button">Оренда</button></li>`;}
+  if(role==='owner'){const sv=svcAll().filter(x=>x.st==='over'||x.st==='soon').sort((a,b)=>(a.days??-1e9)-(b.days??-1e9)||a.left-b.left);if(sv.length)li+=`<li class="grp"><span class="tx">Заміна фільтрів</span></li><li><span class="tx">${sv.filter(x=>x.st==='over').length?'Прострочено: '+sv.filter(x=>x.st==='over').length+' · ':''}скоро: ${sv.filter(x=>x.st==='soon').length}<span class="note">${esc(sv.slice(0,5).map(x=>x.p.name).join(', '))}</span></span><button class="btn sm" data-act="goTab" data-id="svc" type="button">Регламент</button></li>`}
   {const na=normAlerts(m);if(na.L.length)li+=`<li class="grp"><span class="tx">Перевитрата · ${mLabel(na.m).toLowerCase()}</span></li>`+na.L.slice(0,6).map(x=>`<li><span class="tx">${esc(x.p.name)} · ${x.k==='w'?'вода':'світло'}<span class="note">${fmt1(x.n.r)} ${x.k==='w'?'л':'Вт·год'} на 1 л · +${Math.round(x.n.dev*100)}% до норми</span></span><button class="btn sm" data-act="utilInfo" data-id="${na.m}|${x.p.id}|${x.k}" type="button">Деталі</button></li>`).join('')}
   if(role==='owner'&&!isDan()){const rq=reqList(r=>r.status==='wait');if(rq.length)li+=`<li class="grp"><span class="tx">Витрати Люди</span></li><li><span class="tx">На підтвердження: ${rq.length}<span class="note">${f0(rq.reduce((a,r)=>a+(+r.amount||0),0))} грн</span></span><button class="btn sm" data-act="goTab" data-id="exp" type="button">Переглянути</button></li>`}
   if(role==='owner'){const st=(S.meta.settings||{}).settleStart||'2026-10';const bi=monthsList().filter(x=>x>=st&&x<=m).flatMap(x=>billIssues(x));
@@ -1721,7 +1810,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot})[a.dataset.act]?.(id);
+  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
