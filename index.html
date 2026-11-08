@@ -360,7 +360,7 @@ function render(){
   if(dan&&repSub==='bal') repSub='fin';
   if(dan&&!danOrdered){const e=document.querySelector('.tab[data-tab=exp]'),r=document.querySelector('.tab[data-tab=reports]');if(e&&r)r.before(e);danOrdered=true}
   $('#newMonthBtn').hidden=acct||tech||!canWrite||!Object.keys(S.points).length;
-  document.querySelectorAll('.tab').forEach(t=>{t.hidden=(tech&&t.dataset.tab!=='svc')||(acct&&!ACCT_TABS.includes(t.dataset.tab))||(!acct&&t.dataset.tab==='myexp')t.setAttribute('aria-selected',t.dataset.tab===tab)});
+  document.querySelectorAll('.tab').forEach(t=>{t.hidden=(tech&&t.dataset.tab!=='svc')||(acct&&!ACCT_TABS.includes(t.dataset.tab))||(!acct&&t.dataset.tab==='myexp');t.setAttribute('aria-selected',t.dataset.tab===tab)});
   const main=$('#main');
   if(fatal){main.innerHTML=`<div class="banner warn">${esc(fatal)}</div>`;return}
   if(loaded.size<COLS.length){main.innerHTML=`<section class="card"><h2>Завантаження</h2><p class="note">${stale?'База поки не відповідає. Дані з’являться, щойно з’єднання відновиться.':'Підключаюся до бази: точки, місяці, витрати й взаєморозрахунок з’являться тут.'}</p></section>`;return}
