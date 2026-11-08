@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080043">
+<meta name="wl-build" content="202611080045">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -221,9 +221,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080043"></script>
+<script src="config.js?v=202611080045"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080043"></script>
+<script src="shim.js?v=202611080045"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -615,7 +615,7 @@ function addPay(){openSheet('Виплата прибутку','Зменшує б
 function editPay(id){openSheet('Виплата','',payForm(S.settle[id]),savePay(id),async()=>{const ok=await w(()=>db.doc('settle/'+id).delete());return ok})}
 
 function pointForm(p){return fld('name','Адреса / назва',p.name||'',{type:'text',full:true})+fld('rent','Оренда на місяць',p.rent??0)+
-  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Не працює']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('rentCash','З оренди щомісяця готівкою (ф2), грн',p.rentCash??'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
+  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Не працює']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('rentCash','З оренди щомісяця з особистої картки Влада (ф2), грн',p.rentCash??'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
 function savePoint(id,base){return async fd=>{const r=parseNum(fd.rent);if(r===null)return 'Не зрозумів суму оренди';if(!fd.name.trim())return 'Вкажіть адресу';
   const order=base.order??(Math.max(0,...Object.values(S.points).map(p=>p.order||0))+1);
   if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',rentCash:parseNum(String(fd.rentCash||''))||0,contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
@@ -1080,7 +1080,7 @@ async function addAllRent(){let n=0;for(const p of monthPts(cur)){const x=payRow
 function editRent(pid,mm){
   const m=mm||cur, p=S.points[pid]||{}, x=payRow(m,pid), py=x.py, closed=!!(S.months[m]||{}).closed;
   const fields=`<div class="calc full">До сплати за карткою точки: <b>${f0(x.rentPlan)} грн</b>${p.payee?' · отримувач: '+esc(p.payee):''}</div>`+
-    fld('rentPaid','Сплачено, грн',py.rentPaid??'')+fld('rentDate','Дата оплати',py.rentDate||'',{type:'date'})+fld('rentCash','З них готівкою (ф2), грн',py.rentCash??(py.rentPaid==null&&p.rentCash?p.rentCash:''))+
+    fld('rentPaid','Сплачено, грн',py.rentPaid??'')+fld('rentDate','Дата оплати',py.rentDate||'',{type:'date'})+fld('rentCash','З них з особистої картки Влада (ф2), грн',py.rentCash??(py.rentPaid==null&&p.rentCash?p.rentCash:''))+
     `<div class="full"><button type="button" class="btn sm" id="fillRent">Сплачено повністю сьогодні</button></div>`+
     fld('rentNote','Коментар',py.rentNote||'',{type:'text',full:true})+
     `<p class="note full" style="margin:0">Оренда у фінрезі нараховується за договором. Оплата потрапляє у звірки й баланс.</p>`;
@@ -1143,9 +1143,9 @@ function balState(){
       if(mv[x.to]){mv[x.to].in+=a;mv[x.to].list.push({id,...x,sgn:1})} if(mv[x.from]){mv[x.from].out+=a;mv[x.from].list.push({id,...x,sgn:-1})}}
     for(const k of ['bank','cash']){
       const rev=+(k==='bank'?md.bank:md.cash)||0, ru=k==='bank'?rent+util:0;
-      const inc=rev+mv[k].in, out=ex[k]+(k==='bank'?rent+util:rentCashOut)+pay[k]+mv[k].out;
+      const inc=rev+mv[k].in, out=ex[k]+(k==='bank'?rent+util:0)+pay[k]+mv[k].out;
       const open=cur_[k], close=Math.round((open+inc-out)*100)/100, f=(S.bal[m+'_'+k]||{}).fact, fact=f==null||f===''?null:+f;
-      st[k].push({m,k,open,rev,mvIn:mv[k].in,mvOut:mv[k].out,mv:mv[k].list,exp:ex[k],rent:k==='bank'?rent:rentCashOut,util:k==='bank'?util:0,pay:pay[k],inc,out,close,fact,diff:fact==null?null:Math.round((fact-close)*100)/100,note:(S.bal[m+'_'+k]||{}).note||''});
+      st[k].push({m,k,open,rev,mvIn:mv[k].in,mvOut:mv[k].out,mv:mv[k].list,exp:ex[k],rent:k==='bank'?rent:0,rentF2:k==='bank'?rentCashOut:0,util:k==='bank'?util:0,pay:pay[k],inc,out,close,fact,diff:fact==null?null:Math.round((fact-close)*100)/100,note:(S.bal[m+'_'+k]||{}).note||''});
       cur_[k]=fact??close;
     }
   }
@@ -1182,7 +1182,7 @@ function balInfo(v){
   h+=kv(k==='bank'?'+ Оплати карткою':'+ Готівка з автоматів',f0(r.rev));
   if(r.mvIn)h+=kv('+ Інші надходження',f0(r.mvIn));
   h+=kv(k==='bank'?'− Витрати (платив Влад)':'− Витрати (платив Даниїл)',f0(-r.exp));
-  if(k==='bank'){h+=kv('− Оренда (за датою оплати)',f0(-r.rent));h+=kv('− Комуналка (за датою оплати)',f0(-r.util))}else if(r.rent)h+=kv('− Оренда готівкою (ф2)',f0(-r.rent));
+  if(k==='bank'){h+=kv('− Оренда (за датою оплати)',f0(-r.rent));h+=kv('− Комуналка (за датою оплати)',f0(-r.util));if(r.rentF2)h+=`<div class="note">Ще ${f0(r.rentF2)} оренди (ф2) сплачено з особистої картки Влада — не з рахунку.</div>`}
   if(r.pay)h+=kv(k==='bank'?'− Виплати Даниїлу':'− Виплати Владу',f0(-r.pay));
   if(r.mvOut)h+=kv('− Інший рух (зняття, перекази)',f0(-r.mvOut));
   h+=kv('= На кінець (розрахунок)','<b>'+f0(r.close)+'</b>');
