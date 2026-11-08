@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611081819">
+<meta name="wl-build" content="202611081821">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,9 +235,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611081819"></script>
+<script src="config.js?v=202611081821"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611081819"></script>
+<script src="shim.js?v=202611081821"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -820,7 +820,23 @@ function savePoint(id,base){return async fd=>{const r=parseNum(fd.rent);if(r===n
   const order=base.order??(Math.max(0,...Object.values(S.points).map(p=>p.order||0))+1);
   if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',kind:fd.kind||'',payee2:fd.payee2||'',rentCash:parseNum(String(fd.rentCash||''))||0,contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
 function addPoint(){openSheet('Нова точка','',pointForm({}),savePoint(db.collection('points').doc().id,{}))}
-function editPoint(id){openSheet('Точка','',pointForm(S.points[id]),savePoint(id,S.points[id]))}
+function pointUsage(id){
+  const n=(col,f)=>Object.values(S[col]||{}).filter(f).length, U=[];
+  const add=(k,v)=>{if(v)U.push(k+' '+v)};
+  add('місяців з продажами',n('pm',x=>x.point===id&&(+x.revenue>0||+x.liters>0)));
+  add('показань комуналки',n('util',x=>x.point===id));
+  add('оплат',n('pay',x=>x.point===id&&(+x.rentPaid>0||+x.utilPaid>0||+x.utilBill>0)));
+  add('витрат',n('exp',x=>x.point===id));
+  add('записів регламенту',n('svc',x=>x.point===id));
+  add('днів продажів',n('sales',x=>x.point===id));
+  return U;
+}
+function editPoint(id){openSheet('Точка','',pointForm(S.points[id]),savePoint(id,S.points[id]),role==='owner'?async()=>{
+  const U=pointUsage(id);
+  if(U.length){const fe=$('#ferr');fe.textContent='Видалити не можна — у точки є історія ('+U.join(', ')+'). Щоб прибрати її зі списків, поставте статус «Не працює».';fe.hidden=false;return false}
+  for(const [k,x] of Object.entries(S.pm))if(x.point===id&&!await w(()=>db.doc('pm/'+k).delete()))return false;
+  for(const col of ['pay','meter'])for(const [k,x] of Object.entries(S[col]))if(x.point===id&&!await w(()=>db.doc(col+'/'+k).delete()))return false;
+  if(!await w(()=>db.doc('points/'+id).delete()))return false;toast('Точку видалено');return true}:null)}
 
 async function toggleClose(){const md=S.months[cur];if(await w(()=>db.doc('months/'+cur).set({...md,closed:!md.closed})))toast(md.closed?'Місяць відкрито':'Місяць закрито')}
 
