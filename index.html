@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080730">
+<meta name="wl-build" content="202611080734">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -223,9 +223,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080730"></script>
+<script src="config.js?v=202611080734"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080730"></script>
+<script src="shim.js?v=202611080734"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -1072,6 +1072,7 @@ function editBill(pid,mm){
     `<p class="note full" style="margin:-4px 0 0">Сума рахується з показників автоматично; якщо в рахунку інша — впишіть її вручну.</p>`+
     `<div class="sub">Оплата</div>`+fld('utilPaid','Сплачено, грн',py.utilPaid??'')+fld('utilDate','Дата оплати',py.utilDate||'',{type:'date'})+
     `<div class="full"><button type="button" class="btn sm" id="fillUtil">Сплачено повністю сьогодні</button></div>`+
+    (p.payee2?`<div class="sub">З них за воду окремо · ${esc(p.payee2)}</div>`+fld('waterDue','Нараховано за воду, грн',py.waterDue??'')+fld('utilPaidW','Сплачено за воду, грн',py.utilPaidW??'')+fld('utilDateW','Дата оплати за воду',py.utilDateW||'',{type:'date'})+`<p class="note full" style="margin:-4px 0 0">Сума до сплати вище — загальна. Частина за воду йде у звірку з ${esc(p.payee2)}, решта — з ${esc(p.payee||'основним контрагентом')}.</p>`:'')+
     fld('utilNote','Коментар',py.utilNote||py.note||'',{type:'text',full:true});
   let manual=py.utilBill!=null&&py.bw1==null&&py.be1==null;
   const calc=()=>{const g=id=>$('#f_'+id).value.trim();
@@ -1082,9 +1083,9 @@ function editBill(pid,mm){
   openSheet('Комуналка · '+(p.name||pid),mLabel(m)+(p.payee?' · '+p.payee:'')+(p.contact?' · '+p.contact:''),fields,async fd=>{
     const c=calc();
     if(c.cw&&c.cw.use<0||c.ce&&c.ce.use<0)return '«Стало» менше, ніж «Було».';
-    const nums=['bw0','bw1','bwT','be0','be1','beT','utilBill','utilPaid'].map(k=>[k,String(fd[k]??'').trim()]);
+    const nums=['bw0','bw1','bwT','be0','be1','beT','utilBill','utilPaid',...(p.payee2?['waterDue','utilPaidW']:[])].map(k=>[k,String(fd[k]??'').trim()]);
     const o={};for(const [k,v] of nums){if(v===''){o[k]=null;continue}const n=parseNum(v);if(n===null)return 'Не зрозумів число. Можна писати 316, 316,5 або 316.5.';o[k]=n}
-    if(!await savePayDoc(m,pid,{...o,bFrom:fd.bFrom||'',bTo:fd.bTo||'',basis:fd.basis||'',utilDate:fd.utilDate||'',utilNote:fd.utilNote||''}))return 'Не збереглося';
+    if(!await savePayDoc(m,pid,{...o,bFrom:fd.bFrom||'',bTo:fd.bTo||'',basis:fd.basis||'',utilDate:fd.utilDate||'',utilNote:fd.utilNote||'',...(p.payee2?{utilDateW:fd.utilDateW||''}:{})}))return 'Не збереглося';
     toast('Рахунок збережено');
   });
   $('#sf').classList.add('wide');
@@ -1186,7 +1187,8 @@ function balState(){
     let rent=0,util=0,rentCashOut=0;
     for(const p of Object.values(S.pay)){
       if(p.rentPaid){const d=p.rentDate||monthEnd(p.month);if(inM(d,m)){rent+=(+p.rentPaid)-(+p.rentCash||0);rentCashOut+=(+p.rentCash||0)}}
-      if(p.utilPaid){const d=p.utilDate||monthEnd(p.month);if(inM(d,m))util+=+p.utilPaid}}
+      if(p.utilPaid){const d=p.utilDate||monthEnd(p.month);if(inM(d,m))util+=+p.utilPaid}
+      if(p.utilPaidW){const d=p.utilDateW||monthEnd(p.month);if(inM(d,m))util+=+p.utilPaidW}}
     const pay={bank:0,cash:0}; /* виплати 50/50 ідуть з особистих коштів, не з рахунку ФОП */
     const mv={bank:{in:0,out:0,list:[]},cash:{in:0,out:0,list:[]}};
     for(const [id,x] of Object.entries(S.mov))if(inM(x.date,m)){const a=+x.amount||0;
@@ -1317,7 +1319,7 @@ function payCheck(){
      G[i].pids=[...new Set([...G[i].pids,...G[j].pids])];G[i].bank.push(...G[j].bank);G[j].names.forEach(n=>G[i].names.add(n));G.splice(j,1);merged=true;break}}
    for(const k in groups)delete groups[k];G.forEach((g,i)=>groups['g'+i]=g)}
   for(const [id,p] of Object.entries(S.pay)){
-    for(const [a,dt,kind] of [[p.rentPaid!=null?(+p.rentPaid)-(+p.rentCash||0):null,p.rentDate,'оренда'],[p.utilPaid,p.utilDate,'комуналка']]){
+    for(const [a,dt,kind] of [[p.rentPaid!=null?(+p.rentPaid)-(+p.rentCash||0):null,p.rentDate,'оренда'],[p.utilPaid,p.utilDate,'комуналка'],[p.utilPaidW,p.utilDateW,'вода']]){
       if(!a||!dt||dt<d0||dt>d1)continue;
       let g=Object.values(groups).find(g=>g.pids.includes(p.point));
       if(!g){const k=p.point;g=groups[k]||(groups[k]={pids:[p.point],names:new Set(),bank:[],db:[]})}
@@ -1417,23 +1419,38 @@ document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.datas
 /* ---------- reconciliation by counterparty ---------- */
 let reconRows=[], reconCp='', reconFrom='', reconTo='', reconKind='all';
 function counterparties(){const m=new Map();for(const p of pointsList()){if(p.id==='p00'||p.active===false)continue;const k=(p.payee||'').trim()||p.name;if(!m.has(k))m.set(k,[]);m.get(k).push(p.id)}return [...m.entries()].sort((a,b)=>a[0].localeCompare(b[0],'uk'))}
+let reconPid='';
+function reconPts(){return pointsList().filter(p=>p.id!=='p00'&&p.active!==false)}
+function reconCps(pid){const p=S.points[pid]||{},o=[];const main=(p.payee||'').trim()||p.name;
+  o.push({k:'main',name:main,pids:[pid]});
+  const same=reconPts().filter(q=>((q.payee||'').trim()||q.name)===main).map(q=>q.id);
+  if(same.length>1)o.push({k:'all',name:main+' — усі локації ('+same.length+')',pids:same});
+  if((p.payee2||'').trim())o.push({k:'w',name:p.payee2.trim()+' (вода)',pids:[pid]});
+  return o}
+const hasW=py=>py&&(py.utilPaidW!=null||py.waterDue!=null);
 function setRecon(v){const [k,val]=v.split('|');if(k==='cp')reconCp=val;if(k==='kind')reconKind=val;render()}
 function monthEnd(m){const [y,mm]=m.split('-').map(Number);return m+'-'+String(new Date(y,mm,0).getDate()).padStart(2,'0')}
 const isDocRef=b=>!!b&&/№|акт|рах/i.test(b);
 function reconData(){
-  const cps=counterparties(); if(!reconCp||!cps.find(c=>c[0]===reconCp)) reconCp=(cps[0]||[''])[0];
-  const pids=(cps.find(c=>c[0]===reconCp)||[0,[]])[1], st=payStart();
+  const pts=reconPts(); if(!reconPid||!pts.find(p=>p.id===reconPid)) reconPid=(pts[0]||{}).id||'';
+  const cpo=reconCps(reconPid); if(!cpo.find(c=>c.k===reconCp)) reconCp='main';
+  const cp=cpo.find(c=>c.k===reconCp), pids=cp.pids, W=reconCp==='w', st=payStart();
   if(!reconFrom) reconFrom=st+'-01'; if(!reconTo) reconTo=todayISO(); if(reconFrom<st+'-01') reconFrom=st+'-01';
   const R=reconKind!=='util', U=reconKind!=='rent', ev=[];
   for(const m of monthsList()) if(m>=st) for(const pid of pids){ if(!S.pm[m+'_'+pid])continue; const x=payRow(m,pid), me_=monthEnd(m), nm=S.points[pid]?.name||pid;
+    if(W){ if(!hasW(x.py))continue; const wd=+x.py.waterDue||0;
+      if(U&&wd) ev.push({m,d:x.py.bTo||me_,doc:'Вода за '+mLabel(m).toLowerCase(),pid,acc:wd,paid:0,k:'w'});
+      if(U&&x.py.utilPaidW) ev.push({m,d:x.py.utilDateW||me_,doc:'Оплата за воду за '+mLabel(m).toLowerCase(),pid,acc:0,paid:+x.py.utilPaidW,k:'w'});
+      continue}
+    const wPart=S.points[pid]?.payee2&&hasW(x.py)?(+x.py.waterDue||0):0;
     if(R&&x.rentDue) ev.push({m,d:me_,doc:'Оренда за '+mLabel(m).toLowerCase(),pid,acc:x.rentDue,paid:0,k:'r'});
     if(R&&x.rentPaid) ev.push({m,d:x.rentDate||me_,doc:'Оплата оренди за '+mLabel(m).toLowerCase(),pid,acc:0,paid:x.rentPaid,k:'r'});
-    if(U&&x.utilDue) ev.push({m,d:x.py.bTo||me_,doc:'Комуналка за '+mLabel(m).toLowerCase()+(x.py.utilBill!=null?(isDocRef(x.py.basis)?' · '+x.py.basis.trim():'')+(billPeriodTxt(x.py)?' · період '+billPeriodTxt(x.py):''):' (за показниками)'),pid,acc:x.utilDue,paid:0,k:'u'});
+    if(U&&x.utilDue-wPart) ev.push({m,d:x.py.bTo||me_,doc:'Комуналка за '+mLabel(m).toLowerCase()+(x.py.utilBill!=null?(isDocRef(x.py.basis)?' · '+x.py.basis.trim():'')+(billPeriodTxt(x.py)?' · період '+billPeriodTxt(x.py):''):' (за показниками)'),pid,acc:x.utilDue-wPart,paid:0,k:'u'});
     if(U&&x.utilPaid) ev.push({m,d:x.utilDate||me_,doc:'Оплата комуналки за '+mLabel(m).toLowerCase(),pid,acc:0,paid:x.utilPaid,k:'u'});}
   ev.sort((a,b)=>a.d.localeCompare(b.d)||(b.acc-a.acc));
   let open=0; const rows=[];
   for(const e of ev){ if(e.d<reconFrom) open+=e.acc-e.paid; else if(e.d<=reconTo) rows.push(e) }
-  return {cps,pids,open,rows,R,U};
+  return {pts,cpo,cp,pids,open,rows,R,U};
 }
 function infoSheet(title,sub,html,onEdit){
   const md=$('#modal');
@@ -1448,8 +1465,9 @@ function reconInfo(i){
   const p=S.points[r.pid]||{}, x=payRow(r.m,r.pid), py=x.py, u=x.u, mt=mLabel(r.m).toLowerCase();
   const n=v=>v==null||v===''?'—':nf1.format(+v), tf=v=>v==null||v===''?'—':String(+v).replace('.',',');
   const kv=(k,v)=>`<div class="kv"><span>${k}</span><b>${v}</b></div>`;
-  const edit=canWrite?(r.k==='u'?()=>editBill(r.pid,r.m):()=>editRent(r.pid,r.m)):null;
+  const edit=canWrite?(r.k==='u'||r.k==='w'?()=>editBill(r.pid,r.m):()=>editRent(r.pid,r.m)):null;
   let h='';
+  if(r.k==='w'){h+=kv('Нараховано за воду',f0(+py.waterDue||0)+' грн')+kv('Сплачено',py.utilPaidW!=null?f0(py.utilPaidW)+' грн'+(py.utilDateW?' · '+dmy(py.utilDateW):''):'ще ні');infoSheet(r.doc,(p.name||r.pid)+' · '+(p.payee2||''),h,edit);return}
   if(r.k==='u'){
     const hasB=py.bw1!=null||py.be1!=null, src=hasB?'з рахунку':'наші показники';
     const W=hasB?{a:py.bw0,b:py.bw1,t:py.bwT}:{a:u.w0,b:u.w1,t:u.wT}, E=hasB?{a:py.be0,b:py.be1,t:py.beT}:{a:u.e0,b:u.e1,t:u.eT};
@@ -1484,7 +1502,9 @@ function viewRecon(){
   const p0=S.points[d.pids[0]]||{};
   return `<section class="card"><div class="shead"><h2>Звірка з контрагентом</h2><button class="btn sm" data-act="reconXlsx" type="button" id="reconBtn">Excel</button></div>
   <div class="form" style="margin-bottom:10px">
-    <label class="full">Контрагент<select id="rc_cp">${d.cps.map(([k,ids])=>opt(k,k+(ids.length>1?` (${ids.length} точки)`:''),reconCp)).join('')}</select>${p0.contract||d.pids.length?`<span class="note">${esc([p0.contract?'Договір '+p0.contract:'',d.pids.map(i=>S.points[i]?.name||i).join(', ')].filter(Boolean).join(' · '))}</span>`:''}</label>
+    <label class="full">Локація<select id="rc_pt">${d.pts.map(p=>opt(p.id,p.name,reconPid)).join('')}</select></label>
+    ${d.cpo.length>1?`<label class="full">Контрагент<select id="rc_cp">${d.cpo.map(c=>opt(c.k,c.name,reconCp)).join('')}</select></label>`:`<div class="full note">Контрагент: <b>${esc(d.cp.name)}</b></div>`}
+    ${reconCp!=='w'&&p0.contract?`<div class="full note">Договір ${esc(p0.contract)}${d.pids.length>1?' · '+esc(d.pids.map(i=>S.points[i]?.name||i).join(', ')):''}</div>`:''}
     <label>З дати<input type="date" id="rc_from" value="${reconFrom}" min="${payStart()}-01"></label>
     <label>По дату<input type="date" id="rc_to" value="${reconTo}"></label>
   </div>
@@ -1501,7 +1521,7 @@ function viewRecon(){
 async function reconXlsx(){
   const dl=await window.claude?.use?.('downloads'); if(!dl){toast('Вивантаження недоступне');return}
   try{await loadXLSX();const d=reconData();let bal=d.open;const r2=v=>Math.round(v*100)/100;
-    const pc=S.points[d.pids[0]]||{};const rows=[{'Дата':'','Документ':reconCp+(pc.contract?' · договір '+pc.contract:''),'Точка':'','Нараховано':'','Сплачено':'','Сальдо':''},{'Дата':dmy(reconFrom),'Документ':'Сальдо на початок періоду','Точка':'','Нараховано':'','Сплачено':'','Сальдо':r2(d.open)}];
+    const pc=S.points[d.pids[0]]||{};const rows=[{'Дата':'','Документ':d.cp.name+(reconCp!=='w'&&pc.contract?' · договір '+pc.contract:''),'Точка':'','Нараховано':'','Сплачено':'','Сальдо':''},{'Дата':dmy(reconFrom),'Документ':'Сальдо на початок періоду','Точка':'','Нараховано':'','Сплачено':'','Сальдо':r2(d.open)}];
     for(const r of d.rows){bal+=r.acc-r.paid;rows.push({'Дата':dmy(r.d),'Документ':r.doc,'Точка':S.points[r.pid]?.name||r.pid,'Нараховано':r.acc?r2(r.acc):'','Сплачено':r.paid?r2(r.paid):'','Сальдо':r2(bal)})}
     rows.push({'Дата':dmy(reconTo),'Документ':'Сальдо на кінець періоду','Точка':'','Нараховано':'','Сплачено':'','Сальдо':r2(bal)});
     const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=[{wch:12},{wch:48},{wch:26},{wch:13},{wch:13},{wch:13}];
@@ -1510,7 +1530,7 @@ async function reconXlsx(){
     await dl.save({filename:`Звірка ${reconCp.replace(/[\\/:*?"<>|]/g,' ')} ${dmy(reconFrom)}–${dmy(reconTo)}.xlsx`,data:new Blob([buf])});toast('Файл збережено');
   }catch(e){toast('Не вдалося підготувати файл')}
 }
-document.addEventListener('change',e=>{const id=e.target.id;if(id==='rc_cp'){reconCp=e.target.value;render()}if(id==='rc_from'&&e.target.value){reconFrom=e.target.value;if(reconTo<reconFrom)reconTo=reconFrom;render()}if(id==='rc_to'&&e.target.value){reconTo=e.target.value;if(reconFrom>reconTo)reconFrom=reconTo;render()}});
+document.addEventListener('change',e=>{const id=e.target.id;if(id==='rc_pt'){reconPid=e.target.value;reconCp='main';render()}if(id==='rc_cp'){reconCp=e.target.value;render()}if(id==='rc_from'&&e.target.value){reconFrom=e.target.value;if(reconTo<reconFrom)reconTo=reconFrom;render()}if(id==='rc_to'&&e.target.value){reconTo=e.target.value;if(reconFrom>reconTo)reconFrom=reconTo;render()}});
 
 /* ---------- export ---------- */
 function loadXLSX(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';sc.onload=ok;sc.onerror=no;document.head.appendChild(sc)})}
