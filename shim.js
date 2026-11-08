@@ -92,8 +92,7 @@
   /* ---------- logout button ---------- */
   function addLogout(){if(document.getElementById('logoutBtn'))return;const row=document.querySelector('header .hrow');if(!row)return;
     const b=document.createElement('button');b.id='logoutBtn';b.type='button';b.className='btn sm';b.textContent='Вийти';b.title=session?session.user.email:'';
-    b.onclick=async()=>{await sb.auth.signOut();location.reload()};
-    const c=document.createElement('button');c.id='passBtn';c.type='button';c.className='btn sm';c.textContent='🔑';c.setAttribute('aria-label','Змінити пароль');c.title='Змінити пароль';c.onclick=()=>show('newpass');row.appendChild(c);row.appendChild(b)}
+    b.onclick=async()=>{await sb.auth.signOut();location.reload()};row.appendChild(b)}
 
 
   /* ---------- auto-update: GitHub Pages caches pages ~10 min ---------- */
