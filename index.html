@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611081151">
+<meta name="wl-build" content="202611081154">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,9 +235,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611081151"></script>
+<script src="config.js?v=202611081154"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611081151"></script>
+<script src="shim.js?v=202611081154"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -410,7 +410,7 @@ function pmInfo(v){
     h+=kv('Виручка','<b>'+f0(rv)+' грн</b>');
     const prev=monthsList().filter(x=>x<m).pop(), pr=prev?S.pm[prev+'_'+pid]:null;
     if(pr&&+pr.liters)h+=`<div class="note">${mLabel(prev)}: ${nf1.format(+pr.liters)} л по ${nf2.format((+pr.revenue||0)/(+pr.liters))} грн/л · ${f0(+pr.revenue||0)} грн</div>`;
-    infoSheet('Виручка · '+(p.name||pid),mLabel(m),h);return;
+    {const gw=(S.months[m]||{}).gwThru;infoSheet('Виручка · '+(p.name||pid),mLabel(m)+(gw&&gw<monthEnd(m)?' · дані по '+dmy(gw):''),h)}return;
   }
   const exps=Object.values(S.exp).filter(e=>e.month===m&&e.point===pid);
   const wUse=u.w1!=null&&u.w0!=null?u.w1-u.w0:null, eUse=u.e1!=null&&u.e0!=null?u.e1-u.e0:null;
