@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080804">
+<meta name="wl-build" content="202611080805">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -225,9 +225,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080804"></script>
+<script src="config.js?v=202611080805"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080804"></script>
+<script src="shim.js?v=202611080805"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq'];
@@ -872,16 +872,14 @@ function viewUtil(m){
   h+=utilPaySection(m)+billIssuesHtml(m);
   // history
   const all=pointsList(); if(!utilPoint||!S.points[utilPoint]) utilPoint=(pts[0]||all[0]||{}).id||'';
-  const hist=Object.values(S.util).filter(u=>u.point===utilPoint).sort((a,b)=>b.month.localeCompare(a.month));
-  h+=`<section class="card"><div class="shead"><h2>Історія по точці</h2><select id="utilPointSel" aria-label="Точка">${all.map(p=>`<option value="${p.id}" ${p.id===utilPoint?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
+  const HY=(m||'').slice(0,4), hist=Object.values(S.util).filter(u=>u.point===utilPoint&&u.month.startsWith(HY)).sort((a,b)=>b.month.localeCompare(a.month));
+  h+=`<section class="card"><div class="shead"><h2>Історія по точці · ${HY}</h2><select id="utilPointSel" aria-label="Точка">${all.map(p=>`<option value="${p.id}" ${p.id===utilPoint?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
   <div class="tbl"><table class="pl ut"><thead><tr><th>Місяць</th><th class="num">Вода, ₴</th><th class="num">Світло, ₴</th><th class="num">Разом, ₴</th><th class="num hide-sm">Сплачено, ₴</th></tr></thead><tbody>`;
-  let yr='';
   for(const u of hist){
-    const y=u.month.slice(0,4); if(y!==yr){yr=y;h+=`<tr class="ysub"><td colspan="5"><b>${y}</b></td></tr>`}
     const py=S.pay[u.month+'_'+u.point], pd=py&&py.utilPaid!=null?py.utilPaid:null;
     h+=`<tr class="${u.noCharge?'mut':''}"><td>${cap(MN[+u.month.slice(5)-1])}${u.noCharge?' <span class="pill">не нарах.</span>':''}</td><td class="num tap" data-act="utilInfo" data-id="${u.month}|${u.point}|w">${f0(u.wSum)}</td><td class="num tap" data-act="utilInfo" data-id="${u.month}|${u.point}|e">${f0(u.eSum)}</td><td class="num"><b>${f0((+u.wSum||0)+(+u.eSum||0))}</b></td><td class="num hide-sm">${pd!=null?f0(pd):'<span class="mut">—</span>'}</td></tr>`;
   }
-  if(!hist.length) h+=`<tr><td colspan="5" class="note">Показників по цій точці поки немає.</td></tr>`;
+  if(!hist.length) h+=`<tr><td colspan="5" class="note">Показників по цій точці за цей рік немає.</td></tr>`;
   h+=`</tbody></table></div><p class="note">Натисніть суму, щоб побачити показники, тариф і витрату на 1 літр.</p>${viewTariffHist(utilPoint)}</section>`;
   return h;
 }
