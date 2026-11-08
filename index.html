@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080811">
+<meta name="wl-build" content="202611080818">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -226,9 +226,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080811"></script>
+<script src="config.js?v=202611080818"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080811"></script>
+<script src="shim.js?v=202611080818"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq'];
@@ -820,9 +820,8 @@ function netRatio(m,k,kind){let U=0,L=0;for(const p of utilPts(m)){if(kind&&(p.k
 function utilNorm(m,pid,k){
   const r=utilRatio(m,pid,k); if(r==null)return null;
   const kind=k==='e'?((S.points[pid]||{}).kind||''):'', net=netRatio(m,k,kind); let own=null,ownTxt='';
-  if(k==='w'){const ms=monthsList().filter(x=>x<m).slice(-6).reverse();const v=[];for(const x of ms){const q=utilRatio(x,pid,'w');if(q!=null)v.push(q);if(v.length===3)break}
-    if(v.length){own=v.reduce((a,b)=>a+b,0)/v.length;ownTxt='за останні '+v.length+' міс.'}}
-  else{const ly=(+m.slice(0,4)-1)+m.slice(4);const q=utilRatio(ly,pid,'e');if(q!=null){own=q;ownTxt='у '+mLabel(ly).toLowerCase()}}
+  {const ms=monthsList().filter(x=>x<m).slice(-6).reverse();const v=[];for(const x of ms){const q=utilRatio(x,pid,k);if(q!=null)v.push(q)}
+    if(v.length){own=v.reduce((a,b)=>a+b,0)/v.length;ownTxt='середнє за '+v.length+' міс. до '+mLabel(m).toLowerCase()}}
   const dn=net?r/net-1:null, do_=own?r/own-1:null, dev=Math.max(dn??-1,do_??-1);
   return {r,net,netTxt:k==='e'?(kind==='автомат'?'по автоматах':kind?'по пунктах':'по мережі (тип точки не вказано)'):'по мережі',own,ownTxt,dn,do_,dev,lvl:dev>=NORM_BAD?'bad':dev>=NORM_WARN?'warn':''};
 }
