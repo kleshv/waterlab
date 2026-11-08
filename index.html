@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080800">
+<meta name="wl-build" content="202611080804">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -225,9 +225,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080800"></script>
+<script src="config.js?v=202611080804"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080800"></script>
+<script src="shim.js?v=202611080804"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq'];
@@ -809,8 +809,28 @@ function tariffSince(pid,m){const t=tariffOf(pid,m);return t.from?'з '+mGen(t.f
 const perL=(use,liters)=>use!=null&&liters?use*1000/liters:null;
 const fmt1=v=>v==null?'—':nf1.format(Math.round(v*10)/10);
 
+
+function utilTot(v){
+  const [m,k]=v.split('|'), kv=(x,y)=>`<div class="kv"><span>${x}</span><b>${y}</b></div>`;
+  let n=0,wU=0,wS=0,eU=0,eS=0,L=0,LW=0,LE=0,LS=0;
+  for(const p of utilPts(m)){const u=S.util[m+'_'+p.id];if(!u||u.noCharge)continue;n++;
+    wU+=+u.wUse||0;wS+=+u.wSum||0;eU+=+u.eUse||0;eS+=+u.eSum||0;
+    const lit=+(S.pm[m+'_'+p.id]||{}).liters||0;if(lit){L+=lit;LW+=+u.wUse||0;LE+=+u.eUse||0;LS+=(+u.wSum||0)+(+u.eSum||0)}}
+  const t2=x=>nf2.format(x), sec=(nm,U,Sm,unit,LU,perUnit)=>kv('Спожито всього',nf1.format(Math.round(U*10)/10)+' '+unit)+kv('Сума',f0(Sm)+' грн')+
+    kv('В середньому на локацію',nf1.format(n?Math.round(U/n*10)/10:0)+' '+unit+' · '+f0(n?Sm/n:0)+' грн')+kv('Середній тариф',U?t2(Sm/U)+' грн за '+unit:'—')+
+    (L?kv('На 1 проданий літр',perUnit(LU))+kv('Вартість на 1 л',t2((nm==='w'?wS:eS)/L)+' грн'):'');
+  let h='';
+  if(k==='w'||k==='t'){if(k==='t')h+=`<div class="sub">Вода</div>`;h+=sec('w',wU,wS,'м³',LW,x=>fmt1(perL(x,L))+' л води')}
+  if(k==='e'||k==='t'){if(k==='t')h+=`<div class="sub">Світло</div>`;h+=sec('e',eU,eS,'кВт·год',LE,x=>fmt1(perL(x,L))+' Вт·год')}
+  if(k==='t'){h+=`<div class="sub">Разом</div>`+kv('Сума',f0(wS+eS)+' грн')+kv('В середньому на локацію',f0(n?(wS+eS)/n:0)+' грн')+(L?kv('Вартість на 1 проданий л',t2(LS/L)+' грн'):'')}
+  infoSheet(k==='w'?'Вода — разом':k==='e'?'Світло — разом':'Комуналка — разом',mLabel(m)+' · '+n+' локацій'+(L?' · продано '+nf1.format(L)+' л':''),h);
+}
 function utilInfo(v){
   const [m,pid,k]=v.split('|'), u=S.util[m+'_'+pid]||{}, r=S.pm[m+'_'+pid]||{}, p=S.points[pid]||{}, lit=+r.liters||0;
+  if(k==='t'){const kv=(x,y)=>`<div class="kv"><span>${x}</span><b>${y}</b></div>`,tot=(+u.wSum||0)+(+u.eSum||0);
+    let h=kv('Вода',nf1.format(+u.wUse||0)+' м³ × '+String(+u.wT||0).replace('.',',')+' = '+f0(u.wSum))+kv('Світло',nf1.format(+u.eUse||0)+' кВт·год × '+String(+u.eT||0).replace('.',',')+' = '+f0(u.eSum))+kv('Разом','<b>'+f0(tot)+' грн</b>');
+    if(lit)h+=kv('На 1 проданий літр',fmt1(perL(u.wUse,lit))+' л води · '+fmt1(perL(u.eUse,lit))+' Вт·год')+kv('Вартість на 1 л',nf2.format(tot/lit)+' грн');
+    infoSheet('Комуналка · '+(p.name||pid),mLabel(m)+(lit?' · продано '+nf1.format(lit)+' л':''),h);return}
   const W=k==='w', a=W?u.w0:u.e0, b=W?u.w1:u.e1, use=W?u.wUse:u.eUse, t=W?u.wT:u.eT, sum=W?u.wSum:u.eSum, unit=W?'м³':'кВт·год';
   const kv=(x,y)=>`<div class="kv"><span>${x}</span><b>${y}</b></div>`, n=x=>x==null||x===''?'—':nf1.format(+x);
   let h=kv('Було',n(a))+kv('Стало',n(b))+kv('Спожито',n(use)+' '+unit)+kv('Тариф',t!=null?String(+t).replace('.',',')+' грн':'—')+kv('Сума','<b>'+f0(sum)+' грн</b>');
@@ -835,7 +855,7 @@ function viewUtil(m){
       if(t0.eT!=null&&eT1!=null&&Math.abs(t0.eT-eT1)>0.0005) tc.push(`світло ${nn(t0.eT)} → <b>${nn(eT1)}</b>`);}
     if(tc.length) tcN++;
     rows+=`<tr class="${ed?'click':''}${off?' mut':''}" data-act="${ed?'editUtil':''}" data-id="${p.id}"><td>${esc(p.name)}${off?' <span class="pill">не нараховуємо</span>':''}${tc.length?`<div class="tchg">↑ ${tc.join(', ')}</div>`:''}${u&&u.note&&u.note!=='не нараховуємо'?`<div class="note">${esc(u.note)}</div>`:''}</td>`+
-      (u?`<td class="num tap" data-act="utilInfo" data-id="${m}|${p.id}|w">${f0(u.wSum)}</td><td class="num tap" data-act="utilInfo" data-id="${m}|${p.id}|e">${f0(u.eSum)}</td><td class="num"><b>${off?'0':f0((+u.wSum||0)+(+u.eSum||0))}</b></td>`
+      (u?`<td class="num tap" data-act="utilInfo" data-id="${m}|${p.id}|w">${f0(u.wSum)}</td><td class="num tap" data-act="utilInfo" data-id="${m}|${p.id}|e">${f0(u.eSum)}</td><td class="num tap" data-act="utilInfo" data-id="${m}|${p.id}|t"><b>${off?'0':f0((+u.wSum||0)+(+u.eSum||0))}</b></td>`
          :`<td colspan="2"><span class="pill open">немає показників</span></td><td class="num mut">—</td>`)+`</tr>`;
   }
   const perLit=(v,l)=>l?' · '+fmt1(perL(v,l)):'';
@@ -847,7 +867,7 @@ function viewUtil(m){
     <div class="tile"><div class="l">Світло за місяць, ₴</div><div class="v">${f0(eS)}</div><div class="s">спожито ${nf1.format(Math.round(eU))} кВт·год${L?`<br>на 1 проданий л: ${fmt1(perL(LE,L))} Вт·год`:''}</div></div>
     <div class="tile main"><div class="l">Комуналка за місяць, ₴</div><div class="v">${f0(wS+eS)}</div><div class="s">${L?`на 1 проданий л: ${nf2.format((wS+eS)/L)} грн`:'вода + світло'}</div></div>
   </div>
-  <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Вода за міс., ₴</th><th class="num">Світло за міс., ₴</th><th class="num">Разом за міс., ₴</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="note">У цьому місяці немає точок.</td></tr>'}</tbody><tfoot><tr class="final"><td>Разом</td><td class="num">${f0(wS)}</td><td class="num">${f0(eS)}</td><td class="num">${f0(wS+eS)}</td></tr></tfoot></table></div>
+  <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Вода за міс., ₴</th><th class="num">Світло за міс., ₴</th><th class="num">Разом за міс., ₴</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="note">У цьому місяці немає точок.</td></tr>'}</tbody><tfoot><tr class="final"><td>Разом</td><td class="num tap" data-act="utilTot" data-id="${m}|w">${f0(wS)}</td><td class="num tap" data-act="utilTot" data-id="${m}|e">${f0(eS)}</td><td class="num tap" data-act="utilTot" data-id="${m}|t">${f0(wS+eS)}</td></tr></tfoot></table></div>
   </section>`;
   h+=utilPaySection(m)+billIssuesHtml(m);
   // history
@@ -1659,7 +1679,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo})[a.dataset.act]?.(id);
+  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
