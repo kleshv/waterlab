@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080045">
+<meta name="wl-build" content="202611080048">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -221,9 +221,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080045"></script>
+<script src="config.js?v=202611080048"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080045"></script>
+<script src="shim.js?v=202611080048"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov'];
@@ -615,10 +615,10 @@ function addPay(){openSheet('Виплата прибутку','Зменшує б
 function editPay(id){openSheet('Виплата','',payForm(S.settle[id]),savePay(id),async()=>{const ok=await w(()=>db.doc('settle/'+id).delete());return ok})}
 
 function pointForm(p){return fld('name','Адреса / назва',p.name||'',{type:'text',full:true})+fld('rent','Оренда на місяць',p.rent??0)+
-  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Не працює']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('rentCash','З оренди щомісяця з особистої картки Влада (ф2), грн',p.rentCash??'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
+  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Не працює']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('payee2','Окремо за воду платимо (якщо інший отримувач)',p.payee2||'',{type:'text',full:true})+fld('rentCash','З оренди щомісяця з особистої картки Влада (ф2), грн',p.rentCash??'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
 function savePoint(id,base){return async fd=>{const r=parseNum(fd.rent);if(r===null)return 'Не зрозумів суму оренди';if(!fd.name.trim())return 'Вкажіть адресу';
   const order=base.order??(Math.max(0,...Object.values(S.points).map(p=>p.order||0))+1);
-  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',rentCash:parseNum(String(fd.rentCash||''))||0,contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
+  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',payee2:fd.payee2||'',rentCash:parseNum(String(fd.rentCash||''))||0,contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
 function addPoint(){openSheet('Нова точка','',pointForm({}),savePoint(db.collection('points').doc().id,{}))}
 function editPoint(id){openSheet('Точка','',pointForm(S.points[id]),savePoint(id,S.points[id]))}
 
@@ -1250,7 +1250,7 @@ const CP_STOP=new Set(['осбб','тов','жк','дп','ф','л','прат','�
 const cpTok=s=>(s||'').toLowerCase().replace(/[іїi]/g,'i').replace(/[ʼ’'`"«»]/g,'').split(/[^a-zа-яєґ0-9]+/).filter(t=>t&&!CP_STOP.has(t));
 function cpPids(bankName){
   const bt=cpTok(bankName); let best=0,ids=[];
-  for(const p of pointsList()){const pt=new Set([...cpTok(p.payee),...cpTok(p.name)]);
+  for(const p of pointsList()){const pt=new Set([...cpTok(p.payee),...cpTok(p.payee2),...cpTok(p.name)]);
     const words=bt.filter(t=>t.length>=2&&!/^\d+$/.test(t)&&pt.has(t)).length; if(!words)continue;
     const sc=words*10+bt.filter(t=>/^\d+$/.test(t)&&pt.has(t)).length;
     if(sc>best){best=sc;ids=[p.id]}else if(sc===best)ids.push(p.id)}
@@ -1262,6 +1262,10 @@ function payCheck(){
   const groups={}, other=[];
   for(const o of ops){if(skip(o))continue;const pids=cpPids(o.name);if(!pids.length){other.push(o);continue}
     const k=pids.join(',');(groups[k]||(groups[k]={pids,names:new Set(),bank:[],db:[]})).bank.push({date:o.date,amt:-o.amt,purp:o.purp});groups[k].names.add(o.name)}
+  {const G=Object.values(groups);let merged=true;
+   while(merged){merged=false;for(let i=0;i<G.length&&!merged;i++)for(let j=i+1;j<G.length;j++)if(G[i].pids.some(x=>G[j].pids.includes(x))){
+     G[i].pids=[...new Set([...G[i].pids,...G[j].pids])];G[i].bank.push(...G[j].bank);G[j].names.forEach(n=>G[i].names.add(n));G.splice(j,1);merged=true;break}}
+   for(const k in groups)delete groups[k];G.forEach((g,i)=>groups['g'+i]=g)}
   for(const [id,p] of Object.entries(S.pay)){
     for(const [a,dt,kind] of [[p.rentPaid!=null?(+p.rentPaid)-(+p.rentCash||0):null,p.rentDate,'оренда'],[p.utilPaid,p.utilDate,'комуналка']]){
       if(!a||!dt||dt<d0||dt>d1)continue;
@@ -1273,11 +1277,18 @@ function payCheck(){
     const sum=(l,d)=>l.filter(x=>x.date===d).reduce((s,x)=>s+x.amt,0);
     const days=[...new Set([...g.bank,...g.db].map(x=>x.date))].sort();
     let ub=[],ud=[],dd=[];
-    for(const d of days){const b=sum(g.bank,d),q=sum(g.db,d);if(Math.abs(b-q)<=0.05)continue;
-      if(b&&q)dd.push({date:d,b,q,purp:g.bank.filter(x=>x.date===d).map(x=>x.purp.slice(0,60)).join('; '),what:g.db.filter(x=>x.date===d).map(x=>x.kind+' за '+mLabel(x.m).toLowerCase()).join(', ')});
-      else{ub.push(...g.bank.filter(x=>x.date===d));ud.push(...g.db.filter(x=>x.date===d))}}
-    // second pass: same amount within ±7 days
-    for(const x of [...ub]){const j=ud.findIndex(y=>Math.abs(y.amt-x.amt)<0.05&&Math.abs((new Date(y.date)-new Date(x.date))/864e5)<=7);if(j>=0){x.off=ud[j].date;ud[j].off=x.date;ud.splice(j,1);ub.splice(ub.indexOf(x),1)}}
+    for(const d of days){const b=sum(g.bank,d),q=sum(g.db,d);if(Math.abs(b-q)<=0.05)continue;ub.push(...g.bank.filter(x=>x.date===d));ud.push(...g.db.filter(x=>x.date===d))}
+    const dif=(a,b)=>Math.abs((new Date(a)-new Date(b))/864e5);
+    // одна сума в межах ±7 днів
+    for(const x of [...ub]){const j=ud.findIndex(y=>Math.abs(y.amt-x.amt)<0.05&&dif(y.date,x.date)<=7);if(j>=0){ud.splice(j,1);ub.splice(ub.indexOf(x),1)}}
+    // одна оплата в обліку = два платежі в банку (напр. світло + вода окремим отримувачам)
+    for(const y of [...ud]){let hit=null;
+      for(let i=0;i<ub.length&&!hit;i++)for(let k=i+1;k<ub.length;k++)if(Math.abs(ub[i].amt+ub[k].amt-y.amt)<0.05&&dif(ub[i].date,y.date)<=31&&dif(ub[k].date,y.date)<=31){hit=[i,k];break}
+      if(hit){const [i,k]=hit;ub.splice(k,1);ub.splice(i,1);ud.splice(ud.indexOf(y),1)}}
+    // що лишилось в один день з обох боків — одним рядком
+    for(const d of [...new Set(ub.map(x=>x.date))]){const bb=ub.filter(x=>x.date===d),qq=ud.filter(x=>x.date===d);if(!qq.length)continue;
+      dd.push({date:d,b:bb.reduce((s,x)=>s+x.amt,0),q:qq.reduce((s,x)=>s+x.amt,0),purp:bb.map(x=>x.purp.slice(0,60)).join('; '),what:qq.map(x=>x.kind+' за '+mLabel(x.m).toLowerCase()).join(', ')});
+      ub=ub.filter(x=>x.date!==d);ud=ud.filter(x=>x.date!==d)}
     const tb=g.bank.reduce((s,x)=>s+x.amt,0),td=g.db.reduce((s,x)=>s+x.amt,0);
     res.push({pids:g.pids,names:[...g.names],tb,td,ub,ud,dd});
   }
