@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611081835">
+<meta name="wl-build" content="202611081841">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,9 +235,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611081835"></script>
+<script src="config.js?v=202611081841"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611081835"></script>
+<script src="shim.js?v=202611081841"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -280,10 +280,11 @@ function toast(t){const el=$('#toast');el.textContent=t;el.hidden=false;clearTim
 /* ---------- data access ---------- */
 function monthsList(){return Object.keys(S.months).sort()}
 function pointsList(){return Object.entries(S.points).map(([id,p])=>({id,...p})).sort((a,b)=>(a.order??99)-(b.order??99)||a.name.localeCompare(b.name))}
+const closedBefore=(pid,m)=>{const p=S.points[pid];return !!(p&&p.active===false&&p.closedAt&&p.closedAt.slice(0,7)<m)};
 function calc(m){
   const md=S.months[m]||{};
   const rows=[];
-  for(const [id,r] of Object.entries(S.pm)) if(r.month===m) rows.push({id,...r});
+  for(const [id,r] of Object.entries(S.pm)) if(r.month===m&&!(closedBefore(r.point,m)&&!(+r.revenue||+r.liters))) rows.push({id,...r});
   const pts=S.points;
   rows.sort((a,b)=>((pts[a.point]?.order??99)-(pts[b.point]?.order??99)));
   const exps=Object.entries(S.exp).filter(([,e])=>e.month===m).map(([id,e])=>({id,...e}));
@@ -934,7 +935,7 @@ function utilPrev(pid,m){let best=null;for(const u of Object.values(S.util)) if(
 function utilPts(m){
   const ids=new Set(Object.values(S.pm).filter(r=>r.month===m).map(r=>r.point));
   for(const u of Object.values(S.util)) if(u.month===m) ids.add(u.point);
-  return pointsList().filter(p=>ids.has(p.id));
+  return pointsList().filter(p=>ids.has(p.id)&&!(closedBefore(p.id,m)&&!Object.values(S.util).some(u=>u.month===m&&u.point===p.id)));
 }
 function tariffHist(pid){return Object.entries(S.tariffs).map(([id,t])=>({id,...t})).filter(t=>t.point===pid).sort((a,b)=>a.from.localeCompare(b.from))}
 function tariffOf(pid,m){
