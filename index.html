@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611081128">
+<meta name="wl-build" content="202611081151">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,9 +235,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611081128"></script>
+<script src="config.js?v=202611081151"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611081128"></script>
+<script src="shim.js?v=202611081151"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -435,12 +435,12 @@ function centralInfo(m){
 }
 function viewMonth(m){
   const c=calc(m), closed=isClosed(m), ed=editable(m), t=monthTable(c);
-  const margin=t.T.rv?t.op/t.T.rv*100:0;
+  const margin=t.T.rv?t.op/t.T.rv*100:0, gw=(S.months[m]||{}).gwThru, gwL=gw&&gw<monthEnd(m)?` <span class="gwd">по ${dmy(gw).slice(0,5)}</span>`:'';
   let h=`<section class="card"><div class="shead"><h2>${mLabel(m)}</h2>
     <span class="pill ${closed?'closed':'open'}">${closed?'закритий':'відкритий'}</span>
     ${canWrite?`<button class="btn sm" data-act="toggleClose" type="button">${closed?'Відкрити для змін':'Закрити місяць'}</button>`:''}</div>
   <div class="tiles">
-    <div class="tile"><div class="l">Виручка</div><div class="v">${f0(t.T.rv)}</div><div class="s">${f0(t.T.L)} л · ${nf2.format(t.T.L?t.T.rv/t.T.L:0)} грн/л</div></div>
+    <div class="tile"><div class="l">Виручка${gwL}</div><div class="v">${f0(t.T.rv)}</div><div class="s">${f0(t.T.L)} л · ${nf2.format(t.T.L?t.T.rv/t.T.L:0)} грн/л</div></div>
     <div class="tile"><div class="l">Операційні витрати</div><div class="v">${f0(t.opex)}</div><div class="s">${nf2.format(t.T.L?t.opex/t.T.L:0)} грн/л</div></div>
     <div class="tile main"><div class="l">Операційний прибуток</div><div class="v ${sgn(t.op)}">${f0(t.op)}</div><div class="s">маржа ${margin.toFixed(1).replace('.',',')}%</div></div>
     <div class="tile"><div class="l">До розподілу</div><div class="v ${sgn(t.net)}">${f0(t.net)}</div><div class="s">після капвкладень ${f0(t.capex)}</div></div>
@@ -449,7 +449,7 @@ function viewMonth(m){
   // points
   const dash='<span class="mut">—</span>', n=v=>v?f0(v):dash;
   h+=`<section class="card"><div class="shead"><h2>Фінрезультат по точках</h2><span class="note">${ed?'натисніть рядок, щоб внести дані':''}</span></div><div class="tbl"><table class="pl">
-  <thead><tr><th>Точка</th><th class="num hide-sm">Літри</th><th class="num">Виручка</th><th class="num hide-sm">Оренда</th><th class="num hide-sm">Вода</th><th class="num hide-sm">Електро</th><th class="num hide-sm">Інше</th><th class="num">Витрати</th><th class="num">Результат</th></tr></thead><tbody>`;
+  <thead><tr><th>Точка</th><th class="num hide-sm">Літри</th><th class="num">Виручка${gwL?`<div class="gwd">${gwL}</div>`:''}</th><th class="num hide-sm">Оренда</th><th class="num hide-sm">Вода</th><th class="num hide-sm">Електро</th><th class="num hide-sm">Інше</th><th class="num">Витрати</th><th class="num">Результат</th></tr></thead><tbody>`;
   for(const o of t.rows){
     const p=S.points[o.point];
     h+=`<tr class="${ed?'click':''}" data-act="${ed?'editPM':''}" data-id="${o.id}"><td>${esc(p?p.name:o.point)}</td><td class="num hide-sm">${f0(o.L)}</td><td class="num tap" data-act="pmInfo" data-id="${o.id}|rv">${f0(o.rv)}</td><td class="num hide-sm">${n(o.rn)}</td><td class="num hide-sm">${n(o.wa)}</td><td class="num hide-sm">${n(o.el)}</td><td class="num hide-sm">${n(o.ot)}</td><td class="num tap" data-act="pmInfo" data-id="${o.id}|ex">${f0(o.ex)}</td><td class="num ${sgn(o.res)}">${f0(o.res)}</td></tr>`;
