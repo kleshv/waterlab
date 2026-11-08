@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080808">
+<meta name="wl-build" content="202611080811">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -226,9 +226,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080808"></script>
+<script src="config.js?v=202611080811"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080808"></script>
+<script src="shim.js?v=202611080811"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq'];
@@ -700,10 +700,10 @@ function addPay(){openSheet('Виплата прибутку','Зменшує б
 function editPay(id){openSheet('Виплата','',payForm(S.settle[id]),savePay(id),async()=>{const ok=await w(()=>db.doc('settle/'+id).delete());return ok})}
 
 function pointForm(p){return fld('name','Адреса / назва',p.name||'',{type:'text',full:true})+fld('rent','Оренда на місяць',p.rent??0)+
-  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Не працює']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('payee2','Окремо за воду платимо (якщо інший отримувач)',p.payee2||'',{type:'text',full:true})+fld('rentCash','З оренди щомісяця з особистої картки Влада (ф2), грн',p.rentCash??'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
+  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Не працює']])+sel('kind','Тип',p.kind||'',[['','— не вказано —'],['автомат','Автомат'],['автоматизований пункт','Автоматизований пункт']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('payee2','Окремо за воду платимо (якщо інший отримувач)',p.payee2||'',{type:'text',full:true})+fld('rentCash','З оренди щомісяця з особистої картки Влада (ф2), грн',p.rentCash??'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
 function savePoint(id,base){return async fd=>{const r=parseNum(fd.rent);if(r===null)return 'Не зрозумів суму оренди';if(!fd.name.trim())return 'Вкажіть адресу';
   const order=base.order??(Math.max(0,...Object.values(S.points).map(p=>p.order||0))+1);
-  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',payee2:fd.payee2||'',rentCash:parseNum(String(fd.rentCash||''))||0,contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
+  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',kind:fd.kind||'',payee2:fd.payee2||'',rentCash:parseNum(String(fd.rentCash||''))||0,contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
 function addPoint(){openSheet('Нова точка','',pointForm({}),savePoint(db.collection('points').doc().id,{}))}
 function editPoint(id){openSheet('Точка','',pointForm(S.points[id]),savePoint(id,S.points[id]))}
 
@@ -816,18 +816,18 @@ const fmt1=v=>v==null?'—':nf1.format(Math.round(v*10)/10);
 /* ---------- перевитрата води/світла на 1 проданий літр ---------- */
 const NORM_WARN=0.3, NORM_BAD=0.6;
 function utilRatio(m,pid,k){const u=S.util[m+'_'+pid], lit=+(S.pm[m+'_'+pid]||{}).liters||0;if(!u||u.noCharge||!lit)return null;const use=+(k==='w'?u.wUse:u.eUse)||0;return use>0?perL(use,lit):null}
-function netRatio(m,k){let U=0,L=0;for(const p of utilPts(m)){const u=S.util[m+'_'+p.id],lit=+(S.pm[m+'_'+p.id]||{}).liters||0;if(!u||u.noCharge||!lit)continue;const use=+(k==='w'?u.wUse:u.eUse)||0;if(use>0){U+=use;L+=lit}}return L?perL(U,L):null}
+function netRatio(m,k,kind){let U=0,L=0;for(const p of utilPts(m)){if(kind&&(p.kind||'')!==kind)continue;const u=S.util[m+'_'+p.id],lit=+(S.pm[m+'_'+p.id]||{}).liters||0;if(!u||u.noCharge||!lit)continue;const use=+(k==='w'?u.wUse:u.eUse)||0;if(use>0){U+=use;L+=lit}}return L?perL(U,L):null}
 function utilNorm(m,pid,k){
   const r=utilRatio(m,pid,k); if(r==null)return null;
-  const net=netRatio(m,k); let own=null,ownTxt='';
+  const kind=k==='e'?((S.points[pid]||{}).kind||''):'', net=netRatio(m,k,kind); let own=null,ownTxt='';
   if(k==='w'){const ms=monthsList().filter(x=>x<m).slice(-6).reverse();const v=[];for(const x of ms){const q=utilRatio(x,pid,'w');if(q!=null)v.push(q);if(v.length===3)break}
     if(v.length){own=v.reduce((a,b)=>a+b,0)/v.length;ownTxt='за останні '+v.length+' міс.'}}
   else{const ly=(+m.slice(0,4)-1)+m.slice(4);const q=utilRatio(ly,pid,'e');if(q!=null){own=q;ownTxt='у '+mLabel(ly).toLowerCase()}}
   const dn=net?r/net-1:null, do_=own?r/own-1:null, dev=Math.max(dn??-1,do_??-1);
-  return {r,net,own,ownTxt,dn,do_,dev,lvl:dev>=NORM_BAD?'bad':dev>=NORM_WARN?'warn':''};
+  return {r,net,netTxt:k==='e'?(kind==='автомат'?'по автоматах':kind?'по пунктах':'по мережі (тип точки не вказано)'):'по мережі',own,ownTxt,dn,do_,dev,lvl:dev>=NORM_BAD?'bad':dev>=NORM_WARN?'warn':''};
 }
 function normHtml(n,k){if(!n)return '';const u=k==='w'?' л води':' Вт·год',pc=x=>(x>0?'+':'')+Math.round(x*100)+'%';
-  return `<div class="kv"><span>Норма по мережі</span><b>${fmt1(n.net)}${u}${n.dn!=null?` <span class="${n.dn>=NORM_WARN?'neg':'mut'}">(${pc(n.dn)})</span>`:''}</b></div>`+
+  return `<div class="kv"><span>Норма ${esc(n.netTxt)}</span><b>${fmt1(n.net)}${u}${n.dn!=null?` <span class="${n.dn>=NORM_WARN?'neg':'mut'}">(${pc(n.dn)})</span>`:''}</b></div>`+
     (n.own!=null?`<div class="kv"><span>Зазвичай у точки<div class="note">${esc(n.ownTxt)}</div></span><b>${fmt1(n.own)}${u}${n.do_!=null?` <span class="${n.do_>=NORM_WARN?'neg':'mut'}">(${pc(n.do_)})</span>`:''}</b></div>`:'')+
     (n.lvl?`<div class="calc ${n.lvl==='bad'?'neg':''}">${n.lvl==='bad'?'Сильна перевитрата':'Перевитрата'}: на ${Math.round(n.dev*100)}% більше норми. ${k==='w'?'Перевірте мембрану, дренаж, протікання або лічильник.':'Перевірте обігрів, насос і лічильник.'}</div>`:'');
 }
