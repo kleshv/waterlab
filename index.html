@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611081821">
+<meta name="wl-build" content="202611081828">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,9 +235,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611081821"></script>
+<script src="config.js?v=202611081828"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611081821"></script>
+<script src="shim.js?v=202611081828"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -719,9 +719,10 @@ function viewTrend(){
 }
 
 function viewPoints(){
-  let h=`<section class="card"><div class="shead"><h2>Точки мережі</h2>${canWrite?`<button class="btn sm pri" data-act="addPoint" type="button">+ Точка</button>`:''}</div><div class="tbl"><table><thead><tr><th>Адреса</th><th class="num">Оренда / міс</th><th>Статус</th></tr></thead><tbody>`;
-  for(const p of pointsList()) h+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editPoint':''}" data-id="${p.id}"><td>${esc(p.name)}${p.note?`<div class="note">${esc(p.note)}</div>`:''}</td><td class="num">${f0(p.rent)}</td><td><span class="pill ${p.active===false?'':'closed'}">${p.active===false?'не працює':'працює'}</span></td></tr>`;
-  h+=`</tbody></table></div></section>`;
+  const all=pointsList().filter(p=>p.id!=='p00'), act=all.filter(p=>p.active!==false), cl=all.filter(p=>p.active===false).sort((a,b)=>(b.closedAt||'').localeCompare(a.closedAt||''));
+  const row=(p,closed)=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editPoint':''}" data-id="${p.id}"><td>${esc(p.name)}${p.note?`<div class="note">${esc(p.note)}</div>`:''}</td><td class="num">${closed?(p.closedAt?dmy(p.closedAt):'—'):f0(p.rent)}</td></tr>`;
+  let h=`<section class="card"><div class="shead"><h2>Точки мережі · ${act.length}</h2>${canWrite?`<button class="btn sm pri" data-act="addPoint" type="button">+ Точка</button>`:''}</div><div class="tbl"><table><thead><tr><th>Адреса</th><th class="num">Оренда / міс</th></tr></thead><tbody>${act.map(p=>row(p,false)).join('')}</tbody></table></div></section>`;
+  if(cl.length)h+=`<section class="card"><details><summary class="shead" style="cursor:pointer"><h2>Закриті · ${cl.length}</h2></summary><div class="tbl"><table><thead><tr><th>Адреса</th><th class="num">Закрита</th></tr></thead><tbody>${cl.map(p=>row(p,true)).join('')}</tbody></table></div></details></section>`;
   return h;
 }
 
@@ -815,10 +816,10 @@ function addPay(){openSheet('Виплата прибутку','Зменшує б
 function editPay(id){openSheet('Виплата','',payForm(S.settle[id]),savePay(id),async()=>{const ok=await w(()=>db.doc('settle/'+id).delete());return ok})}
 
 function pointForm(p){return fld('name','Адреса / назва',p.name||'',{type:'text',full:true})+fld('rent','Оренда на місяць',p.rent??0)+
-  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Не працює']])+sel('kind','Тип',p.kind||'',[['','— не вказано —'],['автомат','Автомат'],['автоматизований пункт','Автоматизований пункт']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('payee2','Окремо за воду платимо (якщо інший отримувач)',p.payee2||'',{type:'text',full:true})+fld('rentCash','З оренди щомісяця з особистої картки Влада (ф2), грн',p.rentCash??'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
+  sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Закрита']])+fld('closedAt','Дата закриття',p.closedAt||'',{type:'date'})+sel('kind','Тип',p.kind||'',[['','— не вказано —'],['автомат','Автомат'],['автоматизований пункт','Автоматизований пункт']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('payee2','Окремо за воду платимо (якщо інший отримувач)',p.payee2||'',{type:'text',full:true})+fld('rentCash','З оренди щомісяця з особистої картки Влада (ф2), грн',p.rentCash??'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
 function savePoint(id,base){return async fd=>{const r=parseNum(fd.rent);if(r===null)return 'Не зрозумів суму оренди';if(!fd.name.trim())return 'Вкажіть адресу';
   const order=base.order??(Math.max(0,...Object.values(S.points).map(p=>p.order||0))+1);
-  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',kind:fd.kind||'',payee2:fd.payee2||'',rentCash:parseNum(String(fd.rentCash||''))||0,contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
+  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',closedAt:fd.active==='no'?(fd.closedAt||''):'',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',kind:fd.kind||'',payee2:fd.payee2||'',rentCash:parseNum(String(fd.rentCash||''))||0,contact:fd.contact||'',order})))return 'Не збереглося';toast('Збережено')}}
 function addPoint(){openSheet('Нова точка','',pointForm({}),savePoint(db.collection('points').doc().id,{}))}
 function pointUsage(id){
   const n=(col,f)=>Object.values(S[col]||{}).filter(f).length, U=[];
@@ -833,7 +834,7 @@ function pointUsage(id){
 }
 function editPoint(id){openSheet('Точка','',pointForm(S.points[id]),savePoint(id,S.points[id]),role==='owner'?async()=>{
   const U=pointUsage(id);
-  if(U.length){const fe=$('#ferr');fe.textContent='Видалити не можна — у точки є історія ('+U.join(', ')+'). Щоб прибрати її зі списків, поставте статус «Не працює».';fe.hidden=false;return false}
+  if(U.length){const fe=$('#ferr');fe.textContent='Видалити не можна — у точки є історія ('+U.join(', ')+'). Щоб прибрати її зі списків, поставте статус «Закрита».';fe.hidden=false;return false}
   for(const [k,x] of Object.entries(S.pm))if(x.point===id&&!await w(()=>db.doc('pm/'+k).delete()))return false;
   for(const col of ['pay','meter'])for(const [k,x] of Object.entries(S[col]))if(x.point===id&&!await w(()=>db.doc(col+'/'+k).delete()))return false;
   if(!await w(()=>db.doc('points/'+id).delete()))return false;toast('Точку видалено');return true}:null)}
