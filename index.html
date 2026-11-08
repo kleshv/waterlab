@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080836">
+<meta name="wl-build" content="202611080845">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -73,7 +73,10 @@ h2{font-family:var(--f-display);font-size:13px;font-weight:700;text-transform:up
 a.lnk{color:var(--acc,#2a6fdb);text-decoration:underline;cursor:pointer}
 label.chk{display:inline-flex;align-items:center;gap:6px;margin:4px 12px 4px 0;font-size:14px}label.chk input{width:auto;min-height:0}
 .pbar{height:5px;border-radius:3px;background:var(--line);margin-top:4px;overflow:hidden}.pbar i{display:block;height:100%;background:#2e9e5b}.pbar i.soon{background:#e6a700}.pbar i.over{background:#d23c3c}
-td.hi-warn,.lg.hi-warn{background:rgba(240,170,0,.22)}td.hi-bad,.lg.hi-bad{background:rgba(220,50,50,.2)}.lg{display:inline-block;width:14px;border-radius:3px}
+td.hi-warn,td.hi-bad{position:relative}td.hi-warn>*:first-child,td.hi-warn{color:#b86e00}td.hi-bad>*:first-child,td.hi-bad{color:#c4413b;font-weight:600}
+td.hi-warn::before,td.hi-bad::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:2px;background:#e8a317}td.hi-bad::before{background:#d9534f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) td.hi-warn{color:#f3c15a}:root:not([data-theme="light"]) td.hi-bad{color:#ff8a80}}
+.normlg{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin-top:10px;font-size:13px;color:var(--muted)}.normlg span{display:inline-flex;align-items:center;gap:6px}.normlg i{width:9px;height:9px;border-radius:50%;display:inline-block}.normlg i.w{background:#e8a317}.normlg i.b{background:#d9534f}.normlg .x{flex-basis:100%;font-size:12px}
 td.tap{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
 button.tile.tapt{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%;background:transparent;appearance:none;-webkit-appearance:none}button.tile.tapt .l{color:var(--accent,inherit)}
 .bi{padding:9px 0;border-bottom:1px solid var(--line)}.bi:last-child{border-bottom:0}
@@ -230,9 +233,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080836"></script>
+<script src="config.js?v=202611080845"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080836"></script>
+<script src="shim.js?v=202611080845"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc'];
@@ -1001,7 +1004,7 @@ function viewUtil(m){
   </div>
   <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Вода за міс., ₴</th><th class="num">Світло за міс., ₴</th><th class="num">Разом за міс., ₴</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="note">У цьому місяці немає точок.</td></tr>'}</tbody><tfoot><tr class="final"><td>Разом</td><td class="num tap" data-act="utilTot" data-id="${m}|w">${f0(wS)}</td><td class="num tap" data-act="utilTot" data-id="${m}|e">${f0(eS)}</td><td class="num tap" data-act="utilTot" data-id="${m}|t">${f0(wS+eS)}</td></tr></tfoot></table></div><!--normlegend-->
   </section>`;
-  {const na=normAlerts(m);if(na.m===m&&na.L.length)h=h.replace('<!--normlegend-->',`<p class="note"><span class="lg hi-warn">&nbsp;</span> перевитрата на 1 проданий літр понад ${NORM_WARN*100}% · <span class="lg hi-bad">&nbsp;</span> понад ${NORM_BAD*100}% (порівняно з мережею або з минулими місяцями точки)</p>`)}
+  {const na=normAlerts(m);if(na.m===m&&na.L.length)h=h.replace('<!--normlegend-->',`<div class="normlg"><span><i class="w"></i>перевитрата понад ${NORM_WARN*100}%</span><span><i class="b"></i>понад ${NORM_BAD*100}%</span><span class="x">на 1 проданий літр, порівняно з мережею або з минулими місяцями точки</span></div>`)}
   h+=utilPaySection(m)+billIssuesHtml(m);
   // history
   const all=pointsList(); if(!utilPoint||!S.points[utilPoint]) utilPoint=(pts[0]||all[0]||{}).id||'';
