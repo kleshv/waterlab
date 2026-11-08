@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611081051">
+<meta name="wl-build" content="202611081056">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -233,9 +233,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611081051"></script>
+<script src="config.js?v=202611081056"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611081051"></script>
+<script src="shim.js?v=202611081056"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -353,13 +353,14 @@ function render(){
   ysel.innerHTML=years.map(y=>`<option value="${y}" ${y===cy?'selected':''}>${y}</option>`).join('')||'<option>—</option>';
   sel.innerHTML=ms.filter(m=>m.startsWith(cy)).reverse().map(m=>`<option value="${m}" ${m===cur?'selected':''}>${cap(MN[+m.slice(5)-1])}${S.months[m].closed?'':' •'}</option>`).join('')||'<option>немає місяців</option>';
   sel.disabled=ysel.disabled=!ms.length;
-  const acct=role==='accountant', dan=isDan();
+  const acct=role==='accountant', dan=isDan(), tech=role==='tech';
   if(acct&&!ACCT_TABS.includes(tab)) tab='util';
+  if(tech) tab='svc';
   if(dan&&tab==='home') tab='exp';
   if(dan&&repSub==='bal') repSub='fin';
   if(dan&&!danOrdered){const e=document.querySelector('.tab[data-tab=exp]'),r=document.querySelector('.tab[data-tab=reports]');if(e&&r)r.before(e);danOrdered=true}
-  $('#newMonthBtn').hidden=acct||!canWrite||!Object.keys(S.points).length;
-  document.querySelectorAll('.tab').forEach(t=>{t.hidden=(acct&&!ACCT_TABS.includes(t.dataset.tab))||(!acct&&t.dataset.tab==='myexp')||(dan&&t.dataset.tab==='home');t.setAttribute('aria-selected',t.dataset.tab===tab)});
+  $('#newMonthBtn').hidden=acct||tech||!canWrite||!Object.keys(S.points).length;
+  document.querySelectorAll('.tab').forEach(t=>{t.hidden=(tech&&t.dataset.tab!=='svc')||(acct&&!ACCT_TABS.includes(t.dataset.tab))||(!acct&&t.dataset.tab==='myexp')||(dan&&t.dataset.tab==='home');t.setAttribute('aria-selected',t.dataset.tab===tab)});
   const main=$('#main');
   if(fatal){main.innerHTML=`<div class="banner warn">${esc(fatal)}</div>`;return}
   if(loaded.size<COLS.length){main.innerHTML=`<section class="card"><h2>Завантаження</h2><p class="note">${stale?'База поки не відповідає. Дані з’являться, щойно з’єднання відновиться.':'Підключаюся до бази: точки, місяці, витрати й взаєморозрахунок з’являться тут.'}</p></section>`;return}
@@ -1845,6 +1846,7 @@ $('#newMonthBtn').addEventListener('click',newMonth);
     const user=await window.claude.use('user');
     if(user){userApi=user;try{const cw=await user.can('data.write');if(cw===false)canWrite=false}catch(_){}try{me=await user.id()}catch(_){}}
     if(window.WL_ROLE==='accountant'){role='accountant';tab='util'}
+    if(window.WL_ROLE==='tech'){role='tech';tab='svc'}
     const timer=setTimeout(()=>{stale=true;render()},10000);
     for(const c of COLS){
       db.collection(c).onSnapshot(snap=>{
