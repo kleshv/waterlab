@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611081122">
+<meta name="wl-build" content="202611081123">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -234,9 +234,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611081122"></script>
+<script src="config.js?v=202611081123"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611081122"></script>
+<script src="shim.js?v=202611081123"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -570,11 +570,13 @@ function viewSvc(){
       <td class="num">${x.last?`${f0(x.used)} з ${f0(x.interval)} л${bar}<div class="note ${x.st==='over'?'neg':''}">${x.st==='over'?'прострочено на '+f0(-x.left)+' л':x.days!=null?'≈ '+x.days+' дн.'+(x.due?' · '+dmy(x.due):''):''}</div>`:'—'}</td>
       <td class="num hide-sm">${x.memL?dmy(x.memL.date)+`<div class="note">${mo(x.memL.date)} · ${f0(x.memUsed||0)} л</div>`:'—'}</td>
       <td class="num hide-sm">${x.toL?dmy(x.toL.date)+`<div class="note">${esc(x.toL.note||'')}</div>`:'—'}</td></tr>`}).join('');
-  return `<section class="card"><div class="shead"><h2>Регламент заміни фільтрів</h2></div>
+  const mAt=Object.values(S.meter).map(x=>x.at||x.date||'').sort().pop()||'', sTh=Object.values(S.sales).map(x=>x.thru||'').sort().pop()||'';
+  const asOf=mAt?dmy(mAt.slice(0,10))+(mAt.slice(11,16)?' '+mAt.slice(11,16):''):(sTh?dmy(sTh):'');
+  return `<section class="card"><div class="shead"><h2>Регламент заміни фільтрів</h2>${asOf?`<span class="gwthru" title="Лічильники з Gwaters${sTh?'; продажі по '+dmy(sTh):''}">дані на ${asOf}</span>`:''}</div>
   ${canWrite?`<div class="bigacts one" style="margin:0 0 12px"><button class="btn pri main" data-act="addSvc" type="button">+ Заміна / ТО</button></div>`:''}
   <div class="tiles t3"><div class="tile"><div class="l">Прострочено</div><div class="v ${n('over')?'neg':''}">${n('over')}</div><div class="s">точок</div></div><div class="tile"><div class="l">Скоро (до 14 днів)</div><div class="v">${n('soon')}</div><div class="s">точок</div></div><div class="tile"><div class="l">У нормі</div><div class="v">${n('ok')}</div><div class="s">точок</div></div></div>
   <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Фільтри: пройшло</th><th class="num hide-sm">Мембрани</th><th class="num hide-sm">ТО</th></tr></thead><tbody>${rows}</tbody></table></div>
-  <p class="note">Скільки води пройшло через фільтри = лічильник води на вході автомата (Gwaters) мінус показник при заміні. Якщо лічильника немає — оцінка: продані літри з Gwaters від дня заміни × коефіцієнт точки (скільки літрів проходить через фільтри на 1 проданий літр — за лічильником автомата на попередніх замінах). Продажі оновлено: ${salesUpd()?dmy(salesUpd().slice(0,10))+(salesUpd().slice(11)?' '+salesUpd().slice(11,16):''):'—'}. Натисніть точку, щоб побачити історію.</p></section>`;
+  <p class="note">Скільки води пройшло через фільтри = лічильник води на вході автомата (Gwaters) мінус показник при заміні. Якщо лічильника немає — оцінка: продані літри з Gwaters від дня заміни × коефіцієнт точки (скільки літрів проходить через фільтри на 1 проданий літр — за лічильником автомата на попередніх замінах). Натисніть точку, щоб побачити історію.</p></section>`;
 }
 function svcPoint(pid){
   const p=S.points[pid]||{}, x=svcState(pid), E=svcEv(pid).reverse();
