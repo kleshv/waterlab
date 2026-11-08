@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611080818">
+<meta name="wl-build" content="202611080828">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -226,9 +226,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611080818"></script>
+<script src="config.js?v=202611080828"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611080818"></script>
+<script src="shim.js?v=202611080828"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq'];
@@ -817,7 +817,20 @@ const fmt1=v=>v==null?'—':nf1.format(Math.round(v*10)/10);
 const NORM_WARN=0.3, NORM_BAD=0.6;
 function utilRatio(m,pid,k){const u=S.util[m+'_'+pid], lit=+(S.pm[m+'_'+pid]||{}).liters||0;if(!u||u.noCharge||!lit)return null;const use=+(k==='w'?u.wUse:u.eUse)||0;return use>0?perL(use,lit):null}
 function netRatio(m,k,kind){let U=0,L=0;for(const p of utilPts(m)){if(kind&&(p.kind||'')!==kind)continue;const u=S.util[m+'_'+p.id],lit=+(S.pm[m+'_'+p.id]||{}).liters||0;if(!u||u.noCharge||!lit)continue;const use=+(k==='w'?u.wUse:u.eUse)||0;if(use>0){U+=use;L+=lit}}return L?perL(U,L):null}
+const WINTER=[11,12,1,2,3];
+const isWinter=m=>WINTER.includes(+m.slice(5,7)), seasonName=m=>isWinter(m)?'зима':'літо';
+function seasonMonths(m,incl){const all=monthsList().filter(x=>incl?x<=m:x<m), w=isWinter(m), y0=(+m.slice(0,4)-1)+m.slice(4);return all.filter(x=>x>(incl?y0:y0)&&isWinter(x)===w)}
+function seasonNorm(m,kind){let U=0,L=0;for(const x of seasonMonths(m,true))for(const p of utilPts(x)){if(kind&&(p.kind||'')!==kind)continue;const u=S.util[x+'_'+p.id],lit=+(S.pm[x+'_'+p.id]||{}).liters||0;if(!u||u.noCharge||!lit||!(+u.eUse>0))continue;U+=+u.eUse;L+=lit}return L?perL(U,L):null}
+function elecNorm(m,pid){
+  const r=utilRatio(m,pid,'e'); if(r==null)return null;
+  const kind=(S.points[pid]||{}).kind||'', net=seasonNorm(m,kind);
+  let U=0,L=0,n=0;for(const x of seasonMonths(m,false)){const u=S.util[x+'_'+pid],lit=+(S.pm[x+'_'+pid]||{}).liters||0;if(!u||u.noCharge||!lit||!(+u.eUse>0))continue;U+=+u.eUse;L+=lit;n++}
+  const own=n>=2?perL(U,L):null, ownTxt=own!=null?seasonName(m)+' · '+n+' міс. за останній рік':'';
+  const dn=net?r/net-1:null, do_=own?r/own-1:null, dev=Math.max(dn??-1,do_??-1);
+  return {r,net,netTxt:(kind==='автомат'?'автоматів':kind?'пунктів':'мережі')+' · '+seasonName(m),own,ownTxt,dn,do_,dev,lvl:dev>=NORM_BAD?'bad':dev>=NORM_WARN?'warn':''};
+}
 function utilNorm(m,pid,k){
+  if(k==='e')return elecNorm(m,pid);
   const r=utilRatio(m,pid,k); if(r==null)return null;
   const kind=k==='e'?((S.points[pid]||{}).kind||''):'', net=netRatio(m,k,kind); let own=null,ownTxt='';
   {const ms=monthsList().filter(x=>x<m).slice(-6).reverse();const v=[];for(const x of ms){const q=utilRatio(x,pid,k);if(q!=null)v.push(q)}
@@ -847,6 +860,10 @@ function utilTot(v){
   let h='';
   if(k==='w'||k==='t'){if(k==='t')h+=`<div class="sub">Вода</div>`;h+=sec('w',wU,wS,'м³',LW,x=>fmt1(perL(x,L))+' л води')}
   if(k==='e'||k==='t'){if(k==='t')h+=`<div class="sub">Світло</div>`;h+=sec('e',eU,eS,'кВт·год',LE,x=>fmt1(perL(x,L))+' Вт·год')}
+  if(k==='e'){const wm=monthsList().filter(x=>x<=m&&isWinter(x)).pop(), sm=monthsList().filter(x=>x<=m&&!isWinter(x)).pop(), nv=(mm,kd)=>mm?fmt1(seasonNorm(mm,kd))+' Вт·год':'—';
+    h+=`<div class="sub">Норми на 1 проданий літр · за останній рік</div><div class="tbl"><table class="ut"><thead><tr><th></th><th class="num">Зима (лист.–бер.)</th><th class="num">Літо (квіт.–жовт.)</th></tr></thead><tbody>
+      <tr><td>Автомати</td><td class="num">${nv(wm,'автомат')}</td><td class="num">${nv(sm,'автомат')}</td></tr>
+      <tr><td>Пункти</td><td class="num">${nv(wm,'автоматизований пункт')}</td><td class="num">${nv(sm,'автоматизований пункт')}</td></tr></tbody></table></div>`}
   if(k==='t'){h+=`<div class="sub">Разом</div>`+kv('Сума',f0(wS+eS)+' грн')+kv('В середньому на локацію',f0(n?(wS+eS)/n:0)+' грн')+(L?kv('Вартість на 1 проданий л',t2(LS/L)+' грн'):'')}
   infoSheet(k==='w'?'Вода — разом':k==='e'?'Світло — разом':'Комуналка — разом',mLabel(m)+' · '+n+' локацій'+(L?' · продано '+nf1.format(L)+' л':''),h);
 }
