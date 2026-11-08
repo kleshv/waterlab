@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611081945">
+<meta name="wl-build" content="202611082022">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,9 +235,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611081945"></script>
+<script src="config.js?v=202611082022"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611081945"></script>
+<script src="shim.js?v=202611082022"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -253,7 +253,7 @@ let me=null, userApi=null; const names={};
 const loaded=new Set();
 let role='owner'; const ACCT_TABS=['util','rent','recon','points','myexp'];
 const isDan=()=>window.WL_NAME==='Даниїл'; let danOrdered=false;
-let repSub='fin';
+let repSub='fin', invSub='dep';
 let db=null, canWrite=true, tab='home', cur=null, stale=false, fatal='', expFilter='all', utilPoint='';
 const ls={get(k){try{return localStorage.getItem(k)}catch(_){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(_){}}};
 
@@ -377,7 +377,7 @@ function render(){
   if(tab==='exp') h+=cur?viewExp(cur):'';
   if(tab==='util') h+=cur?viewUtil(cur):'';
   if(tab==='rent') h+=cur?viewRent(cur):'';
-  if(tab==='inv') h+=viewInv();
+  if(tab==='inv'){h+=`<div class="seg2 rep" role="tablist">${[['dep','Внески'],['pct','Відсотки']].map(([k,l])=>`<button type="button" class="${invSub===k?'on':''}" data-act="setInv" data-id="${k}">${l}</button>`).join('')}</div>`;h+=invSub==='pct'?viewInvPct():viewInv();}
   if(tab==='myexp') h+=viewMyExp();
   if(tab==='svc') h+=viewSvc();
   if(tab==='recon') h+=viewRecon();
@@ -889,6 +889,7 @@ function yearTable(m){
   <tfoot><tr class="final"><td>Разом ${y}</td><td class="num hide-sm">${f0(Z.L)}</td><td class="num">${f0(Z.R)}</td><td class="num hide-sm">${f0(Z.opex)}</td><td class="num ${sgn(Z.op)}">${f0(Z.op)}</td><td class="num">${Z.R?(Z.op/Z.R*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="num hide-sm">${f0(Z.capex)}</td><td class="num">${f0(Z.net)}</td></tr></tfoot></table></div>
   </section>`;
 }
+function setInv(v){invSub=v==='pct'?'pct':'dep';render()}
 function setRep(v){repSub=['fin','trend','settle','bal'].includes(v)?v:'fin';render()}
 function goTab(v){if(v.startsWith('rep:')){tab='reports';repSub=v.slice(4)}else tab=v;render();window.scrollTo(0,0)}
 function prevMonthOf(m){const ms=monthsList();const i=ms.indexOf(m);return i>0?ms[i-1]:null}
@@ -1416,24 +1417,55 @@ function editRent(pid,mm){
 }
 
 /* ---------- investments ---------- */
-function invList(){return Object.entries(S.inv||{}).map(([id,v])=>({id,...v})).sort((a,b)=>((a.from||'')+(a.date||'')).localeCompare((b.from||'')+(b.date||'')))}
+function invList(){return Object.entries(S.inv||{}).filter(([,v])=>v.kind!=='pay').map(([id,v])=>({id,...v})).sort((a,b)=>((a.from||'')+(a.date||'')).localeCompare((b.from||'')+(b.date||'')))}
 function monthsBetween(from,to){if(!from)return 0;const [y1,m1]=from.split('-').map(Number),[y2,m2]=to.split('-').map(Number);return Math.max(0,(y2-y1)*12+(m2-m1))}
 function nowYM(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function invAccrued(i){return (+i.usd||0)*(+i.pct||0)/100*monthsBetween(i.from,nowYM())/12}
 const fUsd=v=>'$'+nf.format(Math.round(v));
 function viewInv(){
-  const L=invList(); let hrn=0,usd=0,yr=0,acc=0,rows='';
-  for(const i of L){const y=(+i.usd||0)*(+i.pct||0)/100, a=invAccrued(i); hrn+=+i.hrn||0;usd+=+i.usd||0;yr+=y;acc+=a;
-    rows+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editInv':''}" data-id="${i.id}"><td><b>${i.date?esc(fmtD(i.date)+'.'+i.date.slice(2,4)):'без дати'}</b> ${esc(i.purpose||'')}${i.investor?`<div class="note">${esc(i.investor)}</div>`:''}${i.note?`<div class="note">${esc(i.note)}</div>`:''}</td>
-      <td class="num">${fUsd(i.usd)}<div class="note">${f0(i.hrn)}&nbsp;грн</div></td>
-      <td class="num">${fUsd(y)}<div class="note">${i.pct}% з ${i.from?mGen(i.from):'—'}</div></td><td class="num">${fUsd(a)}</td></tr>`}
+  const L=invList(); let hrn=0,usd=0,rows='';
+  for(const i of L){hrn+=+i.hrn||0;usd+=+i.usd||0;
+    rows+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editInv':''}" data-id="${i.id}"><td><b>${i.date?esc(fmtD(i.date)+'.'+i.date.slice(2,4)):'без дати'}</b> ${esc(i.purpose||'')}${i.investor?`<div class="note">${esc(i.investor)}${i.reinv?' · реінвестовані %':''}</div>`:''}${i.note?`<div class="note">${esc(i.note)}</div>`:''}</td>
+      <td class="num">${fUsd(i.usd)}<div class="note">${f0(i.hrn)}&nbsp;грн</div></td></tr>`}
+  const by=w=>L.filter(i=>(i.investor||'Влад')===w).reduce((a,i)=>a+(+i.usd||0),0);
   return `<section class="card"><div class="shead"><h2>Інвестиції</h2>${canWrite?'<button class="btn sm pri" data-act="addInv" type="button">+ Внесок</button>':''}</div>
   <div class="tiles t3"><div class="tile"><div class="l">Вкладено</div><div class="v">${fUsd(usd)}</div><div class="s">${f0(hrn)} грн · середній курс ${usd?nf2.format(hrn/usd):'—'}</div></div>
-    <div class="tile"><div class="l">% за рік</div><div class="v">${fUsd(yr)}</div><div class="s">${fUsd(yr/12)} на місяць</div></div>
-    <div class="tile main"><div class="l">Нараховано %</div><div class="v">${fUsd(acc)}</div><div class="s">з дат початку по ${mLabel(nowYM()).toLowerCase()}</div></div></div>
-  <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Внесок</th><th class="num">Сума</th><th class="num">% за рік</th><th class="num">Нараховано %</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="note">Внесків поки немає.</td></tr>'}</tbody>
-  <tfoot><tr class="final"><td>Разом</td><td class="num">${fUsd(usd)}<div class="note">${f0(hrn)}&nbsp;грн</div></td><td class="num">${fUsd(yr)}</td><td class="num">${fUsd(acc)}</td></tr></tfoot></table></div>
+    <div class="tile"><div class="l">Влад</div><div class="v">${fUsd(by('Влад'))}</div></div><div class="tile"><div class="l">Даниїл</div><div class="v">${fUsd(by('Даниїл'))}</div></div></div>
+  <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Внесок</th><th class="num">Сума</th></tr></thead><tbody>${rows||'<tr><td colspan="2" class="note">Внесків поки немає.</td></tr>'}</tbody>
+  <tfoot><tr class="final"><td>Разом</td><td class="num">${fUsd(usd)}<div class="note">${f0(hrn)}&nbsp;грн</div></td></tr></tfoot></table></div>
   </section>`;
+}
+function pctPays(){return Object.entries(S.inv||{}).filter(([,v])=>v.kind==='pay').map(([id,v])=>({id,...v})).sort((a,b)=>(b.date||'').localeCompare(a.date||''))}
+function pctState(w){const L=invList().filter(i=>(i.investor||'Влад')===w), P=pctPays().filter(p=>p.investor===w);
+  const yr=L.reduce((a,i)=>a+(+i.usd||0)*(+i.pct||0)/100,0), acc=L.reduce((a,i)=>a+invAccrued(i),0), paid=P.filter(p=>!p.reinv).reduce((a,p)=>a+(+p.usd||0),0), rein=P.filter(p=>p.reinv).reduce((a,p)=>a+(+p.usd||0),0);
+  return {w,yr,acc,paid,rein,due:acc-paid-rein,base:L.reduce((a,i)=>a+(+i.usd||0),0)}}
+function viewInvPct(){
+  const st=['Влад','Даниїл'].map(pctState).filter(x=>x.base>0||x.acc>0), P=pctPays();
+  const card=x=>`<section class="card"><div class="shead"><h2>${x.w}</h2>${canWrite&&x.due>0.5?`<button class="btn sm pri" data-act="payPct" data-id="${x.w}" type="button">Виплатити %</button>`:''}</div>
+    <div class="tiles"><div class="tile main"><div class="l">До виплати</div><div class="v">${fUsd(x.due)}</div><div class="s">нараховано ${fUsd(x.acc)} по ${mLabel(nowYM()).toLowerCase()}</div></div>
+    <div class="tile"><div class="l">% за рік</div><div class="v">${fUsd(x.yr)}</div><div class="s">${fUsd(x.yr/12)} на місяць · база ${fUsd(x.base)}</div></div>
+    <div class="tile"><div class="l">Виплачено</div><div class="v">${fUsd(x.paid)}</div></div><div class="tile"><div class="l">Реінвестовано</div><div class="v">${fUsd(x.rein)}</div><div class="s">додано до внесків</div></div></div></section>`;
+  let h=st.map(card).join('')||`<section class="card"><p class="note">Внесків поки немає.</p></section>`;
+  h+=`<section class="card"><h2>Виплати відсотків</h2><div class="tbl"><table class="ut"><thead><tr><th>Дата</th><th>Кому</th><th class="num">Сума</th></tr></thead><tbody>${P.map(p=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editPctPay':''}" data-id="${p.id}"><td>${p.date?dmy(p.date):'—'}</td><td>${esc(p.investor)}<div class="note">${p.reinv?'реінвестовано':'виплачено'}${p.note?' · '+esc(p.note):''}</div></td><td class="num">${fUsd(p.usd)}${p.hrn?`<div class="note">${f0(p.hrn)}&nbsp;грн</div>`:''}</td></tr>`).join('')||'<tr><td colspan="3" class="note">Виплат ще не було.</td></tr>'}</tbody></table></div>
+  <p class="note">Відсотки нараховуються щомісяця від суми внесків інвестора. «Реінвестувати» — відсотки не виплачуються, а додаються новим внеском і далі теж приносять %.</p></section>`;
+  return h;
+}
+function payPct(who){const x=pctState(who);
+  openSheet('Відсотки · '+who,'До виплати '+fUsd(x.due),fld('date','Дата',todayISO(),{type:'date'})+fld('usd','Сума, $',Math.round(x.due*100)/100)+fld('rate','Курс, грн/$','')+
+    sel('mode','Що робимо',(S.meta.settings||{}).pctMode||'pay',[['pay','Виплатити'],['reinv','Реінвестувати (додати до внеску)']],true)+fld('note','Примітка','',{type:'text',full:true}),
+    async fd=>{const u=parseNum(fd.usd), r=String(fd.rate||'').trim()===''?null:parseNum(fd.rate);if(u===null||u<=0)return 'Вкажіть суму';if(String(fd.rate||'').trim()!==''&&r===null)return 'Не зрозумів курс';
+      const reinv=fd.mode==='reinv', hrn=r?Math.round(u*r*100)/100:null, id=db.collection('inv').doc().id;
+      const pay={kind:'pay',investor:who,date:fd.date||todayISO(),usd:u,hrn,reinv,note:fd.note||''};
+      if(reinv){const dep={date:fd.date||todayISO(),purpose:'Реінвестовані відсотки',hrn:hrn||0,usd:u,pct:(invList().filter(i=>(i.investor||'Влад')===who).pop()||{}).pct??5,from:nextMonth((fd.date||todayISO()).slice(0,7)),investor:who,note:fd.note||'',reinv:true,payId:id};
+        const did=db.collection('inv').doc().id;pay.depId=did;if(!await w(()=>db.doc('inv/'+did).set(dep)))return 'Не збереглося'}
+      if(!await w(()=>db.doc('inv/'+id).set(pay)))return 'Не збереглося';toast(reinv?'Реінвестовано':'Виплату записано')});
+}
+function editPctPay(id){const p=S.inv[id];if(!p)return;
+  openSheet('Виплата відсотків',p.investor+' · '+(p.reinv?'реінвестовано':'виплачено'),fld('date','Дата',p.date||'',{type:'date'})+fld('usd','Сума, $',p.usd)+fld('note','Примітка',p.note||'',{type:'text',full:true}),
+    async fd=>{const u=parseNum(fd.usd);if(u===null||u<=0)return 'Вкажіть суму';const d={...p,date:fd.date||p.date,usd:u,note:fd.note||''};delete d.id;
+      if(!await w(()=>db.doc('inv/'+id).set(d)))return 'Не збереглося';
+      if(p.depId&&S.inv[p.depId]){const dep={...S.inv[p.depId],usd:u,date:d.date};delete dep.id;await w(()=>db.doc('inv/'+p.depId).set(dep))}toast('Збережено')},
+    async()=>{if(p.depId)await w(()=>db.doc('inv/'+p.depId).delete());return await w(()=>db.doc('inv/'+id).delete())});
 }
 function invForm(i){return fld('date','Дата внеску',i.date||'',{type:'date'})+fld('purpose','Призначення',i.purpose||'',{type:'text',full:true})+fld('hrn','Сума, грн',i.hrn??'')+fld('usd','Сума, $',i.usd??'')+fld('pct','% річних',i.pct??5)+fld('from','Відсотки з місяця',i.from||'',{type:'month'})+sel('investor','Інвестор',i.investor||'Влад',[['Влад','Влад'],['Даниїл','Даниїл']])+fld('note','Примітка',i.note||'',{type:'text',full:true})}
 function saveInv(id){return async fd=>{const h=parseNum(fd.hrn),u=parseNum(fd.usd),pc=parseNum(fd.pct);if(h===null||u===null||pc===null)return 'Перевірте числа';if(!fd.purpose)return 'Вкажіть призначення';
@@ -1869,7 +1901,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
