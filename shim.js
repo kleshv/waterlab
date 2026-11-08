@@ -107,7 +107,7 @@
     setTimeout(check,3000); setInterval(check,120000);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
   })();
-  let started=false, role='owner'; const ACCT_COLS=['points','util','pay','tariffs'];
+  let started=false, role='owner'; const ACCT_COLS=['points','util','pay','tariffs','radj'];
   function denied(email){const d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:#f4f8fc;font-family:Arimo,Arial,sans-serif';
     d.innerHTML='<div style="max-width:380px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 20px rgba(17,35,63,.12);color:#11233f"><b style="font-size:18px">Немає доступу</b><p style="margin:12px 0 18px;line-height:1.45">Обліковий запис <b></b> ще не додано до списку доступу WaterLab. Попросіть Влада додати його й потім оновіть сторінку.</p><button type="button" style="background:#11233f;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer">Вийти</button></div>';
