@@ -32,18 +32,20 @@
         <button type="submit" id="lg_b">Надіслати посилання</button><button type="button" class="lnk" id="lg_back">Назад до входу</button><div class="msg" id="lg_m"></div></form>`,
       newpass:`<form class="lg" id="lgf" novalidate>${logoSvg()}<h1>Новий пароль</h1>
         <label for="lg_p">Новий пароль (не менше 10 символів)</label><input id="lg_p" type="password" autocomplete="new-password" required>
-        <button type="submit" id="lg_b">Зберегти</button><div class="msg" id="lg_m"></div></form>`};
+        <label for="lg_p2">Повторіть пароль</label><input id="lg_p2" type="password" autocomplete="new-password" required>
+        <button type="submit" id="lg_b">Зберегти</button>${started?'<button type="button" class="lnk" id="lg_x">Скасувати</button>':''}<div class="msg" id="lg_m"></div></form>`};
     w.innerHTML=forms[mode]; w.hidden=false;
     const f=document.getElementById('lgf'), m=document.getElementById('lg_m'), b=document.getElementById('lg_b');
     const msg=(t,ok)=>{m.textContent=t;m.className='msg'+(ok?' ok':'')};
     (document.getElementById('lg_e')||document.getElementById('lg_p')).focus();
     const fl=document.getElementById('lg_f'); if(fl) fl.onclick=()=>show('reset');
+    const fx=document.getElementById('lg_x'); if(fx) fx.onclick=()=>{w.hidden=true};
     const bk=document.getElementById('lg_back'); if(bk) bk.onclick=()=>show('login');
     f.onsubmit=async e=>{e.preventDefault();b.disabled=true;msg('');
       try{
         if(mode==='login'){const {error}=await sb.auth.signInWithPassword({email:lg_e.value.trim(),password:lg_p.value});if(error)throw error}
         if(mode==='reset'){const {error}=await sb.auth.resetPasswordForEmail(lg_e.value.trim(),{redirectTo:location.origin+location.pathname});if(error)throw error;msg('Якщо такий email є, лист із посиланням уже надіслано.',true)}
-        if(mode==='newpass'){if(lg_p.value.length<10)throw {message:'Пароль має бути не менше 10 символів.'};const {error}=await sb.auth.updateUser({password:lg_p.value});if(error)throw error;w.hidden=true;start()}
+        if(mode==='newpass'){if(lg_p.value.length<10)throw {message:'Пароль має бути не менше 10 символів.'};const p2=document.getElementById('lg_p2');if(p2&&p2.value!==lg_p.value)throw {message:'Паролі не збігаються.'};const {error}=await sb.auth.updateUser({password:lg_p.value});if(error)throw error;msg('Пароль змінено ✓',true);setTimeout(()=>{w.hidden=true},1200);start()}
       }catch(err){msg(/Invalid login/i.test(err.message||'')?'Невірний email або пароль.':(err.message||'Не вийшло, спробуйте ще раз.'))}
       b.disabled=false};
   }
@@ -90,7 +92,8 @@
   /* ---------- logout button ---------- */
   function addLogout(){if(document.getElementById('logoutBtn'))return;const row=document.querySelector('header .hrow');if(!row)return;
     const b=document.createElement('button');b.id='logoutBtn';b.type='button';b.className='btn sm';b.textContent='Вийти';b.title=session?session.user.email:'';
-    b.onclick=async()=>{await sb.auth.signOut();location.reload()};row.appendChild(b)}
+    b.onclick=async()=>{await sb.auth.signOut();location.reload()};
+    const c=document.createElement('button');c.id='passBtn';c.type='button';c.className='btn sm';c.textContent='🔑';c.setAttribute('aria-label','Змінити пароль');c.title='Змінити пароль';c.onclick=()=>show('newpass');row.appendChild(c);row.appendChild(b)}
 
 
   /* ---------- auto-update: GitHub Pages caches pages ~10 min ---------- */
