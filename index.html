@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611082022">
+<meta name="wl-build" content="202611082024">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab Фінанси</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,9 +235,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611082022"></script>
+<script src="config.js?v=202611082024"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611082022"></script>
+<script src="shim.js?v=202611082024"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -1430,7 +1430,7 @@ function viewInv(){
   const by=w=>L.filter(i=>(i.investor||'Влад')===w).reduce((a,i)=>a+(+i.usd||0),0);
   return `<section class="card"><div class="shead"><h2>Інвестиції</h2>${canWrite?'<button class="btn sm pri" data-act="addInv" type="button">+ Внесок</button>':''}</div>
   <div class="tiles t3"><div class="tile"><div class="l">Вкладено</div><div class="v">${fUsd(usd)}</div><div class="s">${f0(hrn)} грн · середній курс ${usd?nf2.format(hrn/usd):'—'}</div></div>
-    <div class="tile"><div class="l">Влад</div><div class="v">${fUsd(by('Влад'))}</div></div><div class="tile"><div class="l">Даниїл</div><div class="v">${fUsd(by('Даниїл'))}</div></div></div>
+    ${['Влад','Даниїл'].filter(x=>by(x)>0).length>1?['Влад','Даниїл'].map(x=>`<div class="tile"><div class="l">${x}</div><div class="v">${fUsd(by(x))}</div></div>`).join(''):''}</div>
   <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Внесок</th><th class="num">Сума</th></tr></thead><tbody>${rows||'<tr><td colspan="2" class="note">Внесків поки немає.</td></tr>'}</tbody>
   <tfoot><tr class="final"><td>Разом</td><td class="num">${fUsd(usd)}<div class="note">${f0(hrn)}&nbsp;грн</div></td></tr></tfoot></table></div>
   </section>`;
