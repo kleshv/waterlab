@@ -821,7 +821,7 @@ function utilNorm(m,pid,k){
   const r=utilRatio(m,pid,k); if(r==null)return null;
   const kind=k==='e'?((S.points[pid]||{}).kind||''):'', net=netRatio(m,k,kind); let own=null,ownTxt='';
   {const ms=monthsList().filter(x=>x<m).slice(-6).reverse();const v=[];for(const x of ms){const q=utilRatio(x,pid,k);if(q!=null)v.push(q)}
-    if(v.length){own=v.reduce((a,b)=>a+b,0)/v.length;ownTxt='середнє за '+v.length+' міс. до '+mLabel(m).toLowerCase()}}
+    if(v.length){own=v.reduce((a,b)=>a+b,0)/v.length;ownTxt='середнє за попередні '+v.length+' міс.'}}
   const dn=net?r/net-1:null, do_=own?r/own-1:null, dev=Math.max(dn??-1,do_??-1);
   return {r,net,netTxt:k==='e'?(kind==='автомат'?'по автоматах':kind?'по пунктах':'по мережі (тип точки не вказано)'):'по мережі',own,ownTxt,dn,do_,dev,lvl:dev>=NORM_BAD?'bad':dev>=NORM_WARN?'warn':''};
 }
