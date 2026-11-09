@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611090919">
+<meta name="wl-build" content="202611091408">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,9 +235,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611090919"></script>
+<script src="config.js?v=202611091408"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611090919"></script>
+<script src="shim.js?v=202611091408"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -372,7 +372,7 @@ function render(){
   if(tab==='month'||tab==='settle'||tab==='trend'){repSub=tab==='month'?'fin':tab;tab='reports'}
   const noMonth=`<section class="card"><h2>Місяців поки немає</h2><p class="note">Додайте точки у вкладці «Точки», потім натисніть «+ Місяць».</p></section>`;
   if(tab==='home') h+=cur?viewHome(cur):noMonth;
-  if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['settle','Взаєморозрахунок 50/50'],['bal','Баланс']].filter(([k])=>!(isDan()&&k==='bal')).map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
+  if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['settle','Взаєморозрахунки партнерів'],['bal','Баланс']].filter(([k])=>!(isDan()&&k==='bal')).map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
     if(repSub==='fin') h+=cur?viewMonth(cur):noMonth; if(repSub==='trend') h+=viewTrend(); if(repSub==='settle') h+=viewSettle(); if(repSub==='bal') h+=viewBal();}
   if(tab==='exp') h+=cur?viewExp(cur):'';
   if(tab==='util') h+=cur?viewUtil(cur):'';
@@ -670,13 +670,15 @@ function setFilter(v){expFilter=v;render()}
 
 function viewSettle(){
   const s=settleState();
-  let h=`<section class="card"><div class="shead"><h2>Взаєморозрахунок Влад ↔ Даниїл</h2>${canWrite?`<button class="btn sm pri" data-act="addPay" type="button">+ Виплата</button>`:''}</div>
+  let h=`<section class="card"><div class="shead"><h2>Взаєморозрахунки партнерів</h2></div>
+  ${canWrite?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px"><button class="btn sm pri" data-act="addPay" data-id="share" type="button">+ Розподіл прибутку 50/50</button><button class="btn sm" data-act="addPay" data-id="exp" type="button">+ На витрати</button></div>`:''}
   <div class="tiles"><div class="tile main"><div class="l">${s.bal>=0?'Влад винен Даниїлу':'Даниїл винен Владу'}</div><div class="v">${f0(Math.abs(s.bal))}</div><div class="s">усі місяці й виплати з ${d1(s.start)}</div></div></div>
+  ${advHtml()}
   <div class="tbl" style="margin-top:12px"><table><thead><tr><th>Дата</th><th>Операція</th><th class="num">Сума</th><th class="num">Борг</th></tr></thead><tbody>
   <tr><td class="mut">—</td><td class="mut">Залишок на ${d1(s.start)}</td><td class="num mut">${f0(s.opening)}</td><td class="num">${f0(s.opening)}</td></tr>`;
   for(const it of s.items){
     if(it.kind==='m') h+=`<tr><td>${mShort(it.key)}</td><td>Нараховано за ${mLabel(it.key).toLowerCase()} ${it.closed?'':'<span class="pill open">відкритий</span>'}${it.pend?'<div class="note">чекає сум банку й готівки — внесіть у звіті «Фінрез по точках»</div>':''}</td><td class="num">${it.pend?'—':f0(it.amount)}</td><td class="num">${f0(it.bal)}</td></tr>`;
-    else h+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editPay':''}" data-id="${it.id}"><td>${esc(it.p.date.split('-').reverse().join('.'))}</td><td>Виплата: ${esc(it.p.from)} → ${it.p.from==='Влад'?'Даниїл':'Влад'}${it.p.note?`<div class="note">${esc(it.p.note)}</div>`:''}</td><td class="num">${f0(it.amount)}</td><td class="num">${f0(it.bal)}</td></tr>`;
+    else h+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editPay':''}" data-id="${it.id}"><td>${esc(it.p.date.split('-').reverse().join('.'))}</td><td>${it.p.kind==='exp'?'На витрати':'Розподіл прибутку'}: ${esc(it.p.from)} → ${it.p.from==='Влад'?'Даниїл':'Влад'}${it.p.note?`<div class="note">${esc(it.p.note)}</div>`:''}</td><td class="num">${f0(it.amount)}</td><td class="num">${f0(it.bal)}</td></tr>`;
   }
   h+=`</tbody></table></div></section>`;
   return h;
@@ -818,15 +820,24 @@ function addExp(){openSheet('Нова витрата',mLabel(cur),expForm({}),sa
 }
 function editExp(id){const e=S.exp[id];openSheet('Витрата',mLabel(e.month),expForm(e),saveExp(id,e),async()=>{const ok=await w(()=>db.doc('exp/'+id).delete());if(ok)toast('Видалено');return ok})}
 
+function advHtml(){
+  const m=cur; if(!m)return '';const A=Object.values(S.settle).filter(p=>p.kind==='exp'&&(p.date||'').slice(0,7)===m);if(!A.length)return '';
+  const out=[];for(const to of ['Даниїл','Влад']){const fr=to==='Даниїл'?'Влад':'Даниїл';
+    const giv=A.filter(p=>p.from===fr).reduce((a,p)=>a+(+p.amount||0),0)-A.filter(p=>p.from===to).reduce((a,p)=>a+(+p.amount||0),0);if(giv<=0)continue;
+    const d0=A.filter(p=>p.from===fr).map(p=>p.date).sort()[0];
+    const sp=Object.values(S.exp).filter(e=>e.month===m&&e.payer===to&&(!e.date||e.date>=d0)).reduce((a,e)=>a+(+e.amount||0),0);
+    out.push(`<div class="tile"><div class="l">На витрати · ${to}</div><div class="v">${f0(Math.max(0,giv-sp))}</div><div class="s">видано ${f0(giv)} · витрати з ${dmy(d0).slice(0,5)}: ${f0(sp)}${giv-sp<0?' (перевищено на '+f0(sp-giv)+')':''}</div></div>`)}
+  return out.length?`<div class="tiles" style="margin-top:10px">${out.join('')}</div><p class="note" style="margin:4px 0 0">Залишок «на витрати» — скільки з виданих за ${mLabel(m).toLowerCase()} грошей ще не підтверджено витратами.</p>`:'';
+}
 function payForm(p){
   const today=new Date().toISOString().slice(0,10);
-  return fld('date','Дата',p.date||today,{type:'date'})+fld('amount','Сума, грн',p.amount??'')+
+  return fld('date','Дата',p.date||today,{type:'date'})+fld('amount','Сума, грн',p.amount??'')+sel('kind','Тип',p.kind==='exp'?'exp':'share',[['share','Розподіл прибутку 50/50'],['exp','На витрати']],true)+
     sel('from','Хто відправив',p.from||'Влад',[['Влад','Влад → Даниїл'],['Даниїл','Даниїл → Влад']],true)+fld('note','Коментар',p.note||'',{type:'text',full:true});
 }
 function savePay(id){return async fd=>{const a=parseNum(fd.amount);if(a===null||!a)return 'Вкажіть суму';if(!fd.date)return 'Вкажіть дату';
-  if(!await w(()=>db.doc('settle/'+id).set({date:fd.date,amount:a,from:fd.from,note:fd.note||''})))return 'Не збереглося';toast('Виплату збережено')}}
-function addPay(){openSheet('Виплата прибутку','Зменшує борг за взаєморозрахунком',payForm({}),savePay(db.collection('settle').doc().id))}
-function editPay(id){openSheet('Виплата','',payForm(S.settle[id]),savePay(id),async()=>{const ok=await w(()=>db.doc('settle/'+id).delete());return ok})}
+  if(!await w(()=>db.doc('settle/'+id).set({date:fd.date,amount:a,from:fd.from,kind:fd.kind==='exp'?'exp':'share',note:fd.note||''})))return 'Не збереглося';toast('Виплату збережено')}}
+function addPay(k){const e=k==='exp';openSheet(e?'На витрати':'Розподіл прибутку 50/50',e?'Гроші під витрати — враховуються у взаєморозрахунку':'Зменшує борг за взаєморозрахунком',payForm({kind:e?'exp':'share'}),savePay(db.collection('settle').doc().id))}
+function editPay(id){openSheet(S.settle[id]&&S.settle[id].kind==='exp'?'На витрати':'Розподіл прибутку 50/50','',payForm(S.settle[id]),savePay(id),async()=>{const ok=await w(()=>db.doc('settle/'+id).delete());return ok})}
 
 function pointForm(p){return fld('name','Адреса / назва',p.name||'',{type:'text',full:true})+fld('rent','Оренда на місяць',p.rent??0)+
   sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Закрита']])+fld('closedAt','Дата закриття',p.closedAt||'',{type:'date'})+sel('kind','Тип',p.kind||'',[['','— не вказано —'],['автомат','Автомат'],['автоматизований пункт','Автоматизований пункт']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('payee2','Окремо за воду платимо (якщо інший отримувач)',p.payee2||'',{type:'text',full:true})+(+p.rentCash>0?fld('rentCash','ф2, грн',p.rentCash):'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
