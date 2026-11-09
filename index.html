@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611091530">
+<meta name="wl-build" content="20261109b">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -237,7 +237,7 @@ p.note{margin:6px 0 0}
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611091530"></script>
+<script src="shim.js?v=20261109b"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -253,7 +253,7 @@ let me=null, userApi=null; const names={};
 const loaded=new Set();
 let role='owner'; const ACCT_TABS=['util','rent','recon','points','myexp'];
 const isDan=()=>window.WL_NAME==='Даниїл'; let danOrdered=false;
-let repSub='fin', invSub='dep';
+let repSub='fin', invSub='dep', expSub='list';
 let db=null, canWrite=true, tab='home', cur=null, stale=false, fatal='', expFilter='all', utilPoint='';
 const ls={get(k){try{return localStorage.getItem(k)}catch(_){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(_){}}};
 
@@ -369,12 +369,13 @@ function render(){
   if(loaded.size<COLS.length){main.innerHTML=`<section class="card"><h2>Завантаження</h2><p class="note">${stale?'База поки не відповідає. Дані з’являться, щойно з’єднання відновиться.':'Підключаюся до бази: точки, місяці, витрати й взаєморозрахунок з’являться тут.'}</p></section>`;return}
   let h=canWrite?'':'<div class="banner">У вас доступ лише на перегляд.</div>';
   if(tab==='pay') tab='util';
-  if(tab==='month'||tab==='settle'||tab==='trend'){repSub=tab==='month'?'fin':tab;tab='reports'}
+  if(tab==='settle'){tab='exp';expSub='settle'}
+  if(tab==='month'||tab==='trend'){repSub=tab==='month'?'fin':tab;tab='reports'}
   const noMonth=`<section class="card"><h2>Місяців поки немає</h2><p class="note">Додайте точки у вкладці «Точки», потім натисніть «+ Місяць».</p></section>`;
   if(tab==='home') h+=cur?viewHome(cur):noMonth;
-  if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['settle','Взаєморозрахунки партнерів'],['bal','Баланс']].filter(([k])=>!(isDan()&&k==='bal')).map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
-    if(repSub==='fin') h+=cur?viewMonth(cur):noMonth; if(repSub==='trend') h+=viewTrend(); if(repSub==='settle') h+=viewSettle(); if(repSub==='bal') h+=viewBal();}
-  if(tab==='exp') h+=cur?viewExp(cur):'';
+  if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['bal','Баланс']].filter(([k])=>!(isDan()&&k==='bal')).map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
+    if(repSub==='fin') h+=cur?viewMonth(cur):noMonth; if(repSub==='trend') h+=viewTrend(); if(repSub==='bal') h+=viewBal();}
+  if(tab==='exp'){h+=`<div class="seg2 rep" role="tablist">${[['list','Витрати'],['settle','Взаєморозрахунки партнерів']].map(([k,l])=>`<button type="button" class="${expSub===k?'on':''}" data-act="setExpSub" data-id="${k}">${l}</button>`).join('')}</div>`;h+=expSub==='settle'?viewSettle():(cur?viewExp(cur):'');}
   if(tab==='util') h+=cur?viewUtil(cur):'';
   if(tab==='rent') h+=cur?viewRent(cur):'';
   if(tab==='inv'){h+=`<div class="seg2 rep" role="tablist">${[['dep','Внески'],['pct','Відсотки']].map(([k,l])=>`<button type="button" class="${invSub===k?'on':''}" data-act="setInv" data-id="${k}">${l}</button>`).join('')}</div>`;h+=invSub==='pct'?viewInvPct():viewInv();}
@@ -904,8 +905,9 @@ function yearTable(m){
   </section>`;
 }
 function setInv(v){invSub=v==='pct'?'pct':'dep';render()}
-function setRep(v){repSub=['fin','trend','settle','bal'].includes(v)?v:'fin';render()}
-function goTab(v){if(v.startsWith('rep:')){tab='reports';repSub=v.slice(4)}else tab=v;render();window.scrollTo(0,0)}
+function setRep(v){if(v==='settle'){tab='exp';expSub='settle';render();return}repSub=['fin','trend','bal'].includes(v)?v:'fin';render()}
+function setExpSub(v){expSub=v==='settle'?'settle':'list';render()}
+function goTab(v){if(v==='rep:settle'){tab='exp';expSub='settle'}else if(v.startsWith('rep:')){tab='reports';repSub=v.slice(4)}else tab=v;render();window.scrollTo(0,0)}
 function prevMonthOf(m){const ms=monthsList();const i=ms.indexOf(m);return i>0?ms[i-1]:null}
 function homeTodo(m){
   const rows=Object.values(S.pm).filter(r=>r.month===m);
@@ -1915,7 +1917,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
