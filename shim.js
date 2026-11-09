@@ -23,7 +23,7 @@
   function show(mode){
     let w=document.getElementById('lgw'); if(!w){w=document.createElement('div');w.id='lgw';w.className='lg-wrap';document.body.appendChild(w)}
     const forms={
-      login:`<form class="lg" id="lgf" novalidate>${logoSvg()}<h1>Лабораторія води · фінанси</h1>
+      login:`<form class="lg" id="lgf" novalidate>${logoSvg()}<h1>Лабораторія води · кабінет</h1>
         <label for="lg_e">Email</label><input id="lg_e" type="email" autocomplete="username" required>
         <label for="lg_p">Пароль</label><input id="lg_p" type="password" autocomplete="current-password" required>
         <button type="submit" id="lg_b">Увійти</button><button type="button" class="lnk" id="lg_f">Забули пароль?</button><div class="msg" id="lg_m"></div></form>`,
