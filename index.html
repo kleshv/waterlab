@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261109d">
+<meta name="wl-build" content="20261109e">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -237,7 +237,7 @@ p.note{margin:6px 0 0}
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261109d"></script>
+<script src="shim.js?v=20261109e"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -442,8 +442,7 @@ function viewMonth(m){
     <span class="pill ${closed?'closed':'open'}">${closed?'закритий':'відкритий'}</span>
     ${canWrite?`<button class="btn sm" data-act="toggleClose" type="button">${closed?'Відкрити для змін':'Закрити місяць'}</button>`:''}</div>
   <div class="tiles">
-    <div class="tile"><div class="l">Виручка${gwL}</div><div class="v">${f0(t.T.rv)}</div><div class="s">${f0(t.T.L)} л · ${nf2.format(t.T.L?t.T.rv/t.T.L:0)} грн/л</div></div>
-    ${(()=>{const inn=`<div class="l">Банк і готівка</div><div class="v">${f0((c.bank||0)+(c.cash||0))}</div><div class="s">банк ${c.bank?f0(c.bank):'—'} · готівка ${c.cash?f0(c.cash):'не внесено'}</div>`;return ed?`<button type="button" class="tile tapt" data-act="editMoney">${inn}</button>`:`<div class="tile">${inn}</div>`})()}
+    ${(()=>{const inn=`<div class="l">Виручка${gwL}</div><div class="v">${f0(t.T.rv)}</div><div class="s">${f0(t.T.L)} л · ${nf2.format(t.T.L?t.T.rv/t.T.L:0)} грн/л</div><div class="s">банк ${c.bank?f0(c.bank):'—'} · готівка ${c.cash?f0(c.cash):'не внесено'}</div>`;return ed?`<button type="button" class="tile tapt" data-act="editMoney" title="Внести банк і готівку">${inn}</button>`:`<div class="tile">${inn}</div>`})()}
     <div class="tile"><div class="l">Операційні витрати</div><div class="v">${f0(t.opex)}</div><div class="s">${nf2.format(t.T.L?t.opex/t.T.L:0)} грн/л</div></div>
     <div class="tile main"><div class="l">Операційний прибуток</div><div class="v ${sgn(t.op)}">${f0(t.op)}</div><div class="s">маржа ${margin.toFixed(1).replace('.',',')}%</div></div>
     <div class="tile"><div class="l">До розподілу</div><div class="v ${sgn(t.net)}">${f0(t.net)}</div><div class="s">по ${f0(t.net/2)} кожному · після капвкладень ${f0(t.capex)}</div></div>
