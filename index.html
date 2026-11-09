@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261109c">
+<meta name="wl-build" content="20261109d">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -237,7 +237,7 @@ p.note{margin:6px 0 0}
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261109c"></script>
+<script src="shim.js?v=20261109d"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -375,7 +375,7 @@ function render(){
   if(tab==='home') h+=cur?viewHome(cur):noMonth;
   if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['bal','Баланс']].filter(([k])=>!(isDan()&&k==='bal')).map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
     if(repSub==='fin') h+=cur?viewMonth(cur):noMonth; if(repSub==='trend') h+=viewTrend(); if(repSub==='bal') h+=viewBal();}
-  if(tab==='exp'){h+=`<div class="seg2 rep" role="tablist">${[['list','Витрати'],['settle','Взаєморозрахунки партнерів']].map(([k,l])=>`<button type="button" class="${expSub===k?'on':''}" data-act="setExpSub" data-id="${k}">${l}</button>`).join('')}</div>`;h+=expSub==='settle'?viewSettle():(cur?viewExp(cur):'');}
+  if(tab==='exp'){h+=`<div class="seg2 rep" role="tablist">${[['list','Витрати'],['settle','Взаєморозрахунки']].map(([k,l])=>`<button type="button" class="${expSub===k?'on':''}" data-act="setExpSub" data-id="${k}">${l}</button>`).join('')}</div>`;h+=expSub==='settle'?viewSettle():(cur?viewExp(cur):'');}
   if(tab==='util') h+=cur?viewUtil(cur):'';
   if(tab==='rent') h+=cur?viewRent(cur):'';
   if(tab==='inv'){h+=`<div class="seg2 rep" role="tablist">${[['dep','Внески'],['pct','Відсотки']].map(([k,l])=>`<button type="button" class="${invSub===k?'on':''}" data-act="setInv" data-id="${k}">${l}</button>`).join('')}</div>`;h+=invSub==='pct'?viewInvPct():viewInv();}
@@ -443,6 +443,7 @@ function viewMonth(m){
     ${canWrite?`<button class="btn sm" data-act="toggleClose" type="button">${closed?'Відкрити для змін':'Закрити місяць'}</button>`:''}</div>
   <div class="tiles">
     <div class="tile"><div class="l">Виручка${gwL}</div><div class="v">${f0(t.T.rv)}</div><div class="s">${f0(t.T.L)} л · ${nf2.format(t.T.L?t.T.rv/t.T.L:0)} грн/л</div></div>
+    ${(()=>{const inn=`<div class="l">Банк і готівка</div><div class="v">${f0((c.bank||0)+(c.cash||0))}</div><div class="s">банк ${c.bank?f0(c.bank):'—'} · готівка ${c.cash?f0(c.cash):'не внесено'}</div>`;return ed?`<button type="button" class="tile tapt" data-act="editMoney">${inn}</button>`:`<div class="tile">${inn}</div>`})()}
     <div class="tile"><div class="l">Операційні витрати</div><div class="v">${f0(t.opex)}</div><div class="s">${nf2.format(t.T.L?t.opex/t.T.L:0)} грн/л</div></div>
     <div class="tile main"><div class="l">Операційний прибуток</div><div class="v ${sgn(t.op)}">${f0(t.op)}</div><div class="s">маржа ${margin.toFixed(1).replace('.',',')}%</div></div>
     <div class="tile"><div class="l">До розподілу</div><div class="v ${sgn(t.net)}">${f0(t.net)}</div><div class="s">по ${f0(t.net/2)} кожному · після капвкладень ${f0(t.capex)}</div></div>
@@ -480,8 +481,8 @@ function viewMonth(m){
   h+=`</tbody><tfoot><tr><td colspan="3">обслуговування ${f0(c.toir)} · податки і банк ${f0(c.fa)} · капвкладення ${f0(c.capex)}</td><td class="num">${f0(c.toir+c.fa+c.capex)}</td></tr></tfoot></table></div></section>`;
 
   // split — only once the month is closed
-  if(!closed){h+=`<section class="card"><div class="shead"><h2>Розподіл 50/50</h2>${ed?`<button class="btn sm" data-act="editMoney" type="button">Банк і готівка</button>`:''}</div><p class="note">З’явиться, коли місяць буде закрито.</p></section>`;return h;}
-  h+=`<section class="card"><div class="shead"><h2>Розподіл 50/50</h2>${ed?`<button class="btn sm" data-act="editMoney" type="button">Банк і готівка</button>`:''}</div><div class="sum2">
+  if(!closed) return h;
+  h+=`<section class="card"><div class="shead"><h2>Розподіл 50/50</h2></div><div class="sum2">
     <div class="party"><b>Влад</b>
       <div class="row"><span>Банк</span><span>${f0(c.bank)}</span></div>
       <div class="row"><span>Сплатив витрат</span><span>−${f0(c.vladExp)}</span></div>
