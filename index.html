@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="202611091521">
+<meta name="wl-build" content="202611091523">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,9 +235,9 @@ p.note{margin:6px 0 0}
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611091521"></script>
+<script src="config.js?v=202611091523"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=202611091521"></script>
+<script src="shim.js?v=202611091523"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -796,6 +796,8 @@ function expForm(e){
   if(e.article&&!artCat(e.article)) arts=`<div class="full"><div class="glabel">Поточна стаття</div><div class="chips">${chip(e.article,true)}</div></div>`+arts;
   const popts=[['','Уся мережа']].concat(pointsList().map(p=>[p.id,p.name]));
   return `<div class="full"><div class="glabel">Хто платив</div><div class="seg">${['Даниїл','Влад'].map(p=>`<label class="segb"><input type="radio" name="payer" value="${p}" ${p===payer?'checked':''}><span>${p}</span></label>`).join('')}</div></div>`+
+    (()=>{const m=e.month||cur, st=advState(m,payer), any=Object.values(S.settle).some(p=>p.kind==='exp'&&(p.date||'').slice(0,7)===m);if(!any&&!e.adv)return '';
+      const on=e.id?!!e.adv:(e.adv??st.left>0.5);return `<div class="full"><label class="chk"><input type="checkbox" name="adv" ${on?'checked':''}> З грошей «на витрати»${st.giv>0?` <span class="note">(залишок ${f0(Math.max(0,st.left))})</span>`:''}</label></div>`})()+
     arts+
     `<label class="full amount">Сума, грн<input id="f_amount" name="amount" value="${esc(e.amount??'')}" inputmode="decimal" autocomplete="off" placeholder="0"></label>`+
     `<label class="full">Призначення платежу<input id="f_purpose" name="purpose" value="${esc(e.purpose||'')}" autocomplete="off" placeholder="напр.: мембрани Vatron 6 шт · ремонт купюроприймача · пальне 40 л"></label>`+
@@ -809,7 +811,7 @@ function saveExp(id,base){return async fd=>{
   let month=base.month||cur;
   if(fd.date){const dm=fd.date.slice(0,7);if(dm!==month){if(!S.months[dm])return 'Місяця '+mLabel(dm).toLowerCase()+' ще немає. Створіть його або оберіть дату в '+mLabel(month).toLowerCase()+'.';if(isClosed(dm))return mLabel(dm)+' закритий. Відкрийте його або оберіть іншу дату.';month=dm}}
   const known=artCat(fd.article);
-  const doc={...base,by:base.by||me||'',month,date:fd.date||'',article:fd.article,amount:a,cat:known||base.cat||'ТОіР',payer:fd.payer||'Даниїл',point:fd.point||'',purpose:(fd.purpose||'').trim(),note:fd.note||'',recurring:known?REC.has(fd.article):!!base.recurring};
+  const doc={...base,by:base.by||me||'',month,date:fd.date||'',article:fd.article,amount:a,cat:known||base.cat||'ТОіР',payer:fd.payer||'Даниїл',point:fd.point||'',purpose:(fd.purpose||'').trim(),note:fd.note||'',recurring:known?REC.has(fd.article):!!base.recurring,adv:!!fd.adv};
   ls.set('wl_payer',doc.payer);
   if(!await w(()=>db.doc('exp/'+id).set(doc)))return 'Не збереглося';toast('Збережено')}}
 function defDate(){const t=new Date();const ts=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');if(ts.slice(0,7)===cur)return ts;const[y,mm]=cur.split('-').map(Number);return cur+'-'+String(new Date(y,mm,0).getDate()).padStart(2,'0')}
@@ -824,17 +826,19 @@ function addExp(){openSheet('Нова витрата',mLabel(cur),expForm({}),sa
     else if(auto){am.value='';auto=false;const h=am.parentElement.querySelector('.hint');if(h)h.remove()}
   }));
 }
-function editExp(id){const e=S.exp[id];openSheet('Витрата',mLabel(e.month),expForm(e),saveExp(id,e),async()=>{const ok=await w(()=>db.doc('exp/'+id).delete());if(ok)toast('Видалено');return ok})}
+function editExp(id){const e=S.exp[id];openSheet('Витрата',mLabel(e.month),expForm({...e,id}),saveExp(id,e),async()=>{const ok=await w(()=>db.doc('exp/'+id).delete());if(ok)toast('Видалено');return ok})}
 
+function advState(m,to){const fr=to==='Даниїл'?'Влад':'Даниїл', A=Object.values(S.settle).filter(p=>p.kind==='exp'&&(p.date||'').slice(0,7)===m);
+  const giv=A.filter(p=>p.from===fr).reduce((a,p)=>a+(+p.amount||0),0)-A.filter(p=>p.from===to).reduce((a,p)=>a+(+p.amount||0),0);
+  const sp=Object.values(S.exp).filter(e=>e.month===m&&e.payer===to&&e.adv).reduce((a,e)=>a+(+e.amount||0),0);return {giv,sp,left:giv-sp}}
 function advHtml(){
   const m=cur; if(!m)return '';const A=Object.values(S.settle).filter(p=>p.kind==='exp'&&(p.date||'').slice(0,7)===m);if(!A.length)return '';
   const out=[];for(const to of ['Даниїл','Влад']){const fr=to==='Даниїл'?'Влад':'Даниїл';
     const giv=A.filter(p=>p.from===fr).reduce((a,p)=>a+(+p.amount||0),0)-A.filter(p=>p.from===to).reduce((a,p)=>a+(+p.amount||0),0);if(giv<=0)continue;
-    const d0=A.filter(p=>p.from===fr).map(p=>p.date).sort()[0];
-    const sp=Object.values(S.exp).filter(e=>e.month===m&&e.payer===to&&(!e.date||e.date>=d0)).reduce((a,e)=>a+(+e.amount||0),0);
-    out.push(`<div class="tile"><div class="l">На витрати · ${to}</div><div class="v">${f0(Math.max(0,giv-sp))}</div><div class="s">видано ${f0(giv)} · витрати з ${dmy(d0).slice(0,5)}: ${f0(sp)}${giv-sp<0?' (перевищено на '+f0(sp-giv)+')':''}</div></div>`)}
+    const sp=advState(m,to).sp;
+    out.push(`<div class="tile"><div class="l">На витрати · ${to}</div><div class="v">${f0(Math.max(0,giv-sp))}</div><div class="s">видано ${f0(giv)} · витрачено з них ${f0(sp)}${giv-sp<0?' (перевищено на '+f0(sp-giv)+')':''}</div></div>`)}
   const rows=A.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(p=>`<div class="kv bi ${canWrite?'click':''}" ${canWrite?`data-act="editPay" data-id="${Object.keys(S.settle).find(k=>S.settle[k]===p)}"`:''}><span>${dmy(p.date)} · ${esc(p.from)} → ${p.from==='Влад'?'Даниїл':'Влад'}${p.note?`<div class="note">${esc(p.note)}</div>`:''}</span><b>${f0(p.amount)}</b></div>`).join('');
-  return out.length?`<div class="tiles" style="margin-top:10px">${out.join('')}</div>${rows}<p class="note" style="margin:4px 0 0">Залишок «на витрати» — скільки з виданих за ${mLabel(m).toLowerCase()} грошей ще не підтверджено витратами.</p>`:'';
+  return out.length?`<div class="tiles" style="margin-top:10px">${out.join('')}</div>${rows}<p class="note" style="margin:4px 0 0">Залишок «на витрати» — скільки з виданих за ${mLabel(m).toLowerCase()} грошей ще не підтверджено витратами. У витраті позначте «З грошей на витрати».</p>`:'';
 }
 function payForm(p){
   const today=new Date().toISOString().slice(0,10);
