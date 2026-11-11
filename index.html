@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261111e">
+<meta name="wl-build" content="20261111f">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -238,7 +238,7 @@ p.note{margin:6px 0 0}
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261111e"></script>
+<script src="shim.js?v=20261111f"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -503,10 +503,10 @@ const REQ_ST={wait:'очікує підтвердження',ok:'підтвер�
 function reqForm(r){
   const arts=ARTS.flatMap(g=>g.items.filter(i=>i!==feeCfg().article&&i!=='Банк 1,3% еквайринг')).concat(['Канцелярія / пошта','Інше']);
   const popts=[['','— без точки —'],...pointsList().filter(p=>p.id!=='p00'&&p.active!==false).map(p=>[p.id,p.name])];
-  return `<label class="full chk"><input type="checkbox" name="byBill" id="f_byBill" ${r.billNo||r.billSum!=null||r.inv?'checked':''}> Оплата за рахунком</label>`+
-    `<div class="full billbox" ${r.billNo||r.billSum!=null||r.inv?'':'hidden'}>`+fld('billNo','Рахунок №',r.billNo||'',{type:'text'})+fld('billSum','Сума за рахунком, грн',r.billSum??(r.inv?r.amount:''))+`</div>`+
+  return `<label class="full chk"><input type="checkbox" name="byBill" id="f_byBill" ${r.billNo||r.billSum!=null||r.inv?'checked':''}> Оплата за рахунком / актом</label>`+
+    `<div class="full billbox" ${r.billNo||r.billSum!=null||r.inv?'':'hidden'}>`+fld('billNo','Рахунок / акт №',r.billNo||'',{type:'text'})+fld('billSum','Сума за рахунком / актом, грн',r.billSum??(r.inv?r.amount:''))+`</div>`+
     fld('date','Дата оплати',r.date||todayISO(),{type:'date'})+fld('amount','Сплачено, грн',r.amount??'')+
-    sel('article','Стаття',r.article||'Інше',arts.map(a=>[a,a]))+sel('point','Точка',r.point||'',popts)+
+    sel('point','Точка',r.point||'',popts)+sel('article','Стаття',r.article||'Інше',arts.map(a=>[a,a]))+
     sel('cp','Контрагент (для звірки)',r.cp||'',reqCpOpts(r.point||'',r.cp||''),true)+
     fld('purpose','Призначення платежу',r.purpose||'',{type:'text',full:true})+fld('note','Коментар',r.note||'',{type:'text',full:true});
 }
@@ -1788,7 +1788,7 @@ function reconData(){
   for(const [id,a] of Object.entries(S.radj))if(pids.includes(a.point)&&(a.cp||'main')===cpk&&(a.kind!=='rent'||R)&&(a.kind!=='util'||U)){const v=+a.amount||0;
     ev.push({m:(a.date||'').slice(0,7),d:a.date,doc:(a.type==='open'?'Початкове сальдо':'Коригування')+(a.kind&&a.kind!=='all'?(a.kind==='rent'?' · оренда':' · комуналка'):'')+(a.note?' · '+a.note:''),pid:a.point,acc:v>0?v:0,paid:v<0?-v:0,k:'a',aid:id})}
   for(const [id,q] of Object.entries(S.expreq)){if(!q.cp||q.status==='no')continue;const [qp,qk]=q.cp.split('|');if(!pids.includes(qp)||qk!==(W?'w':'main')||!q.date)continue;
-    {const bsum=q.billSum!=null?+q.billSum:(q.inv?+q.amount:0); if(bsum) ev.push({m:q.date.slice(0,7),d:q.date,doc:'Рахунок'+(q.billNo?' №'+q.billNo:'')+(q.purpose?' · '+q.purpose:' · '+q.article),pid:qp,acc:bsum,paid:0,k:'q',qid:id});}
+    {const bsum=q.billSum!=null?+q.billSum:(q.inv?+q.amount:0); if(bsum) ev.push({m:q.date.slice(0,7),d:q.date,doc:'Рахунок / акт'+(q.billNo?' №'+q.billNo:'')+(q.purpose?' · '+q.purpose:' · '+q.article),pid:qp,acc:bsum,paid:0,k:'q',qid:id});}
     ev.push({m:q.date.slice(0,7),d:q.date,doc:'Оплата · '+q.article+(q.purpose?' · '+q.purpose:''),pid:qp,acc:0,paid:+q.amount||0,k:'q',qid:id})}
   ev.sort((a,b)=>a.d.localeCompare(b.d)||(b.acc-a.acc));
   let open=0; const rows=[];
@@ -1827,7 +1827,7 @@ function infoSheet(title,sub,html,onEdit){
 function reconInfo(i){
   const r=reconRows[+i]; if(!r) return;
   if(r.k==='a'){editRadj(r.aid);return}
-  if(r.k==='q'){const q=S.expreq[r.qid]||{},kv=(k,v)=>`<div class="kv"><span>${k}</span><b>${v}</b></div>`;infoSheet(r.doc,(S.points[r.pid]||{}).name||'',kv('Сума',f0(q.amount)+' грн')+kv('Дата',dmy(q.date))+(q.billNo||q.billSum?kv('Рахунок',(q.billNo?'№'+esc(q.billNo)+' · ':'')+f0(q.billSum||0)+' грн'):'')+(q.note?kv('Коментар',esc(q.note)):'')+kv('Статус',REQ_ST[q.status]||''));return}
+  if(r.k==='q'){const q=S.expreq[r.qid]||{},kv=(k,v)=>`<div class="kv"><span>${k}</span><b>${v}</b></div>`;infoSheet(r.doc,(S.points[r.pid]||{}).name||'',kv('Сума',f0(q.amount)+' грн')+kv('Дата',dmy(q.date))+(q.billNo||q.billSum?kv('Рахунок / акт',(q.billNo?'№'+esc(q.billNo)+' · ':'')+f0(q.billSum||0)+' грн'):'')+(q.note?kv('Коментар',esc(q.note)):'')+kv('Статус',REQ_ST[q.status]||''));return}
   const p=S.points[r.pid]||{}, x=payRow(r.m,r.pid), py=x.py, u=x.u, mt=mLabel(r.m).toLowerCase();
   const n=v=>v==null||v===''?'—':nf1.format(+v), tf=v=>v==null||v===''?'—':String(+v).replace('.',',');
   const kv=(k,v)=>`<div class="kv"><span>${k}</span><b>${v}</b></div>`;
