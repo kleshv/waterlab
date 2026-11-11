@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261111i">
+<meta name="wl-build" content="20261111j">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -238,7 +238,7 @@ p.note{margin:6px 0 0}
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261111i"></script>
+<script src="shim.js?v=20261111j"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -525,11 +525,11 @@ function saveReq(id,old){return async fd=>{const a=parseNum(String(fd.amount||''
   if(!fd.byBill){fd.billNo='';fd.billSum='';fd.cp=''}
   const bs=String(fd.billSum||'').trim()===''?null:parseNum(String(fd.billSum));if(bs===null&&String(fd.billSum||'').trim()!=='')return 'Не зрозумів суму за рахунком';
   const doc={...(old||{}),date:fd.date,amount:a,article:fd.article,point:fd.point||'',purpose:(fd.purpose||'').trim(),note:fd.note||'',cp:fd.cp&&fd.cp!=='__other'?fd.cp:'',billNo:(fd.billNo||'').trim(),billSum:bs!=null?bs:((fd.billNo||'').trim()?a:null),status:'wait',by:(old&&old.by)||me||'',at:new Date().toISOString()};
-  if(!await w(()=>db.doc('expreq/'+id).set(doc)))return 'Не збереглося';toast('Відправлено на підтвердження')}}
+  if(!await w(()=>db.doc('expreq/'+id).set(doc)))return 'Не збереглося';toast('Збережено')}}
 function addReq(){openSheet('Інший платіж','',reqForm({}),saveReq(db.collection('expreq').doc().id));reqWire()}
 function editReq(id){const r=S.expreq[id];if(!r)return;
-  if(r.status==='ok'){infoSheet('Витрата підтверджена',dmy(r.date)+' · '+f0(r.amount)+' грн',`<div class="kv"><span>${esc(r.article)}</span><b>${f0(r.amount)}</b></div>`);return}
-  openSheet('Інший платіж',r.status==='no'?'Відхилено'+(r.reason?': '+r.reason:''):'',reqForm(r),saveReq(id,r),async()=>await w(()=>db.doc('expreq/'+id).delete()));reqWire()}
+  if(r.status==='ok'){const kv=(k,v)=>`<div class="kv"><span>${k}</span><b>${v}</b></div>`;infoSheet('Платіж',dmy(r.date)+' · '+f0(r.amount)+' грн',kv(esc(r.article),f0(r.amount))+(r.point?kv('Точка',esc((S.points[r.point]||{}).name||'')):'')+(r.billNo||r.billSum!=null?kv('Рахунок / акт',(r.billNo?'№'+esc(r.billNo)+' · ':'')+f0(r.billSum||0)):'')+(r.purpose?kv('Призначення',esc(r.purpose)):'')+(r.note?kv('Коментар',esc(r.note)):''));return}
+  openSheet('Інший платіж','',reqForm(r),saveReq(id,r),async()=>await w(()=>db.doc('expreq/'+id).delete()));reqWire()}
 function reqList(filter){return Object.entries(S.expreq).map(([id,r])=>({id,...r})).filter(filter).sort((a,b)=>(b.date||'').localeCompare(a.date||''))}
 
 /* ---------- регламент заміни фільтрів ---------- */
@@ -632,12 +632,16 @@ function editSvc(id){const e=S.svc[id];if(!e)return;
     const d={...e,point:fd.point,type:fd.type,date:fd.date,note:fd.note||''};delete d.id;if(rd!=null)d.reading=rd;else delete d.reading;if(iv)d.interval=iv;else delete d.interval;
     if(!await w(()=>db.doc('svc/'+id).set(d)))return 'Не збереглося';toast('Збережено')},async()=>await w(()=>db.doc('svc/'+id).delete()))}
 function viewMyExp(){
-  const L=reqList(()=>true), sum=st=>L.filter(r=>r.status===st).reduce((a,r)=>a+(+r.amount||0),0);
+  const L=reqList(()=>true), t=todayISO(), mN=t.slice(0,7), y=t.slice(0,4);
+  const pm=(()=>{const [yy,mm]=mN.split('-').map(Number);const d=new Date(yy,mm-2,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')})();
+  const by=f=>{const a=L.filter(r=>f(r.date||''));return {s:a.reduce((x,r)=>x+(+r.amount||0),0),n:a.length}};
+  const cm=by(d=>d.startsWith(mN)), lm=by(d=>d.startsWith(pm)), yr=by(d=>d.startsWith(y));
+  const cnt=n=>n+' '+(n%10===1&&n%100!==11?'платіж':n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?'платежі':'платежів');
   return `<section class="card"><h2>Інші платежі</h2>
   <div class="bigacts one" style="margin:0 0 12px"><button class="btn pri main" data-act="addReq" type="button">+ Платіж</button></div>
-  <div class="tiles t3"><div class="tile"><div class="l">Очікує</div><div class="v">${f0(sum('wait'))}</div></div><div class="tile"><div class="l">Підтверджено</div><div class="v">${f0(sum('ok'))}</div></div><div class="tile"><div class="l">Відхилено</div><div class="v">${f0(sum('no'))}</div></div></div>
+  <div class="tiles t3"><div class="tile main"><div class="l">${mLabel(mN).split(' ')[0]}</div><div class="v">${f0(cm.s)}</div><div class="s">${cnt(cm.n)}</div></div><div class="tile"><div class="l">${mLabel(pm).split(' ')[0]}</div><div class="v">${f0(lm.s)}</div><div class="s">${cnt(lm.n)}</div></div><div class="tile"><div class="l">${y} рік</div><div class="v">${f0(yr.s)}</div><div class="s">${cnt(yr.n)}</div></div></div>
   <div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Стаття</th><th class="num">Сума</th></tr></thead><tbody>
-  ${L.map(r=>`<tr class="click" data-act="editReq" data-id="${r.id}"><td>${dmy(r.date)}</td><td>${esc(r.article)}<div class="note">${esc([r.purpose,r.point?(S.points[r.point]||{}).name:'',REQ_ST[r.status]||''].filter(Boolean).join(' · '))}</div></td><td class="num ${r.status==='no'?'mut':''}">${f0(r.amount)}</td></tr>`).join('')||'<tr><td colspan="3" class="note">Поки немає.</td></tr>'}
+  ${L.map(r=>`<tr class="click" data-act="editReq" data-id="${r.id}"><td>${dmy(r.date)}</td><td>${esc(r.article)}<div class="note">${esc([r.point?(S.points[r.point]||{}).name:'',r.billNo?'рахунок / акт №'+r.billNo:'',r.purpose].filter(Boolean).join(' · '))}</div></td><td class="num">${f0(r.amount)}</td></tr>`).join('')||'<tr><td colspan="3" class="note">Поки немає.</td></tr>'}
   </tbody></table></div></section>`;
 }
 function reqPendingHtml(){
