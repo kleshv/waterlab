@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261111l">
+<meta name="wl-build" content="20261111m">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -108,6 +108,7 @@ tfoot td{font-weight:700;border-bottom:0}
 .pill.capex{border-color:transparent;background:var(--warn-bg);color:var(--warn)}
 .pill.closed{border-color:transparent;background:var(--cyan);color:#11233f}
 .pill.open{border-color:transparent;background:var(--warn-bg);color:var(--warn)}
+.pill.bad{border-color:var(--bad);color:var(--bad)}.pill.ok{border-color:var(--good);color:var(--good)}
 .btn{font:inherit;font-family:var(--f-display);font-weight:500;font-size:13px;letter-spacing:.03em;text-transform:uppercase;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap}
 .btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .btn.danger{color:var(--bad)}
@@ -238,7 +239,7 @@ p.note{margin:6px 0 0}
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261111l"></script>
+<script src="shim.js?v=20261111m"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -374,8 +375,8 @@ function render(){
   if(tab==='month'||tab==='trend'){repSub=tab==='month'?'fin':tab;tab='reports'}
   const noMonth=`<section class="card"><h2>Місяців поки немає</h2><p class="note">Додайте точки у вкладці «Точки», потім натисніть «+ Місяць».</p></section>`;
   if(tab==='home') h+=cur?viewHome(cur):noMonth;
-  if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['bal','Баланс']].filter(([k])=>!(isDan()&&k==='bal')).map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
-    if(repSub==='fin') h+=cur?viewMonth(cur):noMonth; if(repSub==='trend') h+=viewTrend(); if(repSub==='bal') h+=viewBal();}
+  if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['price','Ціни'],['bal','Баланс']].filter(([k])=>!(isDan()&&k==='bal')).map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
+    if(repSub==='fin') h+=cur?viewMonth(cur):noMonth; if(repSub==='trend') h+=viewTrend(); if(repSub==='price') h+=viewPrices(); if(repSub==='bal') h+=viewBal();}
   if(tab==='exp'){h+=`<div class="seg2 rep" role="tablist">${[['list','Витрати'],['settle','Взаєморозрахунки']].map(([k,l])=>`<button type="button" class="${expSub===k?'on':''}" data-act="setExpSub" data-id="${k}">${l}</button>`).join('')}</div>`;h+=expSub==='settle'?viewSettle():(cur?viewExp(cur):'');}
   if(tab==='util') h+=cur?viewUtil(cur):'';
   if(tab==='rent') h+=cur?viewRent(cur):'';
@@ -719,6 +720,55 @@ function viewSettle(){
   return h+`</section>`;
 }
 
+/* ---------- ціни та тест ціни ---------- */
+const gwLast=()=>Object.values(S.sales).map(x=>x.thru||'').sort().pop()||'';
+function dayLR(pid,d){const sd=S.sales[d.slice(0,7)+'_'+pid];if(!sd||!sd.d)return null;const v=sd.d[d.slice(8,10)];if(!v)return null;return [+v[0]||0,(+v[1]||0)+(+v[2]||0)]}
+function winLR(pids,d0,d1){ // сума літрів/виручки по днях, де є дані в усіх точках набору
+  let L=0,R=0,n=0;for(let d=d0;d<=d1;d=addDay(d,1)){let l=0,r=0,ok=true;for(const pid of pids){const v=dayLR(pid,d);if(!v){ok=false;break}l+=v[0];r+=v[1]}if(ok&&l>0){L+=l;R+=r;n++}}
+  return {L,R,n,lpd:n?L/n:0,pr:L?R/L:0}}
+const pHist=p=>(p.priceHist||[]).slice().sort((a,b)=>a.d.localeCompare(b.d));
+const pf=v=>v==null||v===''?'—':nf2.format(+v).replace(/,00$/,'');
+function priceTests(){
+  const last=gwLast(); if(!last)return [];
+  const act=pointsList().filter(p=>p.id!=='p00'&&p.active!==false&&p.gwId);
+  const out=[];
+  for(const p of act)for(const h of pHist(p)){
+    if(h.d<addDay(last,-150))continue;
+    const b0=addDay(h.d,-28), b1=addDay(h.d,-1), a0=h.d, a1=last<addDay(h.d,27)?last:addDay(h.d,27);
+    const ctrl=act.filter(q=>q.id!==p.id&&!pHist(q).some(x=>x.d>=b0&&x.d<=a1)).map(q=>q.id);
+    const pb=winLR([p.id],b0,b1), pa=winLR([p.id],a0,a1), cb=winLR(ctrl,b0,b1), ca=winLR(ctrl,a0,a1);
+    const raw=pb.lpd?pa.lpd/pb.lpd-1:null, cr=cb.lpd&&ca.lpd?ca.lpd/cb.lpd:null, eff=raw!=null&&cr?(pa.lpd/pb.lpd)/cr-1:null;
+    const rvEff=pb.lpd&&cr?((pa.lpd*pa.pr)/(pb.lpd*pb.pr))/cr-1:null;
+    out.push({p,h,pb,pa,raw,eff,rvEff,days:pa.n,before:pb.n});
+  }
+  return out.sort((a,b)=>b.h.d.localeCompare(a.h.d));
+}
+function viewPrices(){
+  const last=gwLast(), act=pointsList().filter(p=>p.id!=='p00'&&p.active!==false);
+  const T=priceTests();
+  const verdict=t=>t.days<7||t.before<5?['pill','замало даних']:t.eff==null?['pill','—']:t.eff<-0.12?['pill bad','відтік — розглянути відкат']:t.eff<-0.05?['pill open','спостерігаємо']:['pill ok','тримається'];
+  const pct=v=>{if(v==null)return '—';const r=Math.round(v*100);return (r>0?'+':r<0?'−':'')+Math.abs(r)+'%'};
+  let h=`<section class="card"><div class="shead"><h2>Тест ціни</h2>${last?`<span class="note">дані по ${dmy(last)}</span>`:''}</div>
+  <p class="note">Літри за день після зміни ціни (до 28 днів) проти 28 днів до неї — з поправкою на точки без змін (сезон, погода). Відкат варто розглядати, якщо падіння більше 12%.</p>`;
+  h+=T.length?`<div class="tbl"><table class="pl ut"><thead><tr><th>Точка · зміна</th><th class="num">Л/день до → після</th><th class="num">Ефект</th></tr></thead><tbody>${T.map(t=>{const [c,l]=verdict(t);return `<tr class="${canWrite?'click':''}" data-act="${canWrite?'editPrice':''}" data-id="${t.p.id}"><td>${esc(t.p.name)}<div class="note">${dmy(t.h.d)} · ${pf(t.h.w0)}/${pf(t.h.m0)} → ${pf(t.h.w)}/${pf(t.h.m)} · ${t.days} дн після</div></td><td class="num">${f0(t.pb.lpd)} → ${f0(t.pa.lpd)}<div class="note">без поправки ${pct(t.raw)}</div></td><td class="num"><b>${pct(t.eff)}</b><div class="note">виручка ${pct(t.rvEff)}</div><div><span class="${c}">${l}</span></div></td></tr>`}).join('')}</tbody></table></div>`
+    :`<p class="note">Змін ціни за останні 5 місяців не записано. Щоб почати тест — відкрийте точку нижче й вкажіть нову ціну та дату зміни.</p>`;
+  h+=`</section>`;
+  const L14=last?addDay(last,-13):'', P14a=last?addDay(last,-27):'', P14b=last?addDay(last,-14):'';
+  const rows=act.map(p=>{const a=last?winLR([p.id],L14,last):{lpd:0,pr:0,n:0}, b=last?winLR([p.id],P14a,P14b):{lpd:0,n:0};const ch=b.lpd&&a.lpd?a.lpd/b.lpd-1:null;
+    return `<tr class="${canWrite?'click':''}" data-act="${canWrite?'editPrice':''}" data-id="${p.id}"><td>${esc(p.name)}${pHist(p).length?`<div class="note">змінено ${dmy(pHist(p).pop().d)}</div>`:''}</td><td class="num">${pf(p.priceW)} / ${pf(p.priceM)}</td><td class="num">${a.pr?nf2.format(a.pr):'—'}</td><td class="num">${a.lpd?f0(a.lpd):'—'}<div class="note">${pct(ch)}</div></td></tr>`}).join('');
+  h+=`<section class="card"><h2>Ціни по точках</h2><p class="note">Ціна: звичайна / мінералізована, грн/л. Середня та літри — за останні 14 днів; % — проти попередніх 14.</p>
+  <div class="tbl"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Ціна</th><th class="num">Сер.</th><th class="num">Л/день</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+  return h;
+}
+function editPrice(pid){const p=S.points[pid];if(!p)return;const H=pHist(p);
+  const hist=H.length?`<div class="full note">${H.slice().reverse().map(x=>`${dmy(x.d)}: ${pf(x.w0)}/${pf(x.m0)} → ${pf(x.w)}/${pf(x.m)}`).join('<br>')}</div>`:'';
+  openSheet('Ціна · '+p.name,'Звичайна / мінералізована, грн за літр',
+    fld('priceW','Звичайна',p.priceW??'')+fld('priceM','Мінералізована',p.priceM??'')+fld('pdate','Дата зміни (якщо ціну змінено)','',{type:'date'})+
+    `<p class="note full" style="margin:-4px 0 0">Вкажіть дату, з якої діє нова ціна на автоматі — від неї рахується тест. Якщо тільки виправляєте запис — дату не заповнюйте.</p>`+hist,
+    async fd=>{const pw=parseNum(String(fd.priceW||'')), pmn=parseNum(String(fd.priceM||''));if(pw===null||pmn===null)return 'Вкажіть обидві ціни';
+      const ph=(p.priceHist||[]).slice(); if(fd.pdate&&(pw!==+p.priceW||pmn!==+p.priceM))ph.push({d:fd.pdate,w0:p.priceW??null,m0:p.priceM??null,w:pw,m:pmn});
+      if(!await w(()=>db.doc('points/'+pid).set({...p,priceW:pw,priceM:pmn,priceHist:ph})))return 'Не збереглося';toast('Ціну збережено')});
+}
 function viewTrend(){
   const all_=monthsList(), Y=(cur||all_[all_.length-1]||'').slice(0,4), ms=all_.filter(m=>m.startsWith(Y)); const cs=ms.map(m=>({m,...calc(m)}));
   if(!ms.length) return `<section class="card"><p class="note">Даних поки немає.</p></section>`;
@@ -927,7 +977,7 @@ function yearTable(m){
   </section>`;
 }
 function setInv(v){invSub=v==='pct'?'pct':'dep';render()}
-function setRep(v){if(v==='settle'){tab='exp';expSub='settle';render();return}repSub=['fin','trend','bal'].includes(v)?v:'fin';render()}
+function setRep(v){if(v==='settle'){tab='exp';expSub='settle';render();return}repSub=['fin','trend','price','bal'].includes(v)?v:'fin';render()}
 function setExpSub(v){expSub=v==='settle'?'settle':'list';render()}
 function goTab(v){if(v==='rep:settle'){tab='exp';expSub='settle'}else if(v.startsWith('rep:')){tab='reports';repSub=v.slice(4)}else tab=v;render();window.scrollTo(0,0)}
 function prevMonthOf(m){const ms=monthsList();const i=ms.indexOf(m);return i>0?ms[i-1]:null}
@@ -1955,7 +2005,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
