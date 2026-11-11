@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261111c">
+<meta name="wl-build" content="20261111d">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -135,7 +135,7 @@ p.note{margin:6px 0 0}
 .form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .form label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--muted);min-width:0}
 .form label.full,.form .full{grid-column:1/-1}
-.form:has(#f_billNo){grid-template-columns:1fr 1fr!important;gap:6px 8px}.form:has(#f_billNo) .sub{margin:4px 0 -2px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+.form:has(#f_billNo){grid-template-columns:1fr 1fr!important;gap:6px 8px}.form .billbox{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px}.form .billbox[hidden]{display:none}.form:has(#f_billNo) .sub{margin:4px 0 -2px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
 .sheet.wide{max-width:760px}
 .form .chk{flex-direction:row;align-items:center;gap:8px;font-size:13px;color:var(--fg)}
 .actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
@@ -238,7 +238,7 @@ p.note{margin:6px 0 0}
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261111c"></script>
+<script src="shim.js?v=20261111d"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -506,8 +506,8 @@ function reqForm(r){
   return fld('date','Дата оплати',r.date||todayISO(),{type:'date'})+fld('amount','Сплачено, грн',r.amount??'')+
     sel('article','Стаття',r.article||'Інше',arts.map(a=>[a,a]))+sel('point','Точка',r.point||'',popts)+
     sel('cp','Контрагент (для звірки)',r.cp||'',reqCpOpts(r.point||'',r.cp||''),true)+
-    `<div class="sub full">Оплата за рахунком</div>`+
-    fld('billNo','Рахунок №',r.billNo||'',{type:'text'})+fld('billSum','Сума за рахунком, грн',r.billSum??(r.inv?r.amount:''))+
+    `<label class="full chk"><input type="checkbox" name="byBill" id="f_byBill" ${r.billNo||r.billSum!=null||r.inv?'checked':''}> Оплата за рахунком</label>`+
+    `<div class="full billbox" ${r.billNo||r.billSum!=null||r.inv?'':'hidden'}>`+fld('billNo','Рахунок №',r.billNo||'',{type:'text'})+fld('billSum','Сума за рахунком, грн',r.billSum??(r.inv?r.amount:''))+`</div>`+
     fld('purpose','Призначення платежу',r.purpose||'',{type:'text',full:true})+fld('note','Коментар',r.note||'',{type:'text',full:true});
 }
 function reqCps(){const o=[];for(const p of reconPts()){const mn=(p.payee||'').trim()||p.name;o.push([p.id+'|main',mn+(mn!==p.name?' · '+p.name:'')]);if((p.payee2||'').trim())o.push([p.id+'|w',p.payee2.trim()+' (вода) · '+p.name])}return o.sort((a,b)=>a[1].localeCompare(b[1],'uk'))}
@@ -515,11 +515,13 @@ function reqCpOpts(pid,val){const all=reqCps(), own=pid?all.filter(o=>o[0].start
   const base=[['','— не враховувати у звірці —']];
   if(other||!own.length) return base.concat(all);
   return base.concat(own,[['__other','Інший контрагент…']])}
-function reqWire(){const pt=$('#f_point'),cp=$('#f_cp');if(!pt||!cp)return;
+function reqWire(){const pt=$('#f_point'),cp=$('#f_cp'),bb=$('#f_byBill');if(!pt||!cp)return;
+  if(bb)bb.addEventListener('change',()=>{const box=$('#sf .billbox');box.hidden=!bb.checked;if(bb.checked){$('#f_billNo').focus();if(!$('#f_billSum').value)$('#f_billSum').value=$('#f_amount').value}});
   const fill=(val)=>{const o=reqCpOpts(pt.value,val);cp.innerHTML=o.map(([v,t])=>`<option value="${esc(v)}">${esc(t)}</option>`).join('');cp.value=val==='__other'?'':(val&&o.some(x=>x[0]===val)?val:(o[1]&&o[1][0]!=='__other'&&pt.value?o[1][0]:''))};
   pt.addEventListener('change',()=>fill(''));
   cp.addEventListener('change',()=>{if(cp.value==='__other')fill('__other')})}
 function saveReq(id,old){return async fd=>{const a=parseNum(String(fd.amount||''));if(a===null||a<=0)return 'Вкажіть суму';if(!fd.date)return 'Вкажіть дату';
+  if(!fd.byBill){fd.billNo='';fd.billSum=''}
   const bs=String(fd.billSum||'').trim()===''?null:parseNum(String(fd.billSum));if(bs===null&&String(fd.billSum||'').trim()!=='')return 'Не зрозумів суму за рахунком';
   const doc={...(old||{}),date:fd.date,amount:a,article:fd.article,point:fd.point||'',purpose:(fd.purpose||'').trim(),note:fd.note||'',cp:fd.cp&&fd.cp!=='__other'?fd.cp:'',billNo:(fd.billNo||'').trim(),billSum:bs!=null?bs:((fd.billNo||'').trim()?a:null),status:'wait',by:(old&&old.by)||me||'',at:new Date().toISOString()};
   if(!await w(()=>db.doc('expreq/'+id).set(doc)))return 'Не збереглося';toast('Відправлено на підтвердження')}}
