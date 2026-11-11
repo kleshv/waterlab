@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261111k">
+<meta name="wl-build" content="20261111l">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -238,7 +238,7 @@ p.note{margin:6px 0 0}
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261111k"></script>
+<script src="shim.js?v=20261111l"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter'];
@@ -1377,7 +1377,7 @@ function editBill(pid,mm){
   const wT=py.bwT??u.wT??t.wT, eT=py.beT??u.eT??t.eT;
   const fields=`<div class="calc full">За нашими показниками (1-ше–1-ше): <b>${f0(x.utilCalc)} грн</b></div>`+
     fld('bFrom','Період рахунку з',py.bFrom||(other?'':m+'-01'),{type:'date'})+fld('bTo','по',py.bTo||(other?'':(([y,mo])=>mo===12?(y+1)+'-01-01':y+'-'+String(mo+1).padStart(2,'0')+'-01')(m.split('-').map(Number))),{type:'date'})+
-    (hasOur?`<label class="full chk"><input type="checkbox" id="f_other" ${other?'checked':''}> Інші показники (не наші на 01)</label>`:'')+
+    (hasOur?`<label class="full chk"><input type="checkbox" id="f_other" ${other?'checked':''}> Інші показники за рахунком / актом</label>`:'')+
     `<div class="full blist b4 bill"><div class="bhead"><span></span><span></span><span>Було</span><span>Стало</span><span>Тариф</span></div>
       <div class="brow"><div class="bname">Вода, м³</div><div class="bc" id="bcw"></div><input name="bw0" id="f_bw0" inputmode="decimal" value="${num(w0)}"><input name="bw1" id="f_bw1" inputmode="decimal" value="${num(w1)}"><input name="bwT" id="f_bwT" inputmode="decimal" value="${num(wT)}"></div>
       <div class="brow"><div class="bname">Світло, кВт·год</div><div class="bc" id="bce"></div><input name="be0" id="f_be0" inputmode="decimal" value="${num(e0)}"><input name="be1" id="f_be1" inputmode="decimal" value="${num(e1)}"><input name="beT" id="f_beT" inputmode="decimal" value="${num(eT)}"></div></div>`+
