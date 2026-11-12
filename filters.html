@@ -303,10 +303,10 @@ function openSheet(title,sub,fields,onSave,onDelete){
 const KIND={prod:'Готові картриджі (виробництво)',buy:'Готові закупні',raw:'Сировина'};
 const TYPES={buy:'Закупівля',contrib:'Внесок товаром',prod:'Виробництво',sale:'Продаж',take:'Вибуття партнеру',adj:'Списання / коригування',exp:'Витрата',eq:'Обладнання',cash:'Гроші партнера'};
 const MONEY=['exp','eq','cash'];
-const SHARE={'Анатолій':.5,'Влад':.25,'Даниїл':.25};
+const SHARE={'Анатолій':.5,'Даниїл':.5};
 const EXPCAT=['Оренда','Доставка','Реклама / поліграфія','Інструмент / ремонт','Інше'];
 const TIERS=[['D','D — WaterLab / дилер'],['O','О10+ — опт'],['MO','О2+ — дрібний опт'],['R','Р — роздріб'],['Z','С/С — за собівартістю']];
-const PARTNERS=['Влад','Даниїл','Анатолій'];
+const PARTNERS=['Даниїл','Анатолій'];
 const items=()=>Object.entries(S.f_items).map(([id,x])=>({id,...x})).filter(x=>x.active!==false).sort((a,b)=>(a.ord||0)-(b.ord||0)||a.name.localeCompare(b.name,'uk'));
 const itemName=i=>(S.f_items[i]||{}).name||i;
 const unit=i=>(S.f_items[i]||{}).unit||'шт';
@@ -580,21 +580,20 @@ function viewPart(){
    <div class="tile hi"><div class="l">Результат</div><div class="v ${r.res<0?'neg':''}">${f0(r.res)}</div><div class="s">до розподілу</div></div></div>
    <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Розподіл</th><th class="num">Частка</th><th class="num">Сума</th></tr></thead><tbody>
    <tr><td>Анатолій</td><td class="num">50%</td><td class="num">${f2(r.res*.5)}</td></tr>
-   <tr class="grp"><td colspan="3">WaterLab (Влад + Даниїл) — 50%</td></tr>
-   <tr><td>Влад</td><td class="num">25%</td><td class="num">${f2(r.res*.25)}</td></tr>
-   <tr><td>Даниїл</td><td class="num">25%</td><td class="num">${f2(r.res*.25)}</td></tr></tbody></table></div></section>`;
+
+
+   <tr><td>Даниїл</td><td class="num">50%</td><td class="num">${f2(r.res*.5)}</td></tr></tbody></table></div></section>`;
   const ex=moves().filter(m=>m.date.slice(0,7)===mon&&(m.type==='exp'||m.type==='eq'||m.type==='cash')).reverse();
   h+=`<section class="card"><h2>Витрати й гроші за ${mLabel(mon).toLowerCase()}</h2>${mvTable(ex,E)}</section>`;
   const C=capital(E,null);
   h+=`<section class="card"><h2>Капітал партнерів на сьогодні</h2><p class="note">Скільки кожен вклав у проект (гроші, товар, оплачені витрати), мінус що отримав (виручку від продажів, забраний товар, виплати), плюс його частка накопиченого результату. Це сума, яку проект «винен» партнеру.</p>
    <div class="tbl"><table class="pl ut"><thead><tr><th>Партнер</th><th class="num hm">Вклав</th><th class="num hm">Отримав</th><th class="num">Результат</th><th class="num">Капітал</th></tr></thead><tbody>
-   ${['Анатолій','Влад','Даниїл'].map(k=>{const x=C.P[k];return `<tr><td>${k} <span class="mut hm">${SHARE[k]*100}%</span></td><td class="num hm">${f0(x.inn)}</td><td class="num hm">${f0(x.out)}</td><td class="num ${x.pl<0?'neg':''}">${f0(x.pl)}</td><td class="num"><b>${f0(x.bal)}</b></td></tr>`}).join('')}
-   <tr class="grp"><td>WaterLab</td><td class="num hm">${f0(C.P['Влад'].inn+C.P['Даниїл'].inn)}</td><td class="num hm">${f0(C.P['Влад'].out+C.P['Даниїл'].out)}</td><td class="num">${f0(C.P['Влад'].pl+C.P['Даниїл'].pl)}</td><td class="num">${f0(C.P['Влад'].bal+C.P['Даниїл'].bal)}</td></tr>
+   ${['Анатолій','Даниїл'].map(k=>{const x=C.P[k];return `<tr><td>${k} <span class="mut hm">${SHARE[k]*100}%</span></td><td class="num hm">${f0(x.inn)}</td><td class="num hm">${f0(x.out)}</td><td class="num ${x.pl<0?'neg':''}">${f0(x.pl)}</td><td class="num"><b>${f0(x.bal)}</b></td></tr>`}).join('')}
    </tbody><tfoot><tr class="final"><td>Разом</td><td class="hm"></td><td class="hm"></td><td class="num">${f0(C.cum)}</td><td class="num">${f0(PARTNERS.reduce((a,k)=>a+C.P[k].bal,0)+C.P['Каса проекту'].bal)}</td></tr></tfoot></table></div>
    ${Math.abs(C.P['Каса проекту'].bal)>.5?`<p class="note">Каса проекту: ${f0(C.P['Каса проекту'].bal)} грн.</p>`:''}
    <p class="note">Разом капітал = склад ${f0(Object.values(E.V).reduce((a,v)=>a+v,0))} + обладнання ${f0(moves().filter(m=>m.type==='eq').reduce((a,m)=>a+(+m.total||0),0))}${Math.abs(C.P['Каса проекту'].bal)>.5?' + каса':''} .</p></section>`;
-  let rows='',cum=0;for(const mo of all){const x=plMonth(E,mo);cum+=x.res;rows=`<tr class="click" data-act="setPartMon" data-id="${mo}"><td>${mLabel(mo)}</td><td class="num">${f0(x.rev)}</td><td class="num hm">${f0(x.rev-x.cogs)}</td><td class="num">${f0(x.exp+x.adj)}</td><td class="num ${x.res<0?'neg':''}"><b>${f0(x.res)}</b></td><td class="num hm">${f0(x.res*.5)}</td><td class="num hm">${f0(x.res*.25)}</td></tr>`+rows}
-  h+=`<section class="card"><h2>По місяцях</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Місяць</th><th class="num">Продажі</th><th class="num hm">Валовий</th><th class="num">Витрати</th><th class="num">Результат</th><th class="num hm">Анатолій</th><th class="num hm">Влад / Даниїл</th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="final"><td>Усього</td><td></td><td class="hm"></td><td></td><td class="num">${f0(cum)}</td><td class="num hm">${f0(cum*.5)}</td><td class="num hm">${f0(cum*.25)}</td></tr></tfoot></table></div></section>`;
+  let rows='',cum=0;for(const mo of all){const x=plMonth(E,mo);cum+=x.res;rows=`<tr class="click" data-act="setPartMon" data-id="${mo}"><td>${mLabel(mo)}</td><td class="num">${f0(x.rev)}</td><td class="num hm">${f0(x.rev-x.cogs)}</td><td class="num">${f0(x.exp+x.adj)}</td><td class="num ${x.res<0?'neg':''}"><b>${f0(x.res)}</b></td><td class="num hm">${f0(x.res*.5)}</td><td class="num hm">${f0(x.res*.5)}</td></tr>`+rows}
+  h+=`<section class="card"><h2>По місяцях</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Місяць</th><th class="num">Продажі</th><th class="num hm">Валовий</th><th class="num">Витрати</th><th class="num">Результат</th><th class="num hm">Анатолій</th><th class="num hm">Даниїл</th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="final"><td>Усього</td><td></td><td class="hm"></td><td></td><td class="num">${f0(cum)}</td><td class="num hm">${f0(cum*.5)}</td><td class="num hm">${f0(cum*.5)}</td></tr></tfoot></table></div></section>`;
   return h;
 }
 function setPartMon(m){partMon=m;render()}
