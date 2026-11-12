@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261112v">
+<meta name="wl-build" content="20261112w">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Фільтри</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -259,7 +259,7 @@ p.note{margin:6px 0 0}
 @media (max-width:520px){.acts4{grid-template-columns:1fr 1fr}}
 .rcpt{margin-top:8px}.ln2{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:15px}.ln2 b{font-variant-numeric:tabular-nums;font-weight:600}.ln2.mut{color:var(--muted)}.ln2.tot{border-bottom:0;font-weight:700;font-size:17px}.ln2.tot b{font-weight:800}.rcpt .ln2.tot{border-top:2px solid var(--navy);margin-top:2px}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.split div{background:var(--chip);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column}.split span{font-size:12px;color:var(--muted)}.split b{font-size:18px;font-variant-numeric:tabular-nums}
-.pb tr.sum td{background:var(--chip)}
+.pb tr.sum td{background:var(--chip)}.pb tr.initr td{background:#e8f0fd;font-size:15px}.pb tr.grp2 td{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;padding-top:12px}
 .tapn{all:unset;cursor:pointer;border-bottom:1px dashed currentColor;font:inherit;font-variant-numeric:tabular-nums}.tapn:hover{color:var(--accent)}.tapn.neg{color:var(--bad)}
 .stat{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:10px;margin-left:auto}.stat.op{background:#fff3d6;color:#8a5a00}.stat.cl{background:#e9f7ef;color:#16804a}
 .brkl .ln2{font-size:14px}
@@ -276,7 +276,7 @@ p.note{margin:6px 0 0}
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>window.WL_ONLY=['f_items','f_moves','f_months'];</script>
-<script src="shim.js?v=20261112v"></script>
+<script src="shim.js?v=20261112w"></script>
 <script>
 const COLS=['f_items','f_moves','f_months'];
 const S={f_items:{},f_moves:{},f_months:{}};
@@ -376,13 +376,16 @@ const actBtns=()=>canWrite?`<div class="acts4">
   <button class="btn" data-act="addMove" data-id="exp" type="button">+ Витрата</button>
   <button class="btn ghost" data-act="addMove" data-id="more" type="button">Інше: забрав собі · вніс товар · обладнання · гроші · списання</button></div>`:'';
 function monthStats(m){let rv=0,cg=0,n=0,wl=0;const E=engine();for(const x of moves())if(x.date.slice(0,7)===m&&x.type==='sale'){const t=mvTotal(x);rv+=t;cg+=E.cogs[x.id]||0;n++;if(/water\s*lab|ватер/i.test(x.client||''))wl+=t}return {rv,cg,n,wl}}
+const initChk=m=>`<label class="chk full" style="margin-top:4px"><input type="checkbox" name="init" ${m&&m.init?'checked':''}> Стартове вкладення (вклад до запуску проекту)</label>`;
+const START_MON='2026-09';
 let homeMon=null, monOpen=null;
 const fClosed=m=>!!(S.f_months[m]&&S.f_months[m].closed);
 const allMons=()=>{const a=[...new Set(moves().map(m=>m.date.slice(0,7)))].sort();const c=todayISO().slice(0,7);if(!a.includes(c))a.push(c);return a};
-function partBook(E,upTo){const B={};for(const k of PARTNERS)B[k]={mat:0,eq:0,exp:0,cash:0,sold:0,took:0,paid:0};
+function partBook(E,upTo){const B={};for(const k of PARTNERS)B[k]={init:0,mat:0,eq:0,exp:0,cash:0,sold:0,took:0,paid:0};
   for(const m of moves()){if(upTo&&m.date.slice(0,7)>upTo)continue;const k=bookKey(m,E);if(k&&B[k.p])B[k.p][k.c]+=k.v}
   return B}
 function bookKey(m,E){const t=mvTotal(m);
+  if(m.init){const p=m.payer||m.partner;if(['buy','contrib','eq','exp'].includes(m.type)||(m.type==='cash'&&m.dir==='in'))return {p,c:'init',v:t}}
   if(m.type==='buy')return {p:m.payer,c:'mat',v:t};if(m.type==='contrib')return {p:m.partner,c:'mat',v:t};
   if(m.type==='eq')return {p:m.payer,c:'eq',v:t};if(m.type==='exp')return {p:m.payer,c:'exp',v:t};
   if(m.type==='cash')return {p:m.partner,c:m.dir==='in'?'cash':'paid',v:t};
@@ -394,12 +397,15 @@ function receipt(E,mon){const r=plMonth(E,mon);const row=(l,v,k,cls='')=>`<div c
 function partnersCard(E,upTo){
   const B=partBook(E,upTo);let cum=0;for(const mo of allMons())if(!upTo||mo<=upTo)cum+=plMonth(E,mo).res;const P=['Даниїл','Анатолій'];
   const inn=b=>b.mat+b.eq+b.exp+b.cash, out=b=>b.sold+b.took+b.paid;
-  const tr=(l,c,cls='')=>`<tr class="${cls}"><td>${l}</td>${P.map(k=>{const v=c==='inn'?inn(B[k]):c==='out'?out(B[k]):c==='pl'?cum/2:B[k][c];return `<td class="num">${c==='inn'||c==='out'?`<b>${f0(v)}</b>`:tap(f0(v),'brk','p:'+c+':'+k+'|'+(upTo||''),c==='pl'&&v<0?'neg':'')}</td>`}).join('')}</tr>`;
+  const initLocked=fClosed(START_MON);
+  const tr=(l,c,cls='')=>`<tr class="${cls}"><td>${l}</td>${P.map(k=>{const v=c==='inn'?inn(B[k]):c==='out'?out(B[k]):c==='pl'?cum/2:B[k][c];return `<td class="num">${c==='inn'||c==='out'?`<b>${f0(v)}</b>`:tap(c==='init'?`<b>${f0(v)}</b>`:f0(v),'brk','p:'+c+':'+k+'|'+(upTo||''),c==='pl'&&v<0?'neg':'')}</td>`}).join('')}</tr>`;
   return `<section class="card"><h2>Партнери${upTo?' · на кінець '+mLabel(upTo).toLowerCase():''}</h2><div class="tbl"><table class="pl ut pb"><thead><tr><th></th>${P.map(k=>`<th class="num">${k}</th>`).join('')}</tr></thead><tbody>
+   ${tr(`<b>Стартові вкладення</b> <span class="stat ${initLocked?'cl':'op'}" style="margin-left:4px">${initLocked?'зафіксовано':'не зафіксовано'}</span>`,'init','initr')}
+   <tr class="grp2"><td colspan="3">Після запуску</td></tr>
    ${tr('Сировина й товар','mat')}${tr('Обладнання','eq')}${tr('Оренда й витрати','exp')}${P.some(k=>B[k].cash)?tr('Гроші','cash'):''}
-   ${tr('<b>Вклав</b>','inn','sum')}${tr('Продав (гроші в нього)','sold')}${tr('Забрав товаром','took')}${P.some(k=>B[k].paid)?tr('Виплачено','paid'):''}
+   ${tr('<b>Довклав</b>','inn','sum')}${tr('Продав (гроші в нього)','sold')}${tr('Забрав товаром','took')}${P.some(k=>B[k].paid)?tr('Виплачено','paid'):''}
    ${tr('<b>Отримав</b>','out','sum')}
-   </tbody><tfoot><tr class="final"><td>Вкладено й не повернуто</td>${P.map(k=>`<td class="num">${f0(inn(B[k])-out(B[k]))}</td>`).join('')}</tr></tfoot></table></div>
+   </tbody><tfoot><tr class="final"><td>Вкладено й не повернуто</td>${P.map(k=>`<td class="num">${f0(B[k].init+inn(B[k])-out(B[k]))}</td>`).join('')}</tr></tfoot></table></div>
    <p class="note">Натисніть на будь-яку цифру, щоб побачити, з чого вона складається.</p></section>`}
 function viewHome(){
   const E=engine(), mon=todayISO().slice(0,7), cl=fClosed(mon);
@@ -441,7 +447,7 @@ function brk(arg){const [key,mon]=arg.split('|');const E=engine();let title='',r
   else if(key==='exp'){title='Витрати · '+mLabel(mon);for(const m of moves())if(m.date.slice(0,7)===mon&&(m.type==='exp'||m.type==='adj'))rows.push(line(m,m.type==='exp'?+m.total:(E.cogs[m.id]||0)))}
   else if(key==='res'){const r=plMonth(E,mon);title='Прибуток · '+mLabel(mon);
     return sheetInfo(title,`<div class="ln2"><span>Продали</span><b>${f0(r.rev)}</b></div><div class="ln2 mut"><span>− товар за собівартістю</span><b>${f0(r.cogs)}</b></div><div class="ln2 mut"><span>− витрати</span><b>${f0(r.exp)}</b></div>${r.adj?`<div class="ln2 mut"><span>− списання</span><b>${f0(r.adj)}</b></div>`:''}<div class="ln2 tot"><span>Прибуток</span><b>${f0(r.res)}</b></div>`)}
-  else if(key.startsWith('p:')){const [,c,p]=key.split(':');const N={mat:'Сировина й товар',eq:'Обладнання',exp:'Оренда й витрати',cash:'Гроші',sold:'Продав (гроші в нього)',took:'Забрав товаром',paid:'Виплачено',pl:'Прибуток 50%'};
+  else if(key.startsWith('p:')){const [,c,p]=key.split(':');const N={init:'Стартові вкладення',mat:'Сировина й товар',eq:'Обладнання',exp:'Оренда й витрати',cash:'Гроші',sold:'Продав (гроші в нього)',took:'Забрав товаром',paid:'Виплачено',pl:'Прибуток 50%'};
     title=p+' · '+N[c]+(mon?' · до кінця '+mLabel(mon).toLowerCase():'');
     if(c==='pl'){let h='';let s=0;for(const mo of allMons()){if(mon&&mo>mon)continue;const x=plMonth(E,mo).res/2;s+=x;h+=`<div class="ln2"><span>${mLabel(mo)}</span><b class="${x<0?'neg':''}">${f0(x)}</b></div>`}return sheetInfo(title,h+`<div class="ln2 tot"><span>Разом</span><b>${f0(s)}</b></div>`)}
     for(const m of moves()){if(mon&&m.date.slice(0,7)>mon)continue;const k=bookKey(m,E);if(k&&k.p===p&&k.c===c)rows.push(line(m,k.v))}}
@@ -575,11 +581,12 @@ function moveForm(type,m){
   if(type==='adj'){sub='Брак, недостача, інвентаризація. Мінус — списати, плюс — оприбуткувати знайдене.';
     f+=linesBlock('L','Позиція · к-сть (−3 або +2)',m.lines,['prod','buy','raw'],false)}
   f+=fld('note','Коментар',m.note||'',{type:'text',full:true});
-  const lk=!isNew&&fClosed(m.date.slice(0,7));
+  if(type==='buy'||type==='contrib')f+=initChk(m);
+  const lk=!isNew&&(fClosed(m.date.slice(0,7))||(m.init&&fClosed(START_MON)));
   openSheet((isNew?'':'Змінити: ')+TYPES[type],lk?'Місяць закрито — змінити не можна. Відкрийте місяць у «Місяці».':sub,f,async fd=>{
     if(!fd.date)return 'Вкажіть дату';if(lk||fClosed(fd.date.slice(0,7)))return 'Місяць '+mLabel(fd.date.slice(0,7))+' закрито';
     const r=readLines(fd,'L');if(r.err)return r.err;if(!r.lines.length)return 'Додайте хоча б одну позицію';
-    const d={type,date:fd.date,lines:r.lines,note:fd.note||'',by:me||'',t:m.t||Date.now()};
+    const d={type,date:fd.date,lines:r.lines,note:fd.note||'',by:me||'',t:m.t||Date.now()};if(fd.init)d.init=true;
     if(type==='buy'){d.payer=fd.payer;d.supplier=fd.supplier||'';if(r.lines.some(l=>!(l.p>0)))return 'Вкажіть ціну закупівлі'}
     if(type==='contrib')d.partner=fd.partner;
     if(type==='take'){d.partner=fd.partner;const t=String(fd.total||'').trim();if(t){const v=parseNum(t);if(v===null)return 'Не зрозумів суму';d.total=v}}
@@ -652,10 +659,11 @@ function moneyForm(type,m){
   if(type==='cash'){sub='Партнер вносить гроші в проект або отримує виплату (наприклад, свою частку прибутку).';
     f+=sel('partner','Партнер',m.partner||'Даниїл',PARTNERS.map(x=>[x,x]))+sel('dir','Що це',m.dir||'out',[['out','Виплата партнеру'],['in','Внесок грошима']])}
   f+=fld('total','Сума, грн',m.total??'')+fld('note','Коментар',m.note||'',{type:'text',full:true});
-  const lk=!isNew&&fClosed(m.date.slice(0,7));
+  f+=initChk(m);
+  const lk=!isNew&&(fClosed(m.date.slice(0,7))||(m.init&&fClosed(START_MON)));
   openSheet((isNew?'':'Змінити: ')+TYPES[type],lk?'Місяць закрито — змінити не можна.':sub,f,async fd=>{
     if(!fd.date)return 'Вкажіть дату';if(lk||fClosed(fd.date.slice(0,7)))return 'Місяць '+mLabel(fd.date.slice(0,7))+' закрито';const v=parseNum(fd.total);if(!v||v<0)return 'Вкажіть суму';
-    const d={type,date:fd.date,total:v,note:fd.note||'',by:me||'',t:m.t||Date.now()};
+    const d={type,date:fd.date,total:v,note:fd.note||'',by:me||'',t:m.t||Date.now()};if(fd.init)d.init=true;
     if(type==='exp'){d.cat=fd.cat;d.payer=fd.payer}if(type==='eq')d.payer=fd.payer;if(type==='cash'){d.partner=fd.partner;d.dir=fd.dir}
     const id=isNew?db.collection('f_moves').doc().id:m.id;
     if(!await w(()=>db.doc('f_moves/'+id).set(d)))return 'Не збереглося';toast('Записано');
