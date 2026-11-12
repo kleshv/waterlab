@@ -21,15 +21,15 @@
   .lg.ch{max-width:380px;text-align:center}
   .lg.ch .logo{height:52px;margin:0 auto 10px;display:block}
   .lg.ch h1{font-size:14px;color:#9fb1d0;margin:0 0 26px;letter-spacing:.04em}
-  .bc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .bc button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;aspect-ratio:1/1;border-radius:20px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);color:#e9eff9;font-family:var(--f-body,Arial,sans-serif);font-size:16px;font-weight:600;letter-spacing:.02em;transition:background .15s,border-color .15s,transform .15s}
-  .bc button:hover,.bc button:focus-visible{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.22);transform:translateY(-2px)}
-  .bc button:active{transform:translateY(0)}
-  .bc .ic{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center}
-  .bc .w .ic{background:rgba(160,205,240,.16);color:#a9d2f2}
-  .bc .f .ic{background:rgba(168,190,255,.16);color:#b3c4ff}
-  .bc .ic svg{width:40px;height:40px}
-  .lg.ch .lnk{margin-top:22px;color:#8597b8;font-size:13px}`;
+  .bc{display:grid;grid-template-columns:repeat(2,auto);justify-content:center;gap:36px;margin-top:6px}
+  .bc button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:14px;color:#e9eff9;font-family:var(--f-body,Arial,sans-serif);font-size:15px;font-weight:600;letter-spacing:.02em;-webkit-tap-highlight-color:transparent}
+  .bc .ic{width:112px;height:112px;border-radius:30px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 26px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .18s,box-shadow .18s,border-color .18s}
+  .bc .w .ic{background:linear-gradient(150deg,rgba(160,205,240,.22),rgba(160,205,240,.08));color:#a9d2f2}
+  .bc .f .ic{background:linear-gradient(150deg,rgba(168,190,255,.22),rgba(168,190,255,.08));color:#b3c4ff}
+  .bc .ic svg{width:66px;height:66px}
+  .bc button:hover .ic,.bc button:focus-visible .ic{transform:translateY(-3px);border-color:rgba(255,255,255,.26);box-shadow:0 14px 32px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.1)}
+  .bc button:active .ic{transform:scale(.96)}
+  .lg.ch .lnk{margin-top:34px;color:#8597b8;font-size:13px}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
   function logoSvg(){const l=document.querySelector('header .logo');return l?l.outerHTML:''}
   function show(mode){
