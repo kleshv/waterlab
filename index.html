@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261112p">
+<meta name="wl-build" content="20261112q">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -103,6 +103,8 @@ td:last-child,th:last-child{padding-right:0}
 tr.click{cursor:pointer} tr.click:hover td{background:var(--chip)}
 tfoot td{font-weight:700;border-bottom:0}
 .pos{color:var(--good)} .neg{color:var(--bad)} .mut{color:var(--muted)}
+.jacts{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));grid-auto-flow:column;gap:6px;margin:0 0 12px}.jacts .btn{padding:12px 6px;white-space:nowrap}
+.badge{display:inline-block;background:var(--bad);color:#fff;border-radius:9px;padding:0 6px;font-size:11px;line-height:16px;margin-left:4px}.mvt{display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;padding:1px 6px;border-radius:4px;background:#fff3d6;color:#8a5a00}
 .pill{display:inline-block;font-family:var(--f-display);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.03em;padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .pill.toir{border-color:transparent;background:var(--accent-soft);color:var(--fg)}
 .pill.capex{border-color:transparent;background:var(--warn-bg);color:var(--warn)}
@@ -253,7 +255,7 @@ p.note{margin:6px 0 0}
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261112p"></script>
+<script src="shim.js?v=20261112q"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday'];
@@ -396,7 +398,7 @@ function render(){
   if(tab==='rent') h+=cur?viewRent(cur):'';
   if(tab==='inv'){h+=`<div class="seg2 rep" role="tablist">${[['dep','Внески'],['pct','Відсотки']].map(([k,l])=>`<button type="button" class="${invSub===k?'on':''}" data-act="setInv" data-id="${k}">${l}</button>`).join('')}</div>`;h+=invSub==='pct'?viewInvPct():viewInv();}
   if(tab==='myexp') h+=viewMyExp();
-  if(tab==='svc') h+=viewSvc();
+  if(tab==='svc'){h+=`<div class="seg2 rep" role="tablist">${[['reg','Заміни'],['job','Роботи й розрахунок']].map(([k,l])=>`<button type="button" class="${svcSub===k?'on':''}" data-act="setSvcSub" data-id="${k}">${l}${k==='job'&&jobPend().length&&role!=='tech'?` <span class="badge">${jobPend().length}</span>`:''}</button>`).join('')}</div>`;h+=svcSub==='job'?viewJobs():viewSvc();}
   if(tab==='recon') h+=viewRecon();
   if(tab==='points') h+=viewPoints();
   main.innerHTML=h;
@@ -613,7 +615,7 @@ function viewSvc(){
   <p class="note">Скільки води пройшло через фільтри = лічильник води на вході автомата (Gwaters) мінус показник при заміні. Якщо лічильника немає — оцінка: продані літри з Gwaters від дня заміни × коефіцієнт точки (скільки літрів проходить через фільтри на 1 проданий літр — за лічильником автомата на попередніх замінах). Продажі оновлено: ${salesUpd()?dmy(salesUpd().slice(0,10))+(salesUpd().slice(11)?' '+salesUpd().slice(11,16):''):'—'}. Натисніть точку, щоб побачити історію.</p></section>`;
 }
 function svcPoint(pid){
-  const p=S.points[pid]||{}, x=svcState(pid), E=svcEv(pid).reverse();
+  const p=S.points[pid]||{}, x=svcState(pid), E=svcEv(pid).filter(e=>SVC_T[e.type]).reverse();
   const kv=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
   let h=x.last?(x.src==='meter'?kv('Лічильник на вході (Gwaters)',f0(x.meter.w)+' л · '+dmy(x.meter.date)):'')+kv('Продано з заміни',f0(x.sold)+' л · '+(x.src==='meter'&&x.kAct?'факт. коеф. '+fmt1(x.kAct):(x.kOwn?'коеф. точки ':'коеф. мережі ')+fmt1(x.k)))+kv('Остання заміна фільтрів',dmy(x.last.date)+(x.last.reading!=null?' · лічильник '+f0(x.last.reading):''))+kv('Регламент',f0(x.interval)+' л')+kv('Пройшло',f0(x.used)+' л ('+Math.round(x.pct*100)+'%)')+kv('Наступна заміна',x.left<=0?'<span class="neg">прострочено</span>':(x.due?'≈ '+dmy(x.due)+' · через '+x.days+' дн.':'—'))+(x.last.reading!=null?kv('Лічильник зараз (оцінка)',f0(x.last.reading+x.used)):''):'';
   if(x.memL)h+=kv('Мембрани',dmy(x.memL.date)+' · пройшло '+f0(x.memUsed||0)+' л');if(x.toL)h+=kv('ТО',dmy(x.toL.date)+(x.toL.note?' · '+esc(x.toL.note):''));
@@ -630,8 +632,10 @@ function svcForm(pid,e){
   return sel('point','Точка',pid||'',pts.map(p=>[p.id,p.name]),true)+fld('date','Дата',e?e.date:todayISO2(),{type:'date'})+
     (e?sel('type','Що',e.type,Object.entries(SVC_T),true):`<div class="full">${ck('t_in','Вхідні фільтри',1)} ${ck('t_post','Пост-фільтри',1)} ${ck('t_mem','Мембрани',0)} ${ck('t_to','ТО',0)}</div>`)+
     fld('reading','Лічильник на автоматі, л'+(!e&&x&&x.last&&x.last.reading!=null?' (орієнтовно '+f0(x.last.reading+x.used)+')':''),e?(e.reading??''):'')+fld('interval','Наступна заміна через, л',e?(e.interval??''):(x?x.interval:20000))+
+    (e?'':fld('work','Оплата за роботу, грн',1000)+fld('filt','Фільтри для WaterLab, грн',lastFilt(pid)))+
     fld('note','Коментар',e?(e.note||''):'',{type:'text',full:true});
 }
+function lastFilt(pid){const L=jobsAll().filter(j=>j.type==='work'&&j.kind==='kit'&&+j.filt>0);const a=L.filter(j=>j.point===pid).pop()||L.pop();return a?a.filt:1151.5}
 function addSvc(pid){
   openSheet('Заміна / ТО','Внесіть, що замінили. Лічильник — з табло автомата (якщо є).',svcForm(pid||'',null),async fd=>{
     if(!fd.point)return 'Оберіть точку';if(!fd.date)return 'Вкажіть дату';
@@ -639,6 +643,10 @@ function addSvc(pid){
     const rd=String(fd.reading||'').trim()===''?null:parseNum(String(fd.reading)), iv=String(fd.interval||'').trim()===''?null:parseNum(String(fd.interval));
     for(const t of types){const d={point:fd.point,type:t,date:fd.date,note:fd.note||'',by:me||''};if(t!=='to'){if(rd!=null)d.reading=rd;if(iv&&t!=='mem')d.interval=iv}
       if(!await w(()=>db.doc('svc/'+db.collection('svc').doc().id).set(d)))return 'Не збереглося'}
+    const wk=parseNum(String(fd.work||0))||0, fl=types.includes('in')||types.includes('post')?(parseNum(String(fd.filt||0))||0):0;
+    if(wk||fl){const kind=types.includes('in')||types.includes('post')?'kit':types.includes('mem')?'mem':'svc';
+      const j={type:'work',kind,point:fd.point,date:fd.date,amount:wk,st:'new',by:me||'',note:fd.note||''};if(fl)j.filt=fl;
+      if(!await w(()=>db.doc('svc/'+db.collection('svc').doc().id).set(j)))return 'Не збереглося'}
     toast('Записано')});
 }
 function editSvc(id){const e=S.svc[id];if(!e)return;
@@ -646,6 +654,48 @@ function editSvc(id){const e=S.svc[id];if(!e)return;
     const rd=String(fd.reading||'').trim()===''?null:parseNum(String(fd.reading)), iv=String(fd.interval||'').trim()===''?null:parseNum(String(fd.interval));
     const d={...e,point:fd.point,type:fd.type,date:fd.date,note:fd.note||''};delete d.id;if(rd!=null)d.reading=rd;else delete d.reading;if(iv)d.interval=iv;else delete d.interval;
     if(!await w(()=>db.doc('svc/'+id).set(d)))return 'Не збереглося';toast('Збережено')},async()=>await w(()=>db.doc('svc/'+id).delete()))}
+/* ---------- роботи Анатолія й розрахунок ---------- */
+let svcSub='reg';
+function setSvcSub(v){svcSub=v==='job'?'job':'reg';render()}
+const JOBK={kit:'Заміна фільтрів',mem:'Заміна мембран',svc:'Сервіс / ремонт',mount:'Монтаж',mat:'Матеріали'};
+const JOBART={kit:'Сервіс і заміна фільтрів',mem:'Сервіс і заміна фільтрів',svc:'Сервіс і заміна фільтрів',mount:'Електрика та монтаж',mat:'Ремонт і запчастини'};
+const jobsAll=()=>Object.entries(S.svc).filter(([,e])=>e.type==='work'||e.type==='pay').map(([id,e])=>({id,...e})).sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
+const jobPend=()=>jobsAll().filter(j=>j.type==='work'&&j.st==='new');
+function viewJobs(){
+  const L=jobsAll(), owner=role==='owner';let bal=0;for(const j of L)bal+=j.type==='work'?(+j.amount||0):-(+j.amount||0);
+  const m=todayISO2().slice(0,7), mw=L.filter(j=>j.type==='work'&&j.date.slice(0,7)===m), mp=L.filter(j=>j.type==='pay'&&j.date.slice(0,7)===m), P=jobPend();
+  const sum=a=>a.reduce((x,j)=>x+(+j.amount||0),0);
+  let h=`<section class="card"><div class="shead"><h2>Роботи Анатолія й розрахунок</h2></div>
+  ${canWrite?`<div class="jacts"><button class="btn pri" data-act="addSvc" type="button">+ Заміна</button><button class="btn" data-act="addJob" type="button">+ Інша робота</button>${owner?`<button class="btn" data-act="addJobPay" type="button">+ Виплата</button>`:''}</div>`:''}
+  <div class="tiles t3"><div class="tile hi"><div class="l">${bal>=0?'Винні Анатолію':'Анатолій винен'}</div><div class="v">${f0(Math.abs(bal))}</div><div class="s">роботи − виплати</div></div>
+  <div class="tile"><div class="l">Роботи · ${MN[+m.slice(5)-1]}</div><div class="v">${f0(sum(mw))}</div><div class="s">${mw.length} записів</div></div>
+  <div class="tile"><div class="l">Виплачено · ${MN[+m.slice(5)-1]}</div><div class="v">${f0(sum(mp))}</div><div class="s">${mp.length} виплат</div></div></div></section>`;
+  if(P.length)h+=`<section class="card"><h2>Чекає підтвердження</h2><p class="note">${owner?'Після підтвердження робота й фільтри потрапляють у витрати WaterLab (платить Даниїл).':'Даниїл підтвердить — і запис піде у витрати.'}</p>
+   ${P.map(j=>`<div class="kv bi"><span>${dmy(j.date)} · ${esc(JOBK[j.kind]||j.kind)} · ${esc((S.points[j.point]||{}).name||'')}<div class="note">робота ${f0(j.amount)}${j.filt?' · фільтри '+nf2.format(j.filt):''}${j.note?' · '+esc(j.note):''}</div></span><b>${f0((+j.amount||0)+(+j.filt||0))}${owner?`<div style="margin-top:4px"><button class="btn sm pri" data-act="jobOk" data-id="${j.id}" type="button">Підтвердити</button></div>`:''}</b></div>`).join('')}</section>`;
+  let cm='',rows='';const R=L.slice().reverse().slice(0,120);
+  for(const j of R){const mm=j.date.slice(0,7);if(mm!==cm){cm=mm;const W=L.filter(x=>x.type==='work'&&x.date.slice(0,7)===mm),Pp=L.filter(x=>x.type==='pay'&&x.date.slice(0,7)===mm);rows+=`<tr class="grp"><td colspan="2">${mLabel(mm)}</td><td class="num">${sum(W)?'роботи '+f0(sum(W)):''}${sum(W)&&sum(Pp)?' · ':''}${sum(Pp)?'виплати '+f0(sum(Pp)):''}</td></tr>`}
+    const pay=j.type==='pay';
+    rows+=`<tr class="${canWrite&&(owner||j.st==='new'||pay)?'click':''}" data-act="${canWrite?'editJob':''}" data-id="${j.id}"><td>${dmy(j.date)}</td><td>${pay?'<b>Виплата</b>':esc(JOBK[j.kind]||j.kind)}${j.point?' · '+esc((S.points[j.point]||{}).name||''):''}${j.st==='new'?' <span class="mvt">чекає</span>':''}${j.note?`<div class="note">${esc(j.note)}</div>`:''}</td><td class="num ${pay?'pos':''}">${pay?'−':''}${f0(j.amount)}${j.filt?`<div class="note">фільтри ${nf2.format(j.filt)}</div>`:''}</td></tr>`}
+  h+=`<section class="card"><h2>Журнал</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Робота</th><th class="num">Сума</th></tr></thead><tbody>${rows}</tbody></table></div><p class="note">Робота — оплата Анатолію. «Фільтри» — вартість комплекту для WaterLab (йде у витрати разом з роботою). Виплата зменшує борг.</p></section>`;
+  return h;
+}
+function jobForm(j){j=j||{};const pts=pointsList().filter(p=>p.id!=='p00'&&p.active!==false);const pay=j.type==='pay';
+  return (pay?'':sel('kind','Що',j.kind||'svc',Object.entries(JOBK),true)+sel('point','Точка',j.point||'',[['','— без точки —'],...pts.map(p=>[p.id,p.name])],true))+fld('date','Дата',j.date||todayISO2(),{type:'date'})+fld('amount',pay?'Сума виплати, грн':'Оплата за роботу, грн',j.amount??'')+(pay?'':fld('filt','Фільтри для WaterLab, грн',j.filt??''))+fld('note','Коментар',j.note||'',{type:'text',full:true})}
+async function saveJob(id,base,fd){const a=parseNum(String(fd.amount||''));if(a===null||String(fd.amount||'').trim()==='')return 'Вкажіть суму';if(!fd.date)return 'Вкажіть дату';
+  const d={...base,date:fd.date,amount:a,note:fd.note||''};delete d.id;
+  if(base.type==='work'){d.kind=fd.kind;d.point=fd.point||'';const f=parseNum(String(fd.filt||''));if(f)d.filt=f;else delete d.filt}
+  if(!await w(()=>db.doc('svc/'+(id||db.collection('svc').doc().id)).set(d)))return 'Не збереглося';toast('Записано')}
+function addJob(){openSheet('Інша робота','Сервіс, ремонт, монтаж або матеріали.',jobForm({type:'work'}),fd=>saveJob(null,{type:'work',st:'new',by:me||''},fd))}
+function addJobPay(){openSheet('Виплата Анатолію','Гроші, які Анатолій отримав за роботи.',jobForm({type:'pay'}),fd=>saveJob(null,{type:'pay',by:me||''},fd))}
+function editJob(id){const j=S.svc[id];if(!j)return;const owner=role==='owner';
+  if(j.st==='ok'&&j.type==='work'&&!owner){toast('Запис уже підтверджено');return}
+  openSheet(j.type==='pay'?'Виплата Анатолію':(JOBK[j.kind]||'Робота'),j.st==='ok'&&j.expId?'Уже у витратах WaterLab — зміни тут не змінять витрату.':'',jobForm(j),fd=>saveJob(id,j,fd),async()=>await w(()=>db.doc('svc/'+id).delete()))}
+async function jobOk(id){const j=S.svc[id];if(!j||j.st!=='new')return;
+  let m=j.date.slice(0,7);if(isClosed(m)||!S.months[m]){const op=monthsList().filter(x=>!isClosed(x)).pop();if(!op){toast('Немає відкритого місяця');return}m=op}
+  const amt=(+j.amount||0)+(+j.filt||0);const eid=db.collection('exp').doc().id;
+  const e={cat:'ТОіР',article:JOBART[j.kind]||'Сервіс і заміна фільтрів',amount:Math.round(amt*100)/100,month:m,date:j.date,point:j.point||'',payer:'Даниїл',note:(JOBK[j.kind]||'')+(j.filt?` (робота ${f0(j.amount)} + фільтри ${nf2.format(j.filt)})`:'')+(j.note?' · '+j.note:''),recurring:false,by:me||'',src:'svc:'+id};
+  if(!await w(()=>db.doc('exp/'+eid).set(e)))return;
+  await w(()=>db.doc('svc/'+id).set({...j,st:'ok',expId:eid,okBy:me||''}));toast('Підтверджено · у витратах '+mLabel(m))}
 function viewMyExp(){
   const L=reqList(()=>true), t=todayISO(), mN=t.slice(0,7), y=t.slice(0,4);
   const pm=(()=>{const [yy,mm]=mN.split('-').map(Number);const d=new Date(yy,mm-2,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')})();
@@ -2025,7 +2075,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
