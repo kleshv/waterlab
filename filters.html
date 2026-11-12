@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261112zb">
+<meta name="wl-build" content="20261112zc">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Фільтри</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -278,7 +278,7 @@ p.note{margin:6px 0 0}
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>window.WL_ONLY=['f_items','f_moves','f_months'];</script>
-<script src="shim.js?v=20261112zb"></script>
+<script src="shim.js?v=20261112zc"></script>
 <script>
 const COLS=['f_items','f_moves','f_months'];
 const S={f_items:{},f_moves:{},f_months:{}};
@@ -444,12 +444,13 @@ function partnersCard(E,upTo){const x=invest(E,upTo);const u=upTo||'';const L=['
    ${tr('− Забрав','tk',(v,n)=>n&&v?tap(f0(v),'brk','inv:tookp:'+n+'|'+u):f0(v))}
    </tbody><tfoot><tr class="final"><td>Вкладення</td>${L.map(n=>`<td class="num">${f0(V[n].own)}</td>`).join('')}<td class="num">${f0(T('own'))}</td></tr></tfoot></table></div>
    <p class="note">Старт ${initLocked?'зафіксовано (вересень закрито)':'ще не зафіксовано — закрийте вересень'}.</p>
+   <div class="ln2 tot" style="margin-top:6px"><span style="text-align:left">${x.cum<0?'Збиток':'Прибуток'} з початку<div class="note" style="font-weight:400">поки не розподілено між партнерами</div></span><b>${tap(f0(x.cum),'brk','p:pl:x|'+u,x.cum<0?'neg':'')}</b></div>
+   <div class="ln2 tot"><span>Вкладення ${x.cum<0?'− збиток':'+ прибуток'}</span><b>${f0(T('own')+x.cum)}</b></div>
    <div class="lnh" style="margin-top:14px">В чому зараз гроші</div>
    <div class="rcpt">${row('Товар і сировина на складі',x.st,'',`із закупленого ${f0(x.C.mat)}: продано ${f0(x.soldC)} · забрали ${f0(x.tookC)}${x.adjC?' · списано '+f0(x.adjC):''}`)}
    ${row('Обладнання',x.eq,'inv:eq')}${row('Гроші від продажів',x.cash,'rev:all',holders)}
    <div class="ln2 tot"><span>Разом</span><b>${f0(x.bal)}</b></div></div>
-   <div class="calc2"><div><span>Вкладення</span><b>${f0(T('own'))}</b></div><div><span>${x.cum<0?'− збиток':'+ прибуток'} з початку</span><b class="${x.cum<0?'neg':''}">${tap(f0(Math.abs(x.cum)),'brk','p:pl:x|'+u,x.cum<0?'neg':'')}</b></div><div><span>= разом</span><b>${f0(T('own')+x.cum)}</b></div></div>
-   <p class="note">Результат поки не розподілено між партнерами.</p></section>`}
+   </section>`}
 function viewHome(){
   const E=engine(), mon=todayISO().slice(0,7), cl=fClosed(mon);
   let h=actBtns();
@@ -567,10 +568,27 @@ function mvTable(L,E){
     const sub=m.type==='sale'?`<div class="note">собів. ${f0(E.cogs[m.id]||0)} · прибуток ${f0(mvTotal(m)-(E.cogs[m.id]||0))}</div>`:m.type==='prod'?'<div class="note">собівартість</div>':'';
     return `<tr class="click" data-act="editMove" data-id="${m.id}"><td>${dmy(m.date)}</td><td><span class="mvt ${m.type}">${TYPES[m.type]||m.type}</span>${mvDesc(m)}</td><td class="num">${f0(amt)}${sub}</td></tr>`}).join('')}</tbody></table></div>`;
 }
+let mvPart='';
+function partOf(m){/* role of a move for a partner: in / out / hold */
+  const contrib=(['buy','eq','exp'].includes(m.type)&&PARTNERS.includes(m.payer))||m.type==='contrib'||(m.type==='cash'&&m.dir==='in');
+  if(contrib)return {p:m.payer||m.partner,r:m.init?'init':'after'};
+  if(m.type==='take'||(m.type==='cash'&&m.dir==='out'))return {p:m.partner,r:'took'};
+  if(m.type==='sale')return {p:m.recv||'Даниїл',r:'hold'};
+  return null}
+function viewPartOps(E){const L=moves().map(m=>({m,x:partOf(m)})).filter(o=>o.x&&o.x.p===mvPart);
+  const val=m=>m.type==='take'?(m.total!=null&&m.total!==''?+m.total:(E.cogs[m.id]||0)):mvTotal(m);
+  const G={init:[],after:[],took:[],hold:[]};for(const o of L)G[o.x.r].push(o.m);
+  const sum=a=>a.reduce((s,m)=>s+val(m),0);const S={init:sum(G.init),after:sum(G.after),took:sum(G.took),hold:sum(G.hold)};
+  const blk=(k,t)=>G[k].length?`<tr class="grp"><td colspan="2">${t}</td><td class="num">${f0(S[k])}</td></tr>`+G[k].slice().reverse().map(m=>mvTable([m],E).match(/<tbody>([\s\S]*)<\/tbody>/)[1]).join(''):'';
+  return `<div class="rcpt" style="margin-bottom:10px"><div class="ln2"><span>Старт</span><b>${f0(S.init)}</b></div><div class="ln2"><span>Після запуску</span><b>${f0(S.after)}</b></div><div class="ln2 tot"><span>Вклав</span><b>${f0(S.init+S.after)}</b></div><div class="ln2"><span>− Забрав</span><b>${f0(S.took)}</b></div><div class="ln2 tot"><span>Вкладення</span><b>${f0(S.init+S.after-S.took)}</b></div>${S.hold?`<div class="ln2 mut"><span>Гроші проекту від продажів у нього</span><b>${f0(S.hold)}</b></div>`:''}</div>
+   <div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Операція</th><th class="num">Сума</th></tr></thead><tbody>${blk('init','Старт')}${blk('after','Після запуску')}${blk('took','Забрав')}${blk('hold','Продажі — гроші в нього')}</tbody></table></div>`}
 function viewMoves(){
   const E=engine();let L=moves();if(mvFilter!=='all')L=L.filter(m=>m.type===mvFilter);L=L.reverse();
   let h=actBtns();
-  h+=`<section class="card"><div class="shead"><h2 style="margin:0">Журнал операцій</h2><select id="mvFilter" style="margin-left:auto">${[['all','Усі'],...Object.entries(TYPES)].map(([k,v])=>`<option value="${k}" ${k===mvFilter?'selected':''}>${v}</option>`).join('')}</select></div>`;
+  const pick=`<div class="seg2 rep" style="margin:0 0 10px">${[['','Усі операції'],...PARTNERS.map(p=>[p,p])].map(([k,l])=>`<button type="button" class="${mvPart===k?'on':''}" data-act="setMvPart" data-id="${k}">${l}</button>`).join('')}</div>`;
+  if(mvPart)return h+`<section class="card">${pick}<h2>${mvPart} — усі операції</h2>${viewPartOps(E)}</section>`;
+  h+=`<section class="card">${pick}`;
+  h+=`<div class="shead"><h2 style="margin:0">Журнал операцій</h2><select id="mvFilter" style="margin-left:auto">${[['all','Усі'],...Object.entries(TYPES)].map(([k,v])=>`<option value="${k}" ${k===mvFilter?'selected':''}>${v}</option>`).join('')}</select></div>`;
   let curM='';const rows=[];
   for(const m of L){const mm=m.date.slice(0,7);if(mm!==curM){curM=mm;rows.push({hdr:mm})}rows.push(m)}
   h+=rows.length?`<div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Операція</th><th class="num">Сума</th></tr></thead><tbody>${rows.map(r=>r.hdr?`<tr class="grp"><td colspan="3">${mLabel(r.hdr)}</td></tr>`:mvTable([r],E).match(/<tbody>([\s\S]*)<\/tbody>/)[1]).join('')}</tbody></table></div>`:'<p class="note">Операцій поки немає.</p>';
@@ -753,7 +771,7 @@ function goTab(t){tab=t;render();window.scrollTo(0,0)}
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;if(tab==='months')monOpen=null;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
-  ({addMove,editMove,editItem,itemHist,goTab,setPartMon,setHomeMon,openMon,toggleMon,brk})[a.dataset.act]?.(a.dataset.id);
+  ({addMove,editMove,editItem,itemHist,goTab,setPartMon,setHomeMon,openMon,toggleMon,brk,setMvPart:v=>{mvPart=v||'';render()}})[a.dataset.act]?.(a.dataset.id);
 });
 document.addEventListener('change',e=>{if(e.target.id==='mvFilter'){mvFilter=e.target.value;render()}if(e.target.id==='partMon'){partMon=e.target.value;render()}if(e.target.id==='homeMon'){homeMon=e.target.value;render()}});
 
