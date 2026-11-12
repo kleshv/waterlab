@@ -21,9 +21,9 @@
   .bc{display:grid;gap:10px;margin-top:4px}
   .bc button{display:flex;align-items:center;gap:14px;width:100%;margin:0;padding:16px;border-radius:12px;text-align:left;text-transform:none;letter-spacing:0;font-weight:400;cursor:pointer;border:1px solid rgba(255,255,255,.25);transition:transform .12s,border-color .12s}
   .bc button:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.6)}
-  .bc .w{background:#1c3a66;color:#fff}.bc .f{background:#0d3b34;color:#fff}
+  .bc .w{background:#1c3a66;color:#fff}.bc .f{background:#1f4a8a;color:#fff}
   .bc .ic{flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-  .bc .w .ic{background:#c7e4f7;color:#11233f}.bc .f .ic{background:#bdeedb;color:#0d3b34}
+  .bc .w .ic{background:#c7e4f7;color:#11233f}.bc .f .ic{background:#d4e3ff;color:#1f4a8a}
   .bc .ic svg{width:22px;height:22px}
   .bc b{display:block;font-size:17px;letter-spacing:.02em}.bc small{display:block;font-size:12.5px;color:#c9d6ea;margin-top:2px;line-height:1.35}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
