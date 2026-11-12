@@ -26,8 +26,9 @@
   .bc button:hover,.bc button:focus-visible{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.22);transform:translateY(-2px)}
   .bc button:active{transform:translateY(0)}
   .bc .ic{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center}
-  .bc .w .ic{background:rgba(160,205,240,.16);color:#a9d2f2}
-  .bc .f .ic{background:rgba(168,190,255,.16);color:#b3c4ff}
+  .bc .w .ic{background:#c7e4f7;color:#11233f}
+  .bc .f .ic{background:#2f5fa8;color:#d4e3ff}
+  .bc .f{background:rgba(47,95,168,.16);border-color:rgba(120,160,230,.25)}
   .bc .ic svg{width:40px;height:40px}
   .lg.ch .lnk{margin-top:22px;color:#8597b8;font-size:13px}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
@@ -66,7 +67,7 @@
   function chooseBase(){return new Promise(res=>{
     let w=document.getElementById('lgw'); if(!w){w=document.createElement('div');w.id='lgw';w.className='lg-wrap';document.body.appendChild(w)}
     const drop='<svg viewBox="0 0 48 48"><path d="M24 4c-.7 0-1.3.3-1.7.8C18.6 9.6 10 21 10 29.3 10 37.4 16.3 44 24 44s14-6.6 14-14.7C38 21 29.4 9.6 25.7 4.8 25.3 4.3 24.7 4 24 4z" fill="currentColor" opacity=".3"/><path d="M10.4 27.5c2.3-1.6 4.6-1.6 6.9 0s4.6 1.6 6.9 0 4.6-1.6 6.9 0 4.6 1.6 6.6 0 .3 1 .3 1.8C38 37.4 31.7 44 24 44s-14-6.6-14-14.7c0-.6 0-1.2.4-1.8z" fill="currentColor"/></svg>';
-    const filt='<svg viewBox="0 0 48 48"><rect x="6" y="8" width="36" height="7" rx="3.5" fill="currentColor" opacity=".35"/><rect x="6" y="18" width="36" height="7" rx="3.5" fill="currentColor" opacity=".6"/><rect x="6" y="28" width="36" height="7" rx="3.5" fill="currentColor"/><path d="M24 37c-1.3 1.7-2.8 3.5-2.8 5a2.8 2.8 0 0 0 5.6 0c0-1.5-1.5-3.3-2.8-5z" fill="currentColor"/></svg>';
+    const filt='<svg viewBox="0 0 48 48"><rect x="6" y="9" width="36" height="8" rx="4" fill="currentColor" opacity=".4"/><rect x="6" y="20" width="36" height="8" rx="4" fill="currentColor" opacity=".7"/><rect x="6" y="31" width="36" height="8" rx="4" fill="currentColor"/></svg>';
     w.innerHTML=`<div class="lg ch">${logoSvg()}<h1>Оберіть базу</h1><div class="bc">
       <button type="button" class="w" data-b="w"><span class="ic">${drop}</span>Вода</button>
       <button type="button" class="f" data-b="f"><span class="ic">${filt}</span>Фільтри</button></div>
