@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261112q">
+<meta name="wl-build" content="20261112r">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Фільтри</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -230,6 +230,7 @@ p.note{margin:6px 0 0}
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" data-tab="home" aria-selected="true" type="button">Головна</button>
+      <button class="tab" role="tab" data-tab="months" aria-selected="false" type="button">Місяці</button>
       <button class="tab" role="tab" data-tab="moves" aria-selected="false" type="button">Операції</button>
       <button class="tab" role="tab" data-tab="stock" aria-selected="false" type="button">Склад</button>
       <button class="tab" role="tab" data-tab="price" aria-selected="false" type="button">Ціни</button>
@@ -259,17 +260,20 @@ p.note{margin:6px 0 0}
 .rcpt{margin-top:8px}.ln2{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:15px}.ln2 b{font-variant-numeric:tabular-nums;font-weight:600}.ln2.mut{color:var(--muted)}.ln2.tot{border-bottom:0;font-weight:700;font-size:17px}.ln2.tot b{font-weight:800}.rcpt .ln2.tot{border-top:2px solid var(--navy);margin-top:2px}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.split div{background:var(--chip);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column}.split span{font-size:12px;color:var(--muted)}.split b{font-size:18px;font-variant-numeric:tabular-nums}
 .pb tr.sum td{background:var(--chip)}
+.tapn{all:unset;cursor:pointer;border-bottom:1px dashed currentColor;font:inherit;font-variant-numeric:tabular-nums}.tapn:hover{color:var(--accent)}.tapn.neg{color:var(--bad)}
+.stat{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:10px;margin-left:auto}.stat.op{background:#fff3d6;color:#8a5a00}.stat.cl{background:#e9f7ef;color:#16804a}
+.brkl .ln2{font-size:14px}.brkl .ln2.bi>span{flex:1;min-width:0}.brkl .ln2 .note{font-size:12px}
 .pacts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 10px}.pacts .btn{padding:12px 8px}
 @media (max-width:520px){.pacts{grid-template-columns:1fr 1fr}.pacts .btn.pri{grid-column:1/-1}.hm{display:none}}
 .useBox{border:1px dashed var(--line);border-radius:8px;padding:8px;margin-top:4px}
 </style>
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script>window.WL_ONLY=['f_items','f_moves'];</script>
-<script src="shim.js?v=20261112q"></script>
+<script>window.WL_ONLY=['f_items','f_moves','f_months'];</script>
+<script src="shim.js?v=20261112r"></script>
 <script>
-const COLS=['f_items','f_moves'];
-const S={f_items:{},f_moves:{}};
+const COLS=['f_items','f_moves','f_months'];
+const S={f_items:{},f_moves:{},f_months:{}};
 const loaded=new Set();
 let db=null, me=null, canWrite=true, tab='home', fatal='', mvFilter='all';
 const $=s=>document.querySelector(s);
@@ -351,7 +355,7 @@ function render(){
   if(fatal){main.innerHTML=`<section class="card"><h2>Помилка</h2><p class="note">${esc(fatal)}</p></section>`;return}
   if(loaded.size<COLS.length){return}
   let h='';
-  if(tab==='home')h=viewHome(); if(tab==='stock')h=viewStock(); if(tab==='moves')h=viewMoves(); if(tab==='price')h=viewPrice(); 
+  if(tab==='home')h=viewHome(); if(tab==='stock')h=viewStock(); if(tab==='moves')h=viewMoves(); if(tab==='price')h=viewPrice(); if(tab==='months')h=monOpen?viewMonth(monOpen):viewMonths();
   main.innerHTML=h;
 }
 const actBtns=()=>canWrite?`<div class="acts4">
@@ -361,44 +365,80 @@ const actBtns=()=>canWrite?`<div class="acts4">
   <button class="btn" data-act="addMove" data-id="exp" type="button">+ Витрата</button>
   <button class="btn ghost" data-act="addMove" data-id="more" type="button">Інше: забрав собі · вніс товар · обладнання · гроші · списання</button></div>`:'';
 function monthStats(m){let rv=0,cg=0,n=0,wl=0;const E=engine();for(const x of moves())if(x.date.slice(0,7)===m&&x.type==='sale'){const t=mvTotal(x);rv+=t;cg+=E.cogs[x.id]||0;n++;if(/water\s*lab|ватер/i.test(x.client||''))wl+=t}return {rv,cg,n,wl}}
-let homeMon=null;
-function partBook(E){const B={};for(const k of PARTNERS)B[k]={mat:0,eq:0,exp:0,cash:0,sold:0,took:0,paid:0};
-  for(const m of moves()){const t=mvTotal(m);
-    if(m.type==='buy'&&B[m.payer])B[m.payer].mat+=t;
-    else if(m.type==='contrib'&&B[m.partner])B[m.partner].mat+=t;
-    else if(m.type==='eq'&&B[m.payer])B[m.payer].eq+=t;
-    else if(m.type==='exp'&&B[m.payer])B[m.payer].exp+=t;
-    else if(m.type==='cash'&&B[m.partner]){if(m.dir==='in')B[m.partner].cash+=t;else B[m.partner].paid+=t}
-    else if(m.type==='sale'&&B[m.recv||'Даниїл'])B[m.recv||'Даниїл'].sold+=t;
-    else if(m.type==='take'&&B[m.partner])B[m.partner].took+=(m.total!=null&&m.total!==''?+m.total:E.cogs[m.id]||0)}
+let homeMon=null, monOpen=null;
+const fClosed=m=>!!(S.f_months[m]&&S.f_months[m].closed);
+const allMons=()=>{const a=[...new Set(moves().map(m=>m.date.slice(0,7)))].sort();const c=todayISO().slice(0,7);if(!a.includes(c))a.push(c);return a};
+function partBook(E,upTo){const B={};for(const k of PARTNERS)B[k]={mat:0,eq:0,exp:0,cash:0,sold:0,took:0,paid:0};
+  for(const m of moves()){if(upTo&&m.date.slice(0,7)>upTo)continue;const k=bookKey(m,E);if(k&&B[k.p])B[k.p][k.c]+=k.v}
   return B}
-function viewHome(){
-  const E=engine();const all=[...new Set(moves().map(m=>m.date.slice(0,7)))].sort();const cur=todayISO().slice(0,7);if(!all.includes(cur))all.push(cur);
-  const mon=homeMon&&all.includes(homeMon)?homeMon:cur;const r=plMonth(E,mon);
-  const row=(l,v,cls='')=>`<div class="ln2 ${cls}"><span>${l}</span><b>${v}</b></div>`;
-  let h=actBtns();
-  h+=`<section class="card"><div class="shead"><h2 style="margin:0">Прибуток</h2><select id="homeMon" style="margin-left:auto">${all.slice().reverse().map(x=>`<option value="${x}" ${x===mon?'selected':''}>${mLabel(x)}</option>`).join('')}</select></div>
-   <div class="rcpt">${row('Продали',f0(r.rev))}${row('− товар за собівартістю',f0(r.cogs),'mut')}${row('− витрати',f0(r.exp+r.adj),'mut')}${row('Прибуток',f0(r.res),'tot'+(r.res<0?' neg':''))}</div>
-   <div class="split"><div><span>Анатолій 50%</span><b class="${r.res<0?'neg':''}">${f0(r.res/2)}</b></div><div><span>Даниїл 50%</span><b class="${r.res<0?'neg':''}">${f0(r.res/2)}</b></div></div></section>`;
-  const B=partBook(E);let cum=0;for(const mo of all)cum+=plMonth(E,mo).res;const P=['Даниїл','Анатолій'];
-  const tr=(l,f,cls='')=>`<tr class="${cls}"><td>${l}</td>${P.map(k=>`<td class="num">${f(B[k],k)}</td>`).join('')}</tr>`;
+function bookKey(m,E){const t=mvTotal(m);
+  if(m.type==='buy')return {p:m.payer,c:'mat',v:t};if(m.type==='contrib')return {p:m.partner,c:'mat',v:t};
+  if(m.type==='eq')return {p:m.payer,c:'eq',v:t};if(m.type==='exp')return {p:m.payer,c:'exp',v:t};
+  if(m.type==='cash')return {p:m.partner,c:m.dir==='in'?'cash':'paid',v:t};
+  if(m.type==='sale')return {p:m.recv||'Даниїл',c:'sold',v:t};
+  if(m.type==='take')return {p:m.partner,c:'took',v:m.total!=null&&m.total!==''?+m.total:(E.cogs[m.id]||0)};return null}
+const tap=(v,act,id,cls='')=>`<button type="button" class="tapn ${cls}" data-act="${act}" data-id="${esc(id)}">${v}</button>`;
+function receipt(E,mon){const r=plMonth(E,mon);const row=(l,v,k,cls='')=>`<div class="ln2 ${cls}"><span>${l}</span><b>${tap(v,'brk',k+'|'+mon,cls.includes('neg')?'neg':'')}</b></div>`;
+  return `<div class="rcpt">${row('Продали',f0(r.rev),'rev')}${row('− товар за собівартістю',f0(r.cogs),'cogs','mut')}${row('− витрати',f0(r.exp+r.adj),'exp','mut')}${row('Прибуток',f0(r.res),'res','tot'+(r.res<0?' neg':''))}</div>`}
+function partnersCard(E,upTo){
+  const B=partBook(E,upTo);let cum=0;for(const mo of allMons())if(!upTo||mo<=upTo)cum+=plMonth(E,mo).res;const P=['Даниїл','Анатолій'];
   const inn=b=>b.mat+b.eq+b.exp+b.cash, out=b=>b.sold+b.took+b.paid;
-  h+=`<section class="card"><h2>Партнери</h2><div class="tbl"><table class="pl ut pb"><thead><tr><th></th>${P.map(k=>`<th class="num">${k}</th>`).join('')}</tr></thead><tbody>
-   ${tr('Сировина й товар',b=>f0(b.mat))}${tr('Обладнання',b=>f0(b.eq))}${tr('Оренда й витрати',b=>f0(b.exp))}${P.some(k=>B[k].cash)?tr('Гроші',b=>f0(b.cash)):''}
-   ${tr('<b>Вклав</b>',b=>`<b>${f0(inn(b))}</b>`,'sum')}
-   ${tr('Продав (гроші в нього)',b=>f0(b.sold))}${tr('Забрав товаром',b=>f0(b.took))}${P.some(k=>B[k].paid)?tr('Виплачено',b=>f0(b.paid)):''}
-   ${tr('<b>Отримав</b>',b=>`<b>${f0(out(b))}</b>`,'sum')}
-   ${tr('Прибуток 50%',b=>`<span class="${cum<0?'neg':''}">${f0(cum/2)}</span>`)}
-   </tbody><tfoot><tr class="final"><td>Його частка в бізнесі</td>${P.map(k=>`<td class="num">${f0(inn(B[k])-out(B[k])+cum/2)}</td>`).join('')}</tr></tfoot></table></div>
-   <p class="note">Частка = вклав − отримав + прибуток. Разом ${f0(P.reduce((a,k)=>a+inn(B[k])-out(B[k])+cum/2,0))} — це склад ${f0(Object.values(E.V).reduce((a,v)=>a+v,0))} і обладнання ${f0(moves().filter(m=>m.type==='eq').reduce((a,m)=>a+(+m.total||0),0))}.</p></section>`;
-  let rows='';cum=0;for(const mo of all){const x=plMonth(E,mo);cum+=x.res;rows=`<tr class="click" data-act="setHomeMon" data-id="${mo}"><td>${mLabel(mo)}</td><td class="num">${f0(x.rev)}</td><td class="num">${f0(x.exp+x.adj)}</td><td class="num ${x.res<0?'neg':''}"><b>${f0(x.res)}</b></td></tr>`+rows}
-  h+=`<section class="card"><h2>По місяцях</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Місяць</th><th class="num">Продали</th><th class="num">Витрати</th><th class="num">Прибуток</th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="final"><td>Усього</td><td></td><td></td><td class="num">${f0(cum)}</td></tr></tfoot></table></div></section>`;
+  const tr=(l,c,cls='')=>`<tr class="${cls}"><td>${l}</td>${P.map(k=>{const v=c==='inn'?inn(B[k]):c==='out'?out(B[k]):c==='pl'?cum/2:B[k][c];return `<td class="num">${c==='inn'||c==='out'?`<b>${f0(v)}</b>`:tap(f0(v),'brk','p:'+c+':'+k+'|'+(upTo||''),c==='pl'&&v<0?'neg':'')}</td>`}).join('')}</tr>`;
+  return `<section class="card"><h2>Партнери${upTo?' · на кінець '+mLabel(upTo).toLowerCase():''}</h2><div class="tbl"><table class="pl ut pb"><thead><tr><th></th>${P.map(k=>`<th class="num">${k}</th>`).join('')}</tr></thead><tbody>
+   ${tr('Сировина й товар','mat')}${tr('Обладнання','eq')}${tr('Оренда й витрати','exp')}${P.some(k=>B[k].cash)?tr('Гроші','cash'):''}
+   ${tr('<b>Вклав</b>','inn','sum')}${tr('Продав (гроші в нього)','sold')}${tr('Забрав товаром','took')}${P.some(k=>B[k].paid)?tr('Виплачено','paid'):''}
+   ${tr('<b>Отримав</b>','out','sum')}
+   </tbody><tfoot><tr class="final"><td>Вкладено й не повернуто</td>${P.map(k=>`<td class="num">${f0(inn(B[k])-out(B[k]))}</td>`).join('')}</tr></tfoot></table></div>
+   <p class="note">Натисніть на будь-яку цифру, щоб побачити, з чого вона складається.</p></section>`}
+function viewHome(){
+  const E=engine(), mon=todayISO().slice(0,7), cl=fClosed(mon);
+  let h=actBtns();
+  h+=`<section class="card"><div class="shead"><h2 style="margin:0">${mLabel(mon)}</h2><span class="stat ${cl?'cl':'op'}">${cl?'закрито':'відкритий'}</span></div>${receipt(E,mon)}
+   <button class="btn sm" style="margin-top:10px" data-act="openMon" data-id="${mon}" type="button">Деталі місяця →</button></section>`;
+  h+=partnersCard(E,null);
   const low=items().filter(it=>it.kind!=='raw'&&it.min!=null&&(E.Q[it.id]||0)<+it.min);const neg=[...new Set(E.errs)];
   if(neg.length)h+=`<section class="card"><h2 class="neg">Перевірте</h2><p class="note">Продано або списано більше, ніж є: ${neg.map(i=>esc(itemName(i))).join(', ')}.</p></section>`;
   if(low.length)h+=`<section class="card"><h2>Закінчується</h2>${low.map(it=>`<div class="ln2"><span>${esc(it.name)}</span><b>${fq(E.Q[it.id])} ${it.unit}</b></div>`).join('')}</section>`;
   return h;
 }
-function setHomeMon(m){homeMon=m;render();window.scrollTo(0,0)}
+function viewMonths(){const E=engine();let rows='',cum=0;
+  for(const mo of allMons()){const x=plMonth(E,mo);cum+=x.res;const cl=fClosed(mo);
+    rows=`<tr class="click" data-act="openMon" data-id="${mo}"><td>${mLabel(mo)}<div class="note"><span class="stat ${cl?'cl':'op'}">${cl?'закрито':'відкритий'}</span></div></td><td class="num">${f0(x.rev)}</td><td class="num">${f0(x.exp+x.adj)}</td><td class="num ${x.res<0?'neg':''}"><b>${f0(x.res)}</b></td></tr>`+rows}
+  return `<section class="card"><h2>Місяці</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Місяць</th><th class="num">Продали</th><th class="num">Витрати</th><th class="num">Прибуток</th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="final"><td>Усього</td><td></td><td></td><td class="num">${f0(cum)}</td></tr></tfoot></table></div><p class="note">Натисніть на місяць, щоб відкрити звіт і закрити місяць.</p></section>`}
+function viewMonth(mon){const E=engine(), cl=fClosed(mon), md=S.f_months[mon]||{};
+  const L=moves().filter(m=>m.date.slice(0,7)===mon).reverse();
+  let h=`<div class="shead" style="margin:0 0 8px"><button class="btn sm" data-act="openMon" data-id="" type="button">← Усі місяці</button></div>`;
+  h+=`<section class="card"><div class="shead"><h2 style="margin:0">${mLabel(mon)}</h2><span class="stat ${cl?'cl':'op'}">${cl?'закрито':'відкритий'}</span></div>${receipt(E,mon)}
+   ${canWrite&&isOwner()?`<button class="btn ${cl?'':'pri'}" style="margin-top:12px;width:100%" data-act="toggleMon" data-id="${mon}" type="button">${cl?'Відкрити для змін':'Закрити місяць'}</button>`:''}
+   ${cl&&md.at?`<p class="note">Закрито ${dmy(md.at.slice(0,10))}${md.by?' · '+esc(md.by):''}. Операції цього місяця змінювати не можна.</p>`:`<p class="note">Перевірте операції й закрийте місяць — після цього результат зафіксовано.</p>`}</section>`;
+  h+=partnersCard(E,mon);
+  h+=`<section class="card"><h2>Операції за ${mLabel(mon).toLowerCase()}</h2>${mvTable(L,E)}</section>`;
+  return h}
+const isOwner=()=>(window.WL_ROLE||'owner')==='owner';
+function openMon(m){monOpen=m||null;tab='months';render();window.scrollTo(0,0)}
+async function toggleMon(m){const cl=fClosed(m);
+  if(!cl){const prev=allMons().filter(x=>x<m&&!fClosed(x)&&moves().some(v=>v.date.slice(0,7)===x));if(prev.length&&!confirmClose(prev))return}
+  const E=engine(),r=plMonth(E,m);
+  await w(()=>db.doc('f_months/'+m).set(cl?{closed:false,reopened:new Date().toISOString(),by:me||''}:{closed:true,at:new Date().toISOString(),by:me||'',snap:{rev:Math.round(r.rev),cogs:Math.round(r.cogs),exp:Math.round(r.exp+r.adj),res:Math.round(r.res)}}));
+  toast(cl?'Місяць відкрито':'Місяць закрито')}
+function confirmClose(prev){toast('Спочатку закрийте: '+prev.map(mLabel).join(', '));return false}
+function brk(arg){const [key,mon]=arg.split('|');const E=engine();let title='',rows=[],tot=0;
+  const line=(m,v,extra='')=>{tot+=v;return {m,v,extra}};
+  if(key==='rev'||key==='cogs'){title=(key==='rev'?'Продали':'Товар за собівартістю')+' · '+mLabel(mon);
+    for(const m of moves())if(m.date.slice(0,7)===mon&&(m.type==='sale'||m.type==='take')){const c=E.cogs[m.id]||0,rv=m.type==='sale'?mvTotal(m):(m.total!=null&&m.total!==''?+m.total:c);rows.push(line(m,key==='rev'?rv:c,key==='rev'?`собів. ${f0(c)} · прибуток ${f0(rv-c)}`:`продали за ${f0(rv)}`))}}
+  else if(key==='exp'){title='Витрати · '+mLabel(mon);for(const m of moves())if(m.date.slice(0,7)===mon&&(m.type==='exp'||m.type==='adj'))rows.push(line(m,m.type==='exp'?+m.total:(E.cogs[m.id]||0)))}
+  else if(key==='res'){const r=plMonth(E,mon);title='Прибуток · '+mLabel(mon);
+    return sheetInfo(title,`<div class="ln2"><span>Продали</span><b>${f0(r.rev)}</b></div><div class="ln2 mut"><span>− товар за собівартістю</span><b>${f0(r.cogs)}</b></div><div class="ln2 mut"><span>− витрати</span><b>${f0(r.exp)}</b></div>${r.adj?`<div class="ln2 mut"><span>− списання</span><b>${f0(r.adj)}</b></div>`:''}<div class="ln2 tot"><span>Прибуток</span><b>${f0(r.res)}</b></div>`)}
+  else if(key.startsWith('p:')){const [,c,p]=key.split(':');const N={mat:'Сировина й товар',eq:'Обладнання',exp:'Оренда й витрати',cash:'Гроші',sold:'Продав (гроші в нього)',took:'Забрав товаром',paid:'Виплачено',pl:'Прибуток 50%'};
+    title=p+' · '+N[c]+(mon?' · до кінця '+mLabel(mon).toLowerCase():'');
+    if(c==='pl'){let h='';let s=0;for(const mo of allMons()){if(mon&&mo>mon)continue;const x=plMonth(E,mo).res/2;s+=x;h+=`<div class="ln2"><span>${mLabel(mo)}</span><b class="${x<0?'neg':''}">${f0(x)}</b></div>`}return sheetInfo(title,h+`<div class="ln2 tot"><span>Разом</span><b>${f0(s)}</b></div>`)}
+    for(const m of moves()){if(mon&&m.date.slice(0,7)>mon)continue;const k=bookKey(m,E);if(k&&k.p===p&&k.c===c)rows.push(line(m,k.v))}}
+  const h=rows.length?rows.slice().reverse().map(r=>`<div class="ln2 bi click" data-act="editMove" data-id="${r.m.id}"><span>${dmy(r.m.date)} · <span class="mvt ${r.m.type}">${TYPES[r.m.type]}</span>${mvDesc(r.m)}${r.extra?`<div class="note">${r.extra}</div>`:''}</span><b>${f0(r.v)}</b></div>`).join('')+`<div class="ln2 tot"><span>Разом</span><b>${f0(tot)}</b></div>`:'<p class="note">Нічого немає.</p>';
+  sheetInfo(title,h)}
+function sheetInfo(title,html){const md=$('#modal');
+  md.innerHTML=`<div class="overlay" id="ov"><div class="sheet"><h3>${esc(title)}</h3><div class="info brkl">${html}</div><div class="actions"><button type="button" class="btn pri" id="cancelBtn">Закрити</button></div></div></div>`;
+  $('#ov').addEventListener('click',e=>{if(e.target.id==='ov')md.innerHTML=''});$('#cancelBtn').onclick=()=>md.innerHTML='';}
+function setHomeMon(m){openMon(m)}
 function viewStock(){
   const E=engine();let h='';let tot=0;
   h+=`<section class="card"><h2>Залишки на складі</h2><p class="note">Рахуються автоматично з усіх операцій. Собівартість — середньозважена.</p><div class="tbl"><table class="pl ut"><thead><tr><th>Позиція</th><th class="num">Кількість</th><th class="num">С/С од.</th><th class="num">Сума</th></tr></thead><tbody>`;
@@ -491,8 +531,9 @@ function moveForm(type,m){
   if(type==='adj'){sub='Брак, недостача, інвентаризація. Мінус — списати, плюс — оприбуткувати знайдене.';
     f+=linesBlock('L','Позиція · к-сть (−3 або +2)',m.lines,['prod','buy','raw'],false)}
   f+=fld('note','Коментар',m.note||'',{type:'text',full:true});
-  openSheet((isNew?'':'Змінити: ')+TYPES[type],sub,f,async fd=>{
-    if(!fd.date)return 'Вкажіть дату';
+  const lk=!isNew&&fClosed(m.date.slice(0,7));
+  openSheet((isNew?'':'Змінити: ')+TYPES[type],lk?'Місяць закрито — змінити не можна. Відкрийте місяць у «Місяці».':sub,f,async fd=>{
+    if(!fd.date)return 'Вкажіть дату';if(lk||fClosed(fd.date.slice(0,7)))return 'Місяць '+mLabel(fd.date.slice(0,7))+' закрито';
     const r=readLines(fd,'L');if(r.err)return r.err;if(!r.lines.length)return 'Додайте хоча б одну позицію';
     const d={type,date:fd.date,lines:r.lines,note:fd.note||'',by:me||'',t:m.t||Date.now()};
     if(type==='buy'){d.payer=fd.payer;d.supplier=fd.supplier||'';if(r.lines.some(l=>!(l.p>0)))return 'Вкажіть ціну закупівлі'}
@@ -502,7 +543,8 @@ function moveForm(type,m){
     if(type==='prod'){d.use=readUse();d.useManual=!!$('#useManual').checked;if(!d.use.length)return 'Немає рецептури для цих позицій — задайте її в «Прайс і рецептури»'}
     const id=isNew?db.collection('f_moves').doc().id:m.id;
     if(!await w(()=>db.doc('f_moves/'+id).set(d)))return 'Не збереглося';toast('Записано');
-  },isNew||!canWrite?null:async()=>await w(()=>db.doc('f_moves/'+m.id).delete()));
+  },isNew||!canWrite||lk?null:async()=>await w(()=>db.doc('f_moves/'+m.id).delete()));
+  if(lk)$('#saveBtn').hidden=true;
   const recalc=e=>{
     if(type==='sale'){const tier=$('#f_tier').value;
       if(e&&e.target&&(e.target.id==='f_tier'||e.target.name&&e.target.name.startsWith('i_')))$('#sf').querySelectorAll('.ln').forEach(row=>{const i=row.querySelector('select').value,p=row.querySelector('[name^=p_]');if(i&&(e.target.id==='f_tier'||e.target===row.querySelector('select')))p.value=Math.round(tierPrice(i,tier)*100)/100});
@@ -560,13 +602,15 @@ function moneyForm(type,m){
   if(type==='cash'){sub='Партнер вносить гроші в проект або отримує виплату (наприклад, свою частку прибутку).';
     f+=sel('partner','Партнер',m.partner||'Даниїл',PARTNERS.map(x=>[x,x]))+sel('dir','Що це',m.dir||'out',[['out','Виплата партнеру'],['in','Внесок грошима']])}
   f+=fld('total','Сума, грн',m.total??'')+fld('note','Коментар',m.note||'',{type:'text',full:true});
-  openSheet((isNew?'':'Змінити: ')+TYPES[type],sub,f,async fd=>{
-    if(!fd.date)return 'Вкажіть дату';const v=parseNum(fd.total);if(!v||v<0)return 'Вкажіть суму';
+  const lk=!isNew&&fClosed(m.date.slice(0,7));
+  openSheet((isNew?'':'Змінити: ')+TYPES[type],lk?'Місяць закрито — змінити не можна.':sub,f,async fd=>{
+    if(!fd.date)return 'Вкажіть дату';if(lk||fClosed(fd.date.slice(0,7)))return 'Місяць '+mLabel(fd.date.slice(0,7))+' закрито';const v=parseNum(fd.total);if(!v||v<0)return 'Вкажіть суму';
     const d={type,date:fd.date,total:v,note:fd.note||'',by:me||'',t:m.t||Date.now()};
     if(type==='exp'){d.cat=fd.cat;d.payer=fd.payer}if(type==='eq')d.payer=fd.payer;if(type==='cash'){d.partner=fd.partner;d.dir=fd.dir}
     const id=isNew?db.collection('f_moves').doc().id:m.id;
     if(!await w(()=>db.doc('f_moves/'+id).set(d)))return 'Не збереглося';toast('Записано');
-  },isNew||!canWrite?null:async()=>await w(()=>db.doc('f_moves/'+m.id).delete()));
+  },isNew||!canWrite||lk?null:async()=>await w(()=>db.doc('f_moves/'+m.id).delete()));
+  if(lk)$('#saveBtn').hidden=true;
 }
 /* ---------- партнери: результат і капітал ---------- */
 function plMonth(E,mon){const r={rev:0,cogs:0,exp:0,adj:0,n:0};
@@ -590,46 +634,14 @@ function capital(E,upTo){const P={};for(const x of [...PARTNERS,'Каса про
   const kas=P['Каса проекту'];kas.bal=kas.out-kas.inn;
   for(const k of PARTNERS)P[k].bal=P[k].inn-P[k].out+P[k].pl;
   return {P,cum,mons}}
-let partMon=null;
-function viewPart(){
-  const E=engine();const all=[...new Set(moves().map(m=>m.date.slice(0,7)))].sort();const cur=todayISO().slice(0,7);if(!all.includes(cur))all.push(cur);
-  const mon=partMon&&all.includes(partMon)?partMon:cur;const r=plMonth(E,mon);
-  let h=canWrite?`<div class="pacts">
-   <button class="btn pri" data-act="addMove" data-id="exp" type="button">+ Витрата</button>
-   <button class="btn" data-act="addMove" data-id="cash" type="button">+ Гроші партнера</button>
-   <button class="btn" data-act="addMove" data-id="eq" type="button">+ Обладнання</button></div>`:'';
-  h+=`<section class="card"><div class="shead"><h2 style="margin:0">Результат місяця</h2><select id="partMon" style="margin-left:auto">${all.slice().reverse().map(x=>`<option value="${x}" ${x===mon?'selected':''}>${mLabel(x)}</option>`).join('')}</select></div>
-   <div class="tiles t4" style="margin-top:10px">
-   <div class="tile"><div class="l">Продажі</div><div class="v">${f0(r.rev)}</div><div class="s">собівартість ${f0(r.cogs)}</div></div>
-   <div class="tile"><div class="l">Валовий прибуток</div><div class="v">${f0(r.rev-r.cogs)}</div><div class="s">${r.n} продажів</div></div>
-   <div class="tile"><div class="l">Витрати</div><div class="v">${f0(r.exp+r.adj)}</div><div class="s">${r.adj?'з них списання '+f0(r.adj):'оренда, доставка…'}</div></div>
-   <div class="tile hi"><div class="l">Результат</div><div class="v ${r.res<0?'neg':''}">${f0(r.res)}</div><div class="s">до розподілу</div></div></div>
-   <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Розподіл</th><th class="num">Частка</th><th class="num">Сума</th></tr></thead><tbody>
-   <tr><td>Анатолій</td><td class="num">50%</td><td class="num">${f2(r.res*.5)}</td></tr>
-
-
-   <tr><td>Даниїл</td><td class="num">50%</td><td class="num">${f2(r.res*.5)}</td></tr></tbody></table></div></section>`;
-  const ex=moves().filter(m=>m.date.slice(0,7)===mon&&(m.type==='exp'||m.type==='eq'||m.type==='cash')).reverse();
-  h+=`<section class="card"><h2>Витрати й гроші за ${mLabel(mon).toLowerCase()}</h2>${mvTable(ex,E)}</section>`;
-  const C=capital(E,null);
-  h+=`<section class="card"><h2>Капітал партнерів на сьогодні</h2><p class="note">Скільки кожен вклав у проект (гроші, товар, оплачені витрати), мінус що отримав (виручку від продажів, забраний товар, виплати), плюс його частка накопиченого результату. Це сума, яку проект «винен» партнеру.</p>
-   <div class="tbl"><table class="pl ut"><thead><tr><th>Партнер</th><th class="num hm">Вклав</th><th class="num hm">Отримав</th><th class="num">Результат</th><th class="num">Капітал</th></tr></thead><tbody>
-   ${['Анатолій','Даниїл'].map(k=>{const x=C.P[k];return `<tr><td>${k} <span class="mut hm">${SHARE[k]*100}%</span></td><td class="num hm">${f0(x.inn)}</td><td class="num hm">${f0(x.out)}</td><td class="num ${x.pl<0?'neg':''}">${f0(x.pl)}</td><td class="num"><b>${f0(x.bal)}</b></td></tr>`}).join('')}
-   </tbody><tfoot><tr class="final"><td>Разом</td><td class="hm"></td><td class="hm"></td><td class="num">${f0(C.cum)}</td><td class="num">${f0(PARTNERS.reduce((a,k)=>a+C.P[k].bal,0)+C.P['Каса проекту'].bal)}</td></tr></tfoot></table></div>
-   ${Math.abs(C.P['Каса проекту'].bal)>.5?`<p class="note">Каса проекту: ${f0(C.P['Каса проекту'].bal)} грн.</p>`:''}
-   <p class="note">Разом капітал = склад ${f0(Object.values(E.V).reduce((a,v)=>a+v,0))} + обладнання ${f0(moves().filter(m=>m.type==='eq').reduce((a,m)=>a+(+m.total||0),0))}${Math.abs(C.P['Каса проекту'].bal)>.5?' + каса':''} .</p></section>`;
-  let rows='',cum=0;for(const mo of all){const x=plMonth(E,mo);cum+=x.res;rows=`<tr class="click" data-act="setPartMon" data-id="${mo}"><td>${mLabel(mo)}</td><td class="num">${f0(x.rev)}</td><td class="num hm">${f0(x.rev-x.cogs)}</td><td class="num">${f0(x.exp+x.adj)}</td><td class="num ${x.res<0?'neg':''}"><b>${f0(x.res)}</b></td><td class="num hm">${f0(x.res*.5)}</td><td class="num hm">${f0(x.res*.5)}</td></tr>`+rows}
-  h+=`<section class="card"><h2>По місяцях</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Місяць</th><th class="num">Продажі</th><th class="num hm">Валовий</th><th class="num">Витрати</th><th class="num">Результат</th><th class="num hm">Анатолій</th><th class="num hm">Даниїл</th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="final"><td>Усього</td><td></td><td class="hm"></td><td></td><td class="num">${f0(cum)}</td><td class="num hm">${f0(cum*.5)}</td><td class="num hm">${f0(cum*.5)}</td></tr></tfoot></table></div></section>`;
-  return h;
-}
-function setPartMon(m){partMon=m;render()}
+let partMon=null;function setPartMon(m){partMon=m;render()}
 function goTab(t){tab=t;render();window.scrollTo(0,0)}
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
+  const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;if(tab==='months')monOpen=null;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
-  ({addMove,editMove,editItem,itemHist,goTab,setPartMon,setHomeMon})[a.dataset.act]?.(a.dataset.id);
+  ({addMove,editMove,editItem,itemHist,goTab,setPartMon,setHomeMon,openMon,toggleMon,brk})[a.dataset.act]?.(a.dataset.id);
 });
 document.addEventListener('change',e=>{if(e.target.id==='mvFilter'){mvFilter=e.target.value;render()}if(e.target.id==='partMon'){partMon=e.target.value;render()}if(e.target.id==='homeMon'){homeMon=e.target.value;render()}});
 
