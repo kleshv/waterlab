@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261112zg">
+<meta name="wl-build" content="20261112zh">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Фільтри</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -219,6 +219,14 @@ p.note{margin:6px 0 0}
 @media (max-width:520px){.basepill span{display:none}.basepill{padding:5px 7px;margin-left:6px}}
 .basepill:hover{background:rgba(255,255,255,.18)}.basepill svg{width:16px;height:16px;flex:none}.basepill .chev{width:12px;height:12px;opacity:.7}
 @media (max-width:520px){.basepill span{display:inline}.basepill{padding:5px 9px 5px 10px}}
+
+/* изящные кнопки действий */
+.bigacts .btn,.acts4 .btn,.jacts .btn,.pacts .btn{min-height:44px;padding:10px 12px;font-size:14px;font-weight:600;text-transform:none;letter-spacing:.01em;border-radius:10px;box-shadow:none}
+.bigacts .btn.pri,.acts4 .btn.pri,.jacts .btn.pri,.pacts .btn.pri{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+@media (hover:hover){.bigacts .btn.pri:hover,.acts4 .btn.pri:hover,.jacts .btn.pri:hover,.pacts .btn.pri:hover{background:var(--accent);color:var(--accent-fg)}}
+.bigacts.one .btn.main,.bigacts .btn.main{min-height:46px;font-size:15px}
+@media (max-width:520px){.bigacts .btn.main{min-height:46px;font-size:15px}}
+.acts4 .ghost{text-transform:none}
 </style>
 
 </head>
@@ -278,7 +286,7 @@ p.note{margin:6px 0 0}
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>window.WL_ONLY=['f_items','f_moves','f_months'];</script>
-<script src="shim.js?v=20261112zg"></script>
+<script src="shim.js?v=20261112zh"></script>
 <script>
 const COLS=['f_items','f_moves','f_months'];
 const S={f_items:{},f_moves:{},f_months:{}};
