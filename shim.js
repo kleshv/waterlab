@@ -18,14 +18,18 @@
   .lg button:disabled{opacity:.6}
   .lg .lnk{background:none;color:#a9bad8;text-transform:none;font-weight:400;margin-top:10px;padding:6px;letter-spacing:0;text-decoration:underline}
   .lg .msg{min-height:18px;margin-top:10px;font-size:13px;color:#ffb4a6}.lg .msg.ok{color:#a8f0c6}
-  .bc{display:grid;gap:10px;margin-top:4px}
-  .bc button{display:flex;align-items:center;gap:14px;width:100%;margin:0;padding:16px;border-radius:12px;text-align:left;text-transform:none;letter-spacing:0;font-weight:400;cursor:pointer;border:1px solid rgba(255,255,255,.25);transition:transform .12s,border-color .12s}
-  .bc button:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.6)}
-  .bc .w{background:#1c3a66;color:#fff}.bc .f{background:#1f4a8a;color:#fff}
-  .bc .ic{flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-  .bc .w .ic{background:#c7e4f7;color:#11233f}.bc .f .ic{background:#d4e3ff;color:#1f4a8a}
-  .bc .ic svg{width:22px;height:22px}
-  .bc b{display:block;font-size:18px;letter-spacing:.02em}.bc small{display:block;font-size:12.5px;color:#c9d6ea;margin-top:2px;line-height:1.35}`;
+  .lg.ch{max-width:380px;text-align:center}
+  .lg.ch .logo{height:52px;margin:0 auto 10px;display:block}
+  .lg.ch h1{font-size:14px;color:#9fb1d0;margin:0 0 26px;letter-spacing:.04em}
+  .bc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .bc button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;aspect-ratio:1/1;border-radius:20px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);color:#e9eff9;font-family:var(--f-body,Arial,sans-serif);font-size:16px;font-weight:600;letter-spacing:.02em;transition:background .15s,border-color .15s,transform .15s}
+  .bc button:hover,.bc button:focus-visible{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.22);transform:translateY(-2px)}
+  .bc button:active{transform:translateY(0)}
+  .bc .ic{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center}
+  .bc .w .ic{background:rgba(160,205,240,.16);color:#a9d2f2}
+  .bc .f .ic{background:rgba(168,190,255,.16);color:#b3c4ff}
+  .bc .ic svg{width:32px;height:32px}
+  .lg.ch .lnk{margin-top:22px;color:#8597b8;font-size:13px}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
   function logoSvg(){const l=document.querySelector('header .logo');return l?l.outerHTML:''}
   function show(mode){
@@ -62,10 +66,10 @@
   function chooseBase(){return new Promise(res=>{
     let w=document.getElementById('lgw'); if(!w){w=document.createElement('div');w.id='lgw';w.className='lg-wrap';document.body.appendChild(w)}
     const drop='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5c-.3 0-.6.2-.8.4C9.6 5 5.5 10.4 5.5 14.3 5.5 18 8.4 21 12 21s6.5-3 6.5-6.7c0-3.9-4.1-9.3-5.7-11.4-.2-.2-.5-.4-.8-.4z"/></svg>';
-    const filt='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M7 8h10M7 16h10"/></svg>';
-    w.innerHTML=`<div class="lg">${logoSvg()}<h1>Оберіть базу</h1><div class="bc">
-      <button type="button" class="w" data-b="w"><span class="ic">${drop}</span><span><b>Вода</b></span></button>
-      <button type="button" class="f" data-b="f"><span class="ic">${filt}</span><span><b>Фільтри</b></span></button></div>
+    const filt='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="3"/><path d="M6.5 6.5h11M6.5 17.5h11"/><path d="M12 9.2c-1 1.3-2.1 2.7-2.1 3.8a2.1 2.1 0 0 0 4.2 0c0-1.1-1.1-2.5-2.1-3.8z" fill="currentColor" stroke="none"/></svg>';
+    w.innerHTML=`<div class="lg ch">${logoSvg()}<h1>Оберіть базу</h1><div class="bc">
+      <button type="button" class="w" data-b="w"><span class="ic">${drop}</span>Вода</button>
+      <button type="button" class="f" data-b="f"><span class="ic">${filt}</span>Фільтри</button></div>
       <button type="button" class="lnk" id="lg_out">Вийти з облікового запису</button></div>`;
     w.hidden=false;
     w.querySelector('[data-b=w]').onclick=()=>{ss.set('wlBase','w');if(location.search)history.replaceState(null,'',location.pathname);w.hidden=true;res()};
