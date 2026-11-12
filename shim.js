@@ -17,7 +17,15 @@
   .lg button{width:100%;margin-top:16px;padding:11px;border:0;border-radius:6px;background:#c7e4f7;color:#11233f;font:inherit;font-weight:700;text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
   .lg button:disabled{opacity:.6}
   .lg .lnk{background:none;color:#a9bad8;text-transform:none;font-weight:400;margin-top:10px;padding:6px;letter-spacing:0;text-decoration:underline}
-  .lg .msg{min-height:18px;margin-top:10px;font-size:13px;color:#ffb4a6}.lg .msg.ok{color:#a8f0c6}`;
+  .lg .msg{min-height:18px;margin-top:10px;font-size:13px;color:#ffb4a6}.lg .msg.ok{color:#a8f0c6}
+  .bc{display:grid;gap:10px;margin-top:4px}
+  .bc button{display:flex;align-items:center;gap:14px;width:100%;margin:0;padding:16px;border-radius:12px;text-align:left;text-transform:none;letter-spacing:0;font-weight:400;cursor:pointer;border:1px solid rgba(255,255,255,.25);transition:transform .12s,border-color .12s}
+  .bc button:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.6)}
+  .bc .w{background:#1c3a66;color:#fff}.bc .f{background:#0d3b34;color:#fff}
+  .bc .ic{flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .bc .w .ic{background:#c7e4f7;color:#11233f}.bc .f .ic{background:#bdeedb;color:#0d3b34}
+  .bc .ic svg{width:22px;height:22px}
+  .bc b{display:block;font-size:17px;letter-spacing:.02em}.bc small{display:block;font-size:12.5px;color:#c9d6ea;margin-top:2px;line-height:1.35}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
   function logoSvg(){const l=document.querySelector('header .logo');return l?l.outerHTML:''}
   function show(mode){
@@ -49,6 +57,21 @@
       }catch(err){msg(/Invalid login/i.test(err.message||'')?'Невірний email або пароль.':(err.message||'Не вийшло, спробуйте ще раз.'))}
       b.disabled=false};
   }
+  const ss={get(k){try{return sessionStorage.getItem(k)}catch(_){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(_){}},del(k){try{sessionStorage.removeItem(k)}catch(_){}}};
+  const IS_F=/filters\.html$/.test(location.pathname);
+  function chooseBase(){return new Promise(res=>{
+    let w=document.getElementById('lgw'); if(!w){w=document.createElement('div');w.id='lgw';w.className='lg-wrap';document.body.appendChild(w)}
+    const drop='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5c-.3 0-.6.2-.8.4C9.6 5 5.5 10.4 5.5 14.3 5.5 18 8.4 21 12 21s6.5-3 6.5-6.7c0-3.9-4.1-9.3-5.7-11.4-.2-.2-.5-.4-.8-.4z"/></svg>';
+    const filt='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M7 8h10M7 16h10"/></svg>';
+    w.innerHTML=`<div class="lg">${logoSvg()}<h1>Оберіть базу</h1><div class="bc">
+      <button type="button" class="w" data-b="w"><span class="ic">${drop}</span><span><b>Вода</b><small>${role==='tech'?'Регламент заміни фільтрів':'Точки, виручка, витрати, комуналка'}</small></span></button>
+      <button type="button" class="f" data-b="f"><span class="ic">${filt}</span><span><b>Фільтри</b><small>Склад, виробництво й продажі картриджів</small></span></button></div>
+      <button type="button" class="lnk" id="lg_out">Вийти з облікового запису</button></div>`;
+    w.hidden=false;
+    w.querySelector('[data-b=w]').onclick=()=>{ss.set('wlBase','w');if(location.search)history.replaceState(null,'',location.pathname);w.hidden=true;res()};
+    w.querySelector('[data-b=f]').onclick=()=>{ss.set('wlBase','f');location.href='filters.html'};
+    document.getElementById('lg_out').onclick=async()=>{ss.del('wlBase');await sb.auth.signOut();location.href='./'};
+  })}
   function hideLogin(){const w=document.getElementById('lgw');if(w)w.hidden=true}
 
   /* ---------- data ---------- */
@@ -92,7 +115,7 @@
   /* ---------- logout button ---------- */
   function addLogout(){if(document.getElementById('logoutBtn'))return;const row=document.querySelector('header .hrow');if(!row)return;
     const b=document.createElement('button');b.id='logoutBtn';b.type='button';b.className='btn sm';b.textContent='Вийти';b.title=session?session.user.email:'';
-    b.onclick=async()=>{await sb.auth.signOut();location.reload()};row.appendChild(b)}
+    b.onclick=async()=>{ss.del('wlBase');await sb.auth.signOut();location.href='./'};row.appendChild(b)}
 
 
   /* ---------- auto-update: GitHub Pages caches pages ~10 min ---------- */
@@ -120,6 +143,10 @@
     try{const {data:ok,error}=await sb.rpc('is_allowed');if(!error&&ok===false){denied(session&&session.user.email);return}}catch(_){}
     try{const {data:r}=await sb.rpc('my_role');role=r||'owner'}catch(_){}
     window.WL_ROLE=role;
+    if(IS_F)ss.set('wlBase','f');
+    else if(role!=='accountant'){const ch=/[?&]choose/.test(location.search);
+      if(!ch&&ss.get('wlBase')==='f'){location.replace('filters.html');return}
+      if(ch||!ss.get('wlBase'))await chooseBase()}
     try{await loadAll()}catch(e){Object.values(errs).flat().forEach(f=>f&&f({code:'unavailable',message:e.message}))}
     window.WL_NAME=names[((session&&session.user.email)||'').toLowerCase()]||'';
     readyResolve()}
