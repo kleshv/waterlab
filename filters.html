@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261112s">
+<meta name="wl-build" content="20261112t">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Фільтри</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -265,6 +265,7 @@ p.note{margin:6px 0 0}
 .brkl .ln2{font-size:14px}
 .st{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}.st th{font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600;text-align:left;padding:4px 3px;border-bottom:1px solid var(--line)}.st td{padding:5px 3px;border-bottom:1px solid var(--line);vertical-align:top}.st .num{text-align:right;white-space:nowrap}.st tfoot td{border-bottom:0;font-weight:600}
 .sblk{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px}.shd{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;padding-bottom:4px;font-size:14px;cursor:pointer}.shd .note{font-size:12px}
+.kitr td:first-child{font-weight:600}.kitbtns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.kitbtns .lnh{width:100%;margin:0}
 .tot3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}.tot3 div{background:var(--chip);border-radius:8px;padding:7px 9px;display:flex;flex-direction:column}.tot3 span{font-size:11px;color:var(--muted)}.tot3 b{font-size:16px;font-variant-numeric:tabular-nums}
 .lnh{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin:4px 0 4px}.brkl .ln2.bi>span{flex:1;min-width:0}.brkl .ln2 .note{font-size:12px}
 .pacts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 10px}.pacts .btn{padding:12px 8px}
@@ -274,7 +275,7 @@ p.note{margin:6px 0 0}
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>window.WL_ONLY=['f_items','f_moves','f_months'];</script>
-<script src="shim.js?v=20261112s"></script>
+<script src="shim.js?v=20261112t"></script>
 <script>
 const COLS=['f_items','f_moves','f_months'];
 const S={f_items:{},f_moves:{},f_months:{}};
@@ -316,6 +317,11 @@ const KIND={prod:'Готові картриджі (виробництво)',buy:
 const TYPES={sale:'Продаж',prod:'Виробництво',buy:'Закупівля',exp:'Витрата',take:'Забрав собі',contrib:'Вніс товар',eq:'Обладнання',cash:'Гроші партнера',adj:'Списання'};
 const MONEY=['exp','eq','cash'];
 const SHARE={'Анатолій':.5,'Даниїл':.5};
+const KITS=[
+ {id:'k20m',name:'Комплект 20ВВ + мех. 10ВВ',parts:{p10coal:1,p10calc:1,p20bb:1,m10bb:1,m20bb:1}},
+ {id:'k10k',name:'Комплект 10ВВ + КДФ',parts:{p10coal:1,p10calc:1,p10bbk:1,m10bb:1}},
+ {id:'k10',name:'Комплект 10ВВ',parts:{p10coal:1,p10calc:1,p10bb:1,m10bb:1}},
+ {id:'k20',name:'Комплект 20ВВ',parts:{p10coal:1,p10calc:1,p20bb:1,m20bb:1}}];
 const EXPCAT=['Оренда','Доставка','Реклама / поліграфія','Інструмент / ремонт','Комісія банку','Інше'];
 const TIERS=[['D','WaterLab / дилер'],['O','Опт (від 10 шт)'],['MO','Дрібний опт (від 2 шт)'],['R','Роздріб'],['Z','За собівартістю']];
 const PARTNERS=['Даниїл','Анатолій'];
@@ -444,19 +450,32 @@ const shortN=i=>itemName(i).replace(/\s*\((поліпропілен|мінера
 function saleLines(E,m){const ls=m.lines||[];const raw=ls.map(l=>(+l.q)*(+l.p||0));const rs=raw.reduce((a,v)=>a+v,0);
   const rv=m.type==='sale'?mvTotal(m):(m.total!=null&&m.total!==''?+m.total:(E.cogs[m.id]||0));const k=rs>0?rv/rs:0;const lc=E.lc[m.id]||[];
   return ls.map((l,n)=>{const c=lc[n]||0;const sum=rs>0?raw[n]*k:rv*(c/((E.cogs[m.id])||1));return {i:l.i,q:+l.q,p:+l.q?sum/+l.q:0,sum,c,pr:sum-c}})}
+function kitGroup(ls){/* ls: [{i,q,sum,c}] -> rows of kits + rest */
+  const pool={};for(const x of ls){const g=pool[x.i]||(pool[x.i]={q:0,sum:0,c:0});g.q+=x.q;g.sum+=x.sum;g.c+=x.c}
+  const unit=i=>({s:pool[i].q?pool[i].sum/pool[i].q:0,c:pool[i].q?pool[i].c/pool[i].q:0});
+  const perms=a=>a.length<2?[a]:a.flatMap((x,i)=>perms([...a.slice(0,i),...a.slice(i+1)]).map(r=>[x,...r]));
+  let best=null;for(const ord of perms(KITS)){const qq={};for(const i in pool)qq[i]=pool[i].q;let n=0,cnt=[];
+    for(const k of ord){let m=Infinity;for(const [i,q] of Object.entries(k.parts))m=Math.min(m,qq[i]?Math.floor(qq[i]/q+1e-9):0);if(m>0&&m<Infinity){for(const [i,q] of Object.entries(k.parts))qq[i]-=q*m;n+=m}}
+    const left=Object.values(qq).reduce((x,v)=>x+(v>1e-9?v:0),0);if(!best||n>best.n||(n===best.n&&left<best.left))best={n,left,ord}}
+  const out=[];
+  for(const k of best.ord){let n=Infinity;for(const [i,q] of Object.entries(k.parts))n=Math.min(n,pool[i]?Math.floor(pool[i].q/q+1e-9):0);
+    if(n>0&&n<Infinity){let s=0,c=0;for(const [i,q] of Object.entries(k.parts)){const u=unit(i);s+=u.s*q*n;c+=u.c*q*n;pool[i].sum-=u.s*q*n;pool[i].c-=u.c*q*n;pool[i].q-=q*n}
+      out.push({kit:k,name:k.name,q:n,sum:s,c})}}
+  for(const [i,g] of Object.entries(pool))if(g.q>1e-9)out.push({i,name:shortN(i),q:g.q,sum:g.sum,c:g.c});
+  return out}
 function salesBrk(E,mon){const f0=v=>nf.format(Math.abs(v)<0.5?0:Math.round(v||0));const L=moves().filter(m=>m.date.slice(0,7)===mon&&(m.type==='sale'||m.type==='take'));
   const G={};let T={sum:0,c:0};
   const blocks=L.slice().reverse().map(m=>{const ls=saleLines(E,m);let s=0,c=0;
-    const rows=ls.map(x=>{s+=x.sum;c+=x.c;const g=G[x.i]||(G[x.i]={q:0,sum:0,c:0});g.q+=x.q;g.sum+=x.sum;g.c+=x.c;
-      return `<tr><td>${esc(shortN(x.i))}</td><td class="num">${fq(x.q)}</td><td class="num">${f0(x.p)}</td><td class="num">${f0(x.sum)}</td><td class="num mut">${f0(x.c)}</td><td class="num ${x.pr<-0.5?'neg':''}">${f0(x.pr)}</td></tr>`}).join('');
+    const rows=kitGroup(ls).map(x=>{s+=x.sum;c+=x.c;const key=x.kit?x.kit.id:x.i;const g=G[key]||(G[key]={name:x.name,kit:!!x.kit,q:0,sum:0,c:0});g.q+=x.q;g.sum+=x.sum;g.c+=x.c;const pr=x.sum-x.c;
+      return `<tr class="${x.kit?'kitr':''}"><td>${esc(x.name)}</td><td class="num">${fq(x.q)}</td><td class="num">${f0(x.q?x.sum/x.q:0)}</td><td class="num">${f0(x.sum)}</td><td class="num mut">${f0(x.c)}</td><td class="num ${pr<-0.5?'neg':''}">${f0(pr)}</td></tr>`}).join('');
     T.sum+=s;T.c+=c;
     const who=m.type==='sale'?(m.client||'Продаж'):'Забрав '+(m.partner||'');
     return `<div class="sblk"><div class="shd click" data-act="editMove" data-id="${m.id}"><span><b>${dmy(m.date).slice(0,5)}</b> · ${esc(who)}${m.note?`<div class="note">${esc(m.note)}</div>`:''}</span><b>${f0(s)}</b></div>
-     <table class="st"><thead><tr><th>Товар</th><th class="num">шт</th><th class="num">ціна</th><th class="num">сума</th><th class="num">собів.</th><th class="num">приб.</th></tr></thead><tbody>${rows}</tbody>
+     <table class="st"><thead><tr><th>Що</th><th class="num">шт</th><th class="num">ціна</th><th class="num">сума</th><th class="num">собів.</th><th class="num">приб.</th></tr></thead><tbody>${rows}</tbody>
      <tfoot><tr><td colspan="3">Разом</td><td class="num">${f0(s)}</td><td class="num mut">${f0(c)}</td><td class="num"><b>${f0(s-c)}</b></td></tr></tfoot></table></div>`}).join('');
-  const sum=Object.entries(G).sort((a,b)=>b[1].sum-a[1].sum).map(([i,g])=>`<tr><td>${esc(shortN(i))}</td><td class="num">${fq(g.q)}</td><td class="num">${f0(g.sum)}</td><td class="num mut">${f0(g.c)}</td><td class="num"><b>${f0(g.sum-g.c)}</b></td></tr>`).join('');
+  const sum=Object.values(G).sort((a,b)=>(b.kit-a.kit)||(b.sum-a.sum)).map(g=>`<tr class="${g.kit?'kitr':''}"><td>${esc(g.name)}</td><td class="num">${fq(g.q)}</td><td class="num">${f0(g.sum)}</td><td class="num mut">${f0(g.c)}</td><td class="num"><b>${f0(g.sum-g.c)}</b></td></tr>`).join('');
   const h=L.length?`<div class="tot3"><div><span>Продали</span><b>${f0(T.sum)}</b></div><div><span>Собівартість</span><b>${f0(T.c)}</b></div><div><span>Прибуток з товару</span><b>${f0(T.sum-T.c)}</b></div></div>
-   <div class="lnh">По товарах</div><table class="st"><thead><tr><th>Товар</th><th class="num">шт</th><th class="num">сума</th><th class="num">собів.</th><th class="num">приб.</th></tr></thead><tbody>${sum}</tbody></table>
+   <div class="lnh">По комплектах і товарах</div><table class="st"><thead><tr><th>Що</th><th class="num">шт</th><th class="num">сума</th><th class="num">собів.</th><th class="num">приб.</th></tr></thead><tbody>${sum}</tbody></table>
    <div class="lnh" style="margin-top:14px">По продажах</div>${blocks}`:'<p class="note">Продажів немає.</p>';
   sheetInfo('Продажі · '+mLabel(mon),h)}
 function sheetInfo(title,html){const md=$('#modal');
@@ -549,7 +568,7 @@ function moveForm(type,m){
   if(type==='prod'){sub='Вкажіть, що виготовили. Сировина спишеться за рецептурою — її можна поправити.';
     f+=linesBlock('L','Що виготовили · к-сть',m.lines,['prod'],false)+`<div class="full useBox"><div class="lnh">Витрачено сировини</div><div id="useBox"></div><label class="chk" style="margin-top:6px"><input type="checkbox" id="useManual" ${m.useManual?'checked':''}> Змінити витрату вручну</label></div>`}
   if(type==='sale'){sub='Ціна підставляється з прайсу за обраним рівнем — її можна змінити.';
-    f+=fld('client','Покупець',m.client||'',{type:'text',list:'clients'})+`<datalist id="clients">${[...new Set(moves().filter(x=>x.client).map(x=>x.client))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist>`+sel('tier','Ціна',m.tier||'D',TIERS)+sel('recv','Продавець (у кого гроші)',m.recv||'Даниїл',[...PARTNERS,'Каса проекту'].map(x=>[x,x]))+linesBlock('L','Позиція · к-сть · ціна',m.lines,['prod','buy'],true)+fld('total','Підсумок, якщо інший (знижка, домовленість)',m.total??'')+`<div class="full tot" id="totBox"></div>`}
+    f+=fld('client','Покупець',m.client||'',{type:'text',list:'clients'})+`<datalist id="clients">${[...new Set(moves().filter(x=>x.client).map(x=>x.client))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist>`+sel('tier','Ціна',m.tier||'D',TIERS)+sel('recv','Продавець (у кого гроші)',m.recv||'Даниїл',[...PARTNERS,'Каса проекту'].map(x=>[x,x]))+`<div class="full kitbtns"><div class="lnh">Додати комплект</div>${KITS.map(k=>`<button type="button" class="btn sm" data-kit="${k.id}">+ ${esc(k.name.replace('Комплект ',''))}</button>`).join('')}</div>`+linesBlock('L','Позиція · к-сть · ціна',m.lines,['prod','buy'],true)+fld('total','Підсумок, якщо інший (знижка, домовленість)',m.total??'')+`<div class="full tot" id="totBox"></div>`}
   if(type==='take'){sub='Партнер забирає товар собі (для своїх клієнтів чи сервісу). Рахується як вибуття за собівартістю.';
     f+=sel('partner','Партнер',m.partner||'Анатолій',PARTNERS.map(x=>[x,x]))+linesBlock('L','Позиція · к-сть',m.lines,['prod','buy','raw'],false)+fld('total','Сума, якщо домовились інакше',m.total??'')}
   if(type==='adj'){sub='Брак, недостача, інвентаризація. Мінус — списати, плюс — оприбуткувати знайдене.';
@@ -578,6 +597,12 @@ function moveForm(type,m){
     if(type==='prod'){const man=$('#useManual').checked;if(!man||!$('#useBox').children.length)renderUse(man?m.use:null)}
   };
   wireLines(recalc);
+  if(type==='sale')$('#sf').addEventListener('click',e=>{const b=e.target.closest('[data-kit]');if(!b)return;const k=KITS.find(x=>x.id===b.dataset.kit);const box=$('#L');const tier=$('#f_tier').value;
+    for(const [i,q] of Object.entries(k.parts)){let row=[...box.querySelectorAll('.ln')].find(r=>r.querySelector('select').value===i);
+      if(!row){row=[...box.querySelectorAll('.ln')].find(r=>!r.querySelector('select').value);if(!row){const n='Lk'+Date.now().toString(36)+i;box.insertAdjacentHTML('beforeend',lineRow(n,{},box.dataset.kinds.split(','),true));row=box.lastElementChild}
+        row.querySelector('select').value=i;row.querySelector('[name^=p_]').value=Math.round(tierPrice(i,tier)*100)/100}
+      const qi=row.querySelector('[name^=q_]');qi.value=(parseNum(qi.value)||0)+q}
+    recalc()});
   if(type==='prod'){$('#useManual').addEventListener('change',()=>{renderUse(null)});renderUse(m.useManual?m.use:null)}
   if(type==='sale')recalc();
 }
