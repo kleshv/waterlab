@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261112x">
+<meta name="wl-build" content="20261112y">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Фільтри</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -277,7 +277,7 @@ p.note{margin:6px 0 0}
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>window.WL_ONLY=['f_items','f_moves','f_months'];</script>
-<script src="shim.js?v=20261112x"></script>
+<script src="shim.js?v=20261112y"></script>
 <script>
 const COLS=['f_items','f_moves','f_months'];
 const S={f_items:{},f_moves:{},f_months:{}};
@@ -414,7 +414,8 @@ function invest(E,upTo){/* upTo = 'YYYY-MM' or null */
   const eq=moves().filter(m=>m.type==='eq'&&inM(m)).reduce((a,m)=>a+(+m.total||0),0);
   let cum=0;for(const mo of allMons())if(!upTo||mo<=upTo)cum+=plMonth(E,mo).res;
   const inv=PARTNERS.reduce((a,k)=>a+P[k].init+P[k].after,0);
-  return {P,C,took,paid,cash,hold,st,eq,cum,inv,bal:st+eq+cash}}
+  let soldC=0,tookC=0,adjC=0;for(const m of moves()){if(!inM(m))continue;const c=E.cogs[m.id]||0;if(m.type==='sale')soldC+=c;else if(m.type==='take')tookC+=c;else if(m.type==='adj')adjC+=c}
+  return {P,C,took,paid,cash,hold,st,eq,cum,inv,bal:st+eq+cash,soldC,tookC,adjC}}
 function partnersCard(E,upTo){const x=invest(E,upTo);const u=upTo||'';
   const row=(l,v,k,cls='')=>`<div class="ln2 ${cls}"><span>${l}</span><b>${k?tap(f0(v),'brk',k+'|'+u,v<0?'neg':''):f0(v)}</b></div>`;
   const initLocked=fClosed(START_MON);
@@ -424,9 +425,9 @@ function partnersCard(E,upTo){const x=invest(E,upTo);const u=upTo||'';
    <div class="rcpt">${PARTNERS.map(k=>`<div class="ln2"><span>${k}<div class="note">старт ${tap(f0(x.P[k].init),'brk','p:init:'+k+'|'+u)} · після запуску ${tap(f0(x.P[k].after),'brk','inv:after:'+k+'|'+u)}</div></span><b>${f0(x.P[k].init+x.P[k].after)}</b></div>`).join('')}
    <div class="ln2 tot"><span>Разом вкладено</span><b>${f0(x.inv)}</b></div></div>
    <div class="lnh" style="margin-top:14px">На що пішли</div>
-   <div class="rcpt">${row('Сировина й товар',x.C.mat,'inv:mat')}${row('Обладнання',x.C.eq,'inv:eq')}${row('Оренда, доставка, комісії та інше',x.C.exp,'inv:exp')}${x.C.cash?row('Гроші',x.C.cash,'inv:cash'):''}</div>
+   <div class="rcpt">${row('Закуплено сировини й товару',x.C.mat,'inv:mat')}${row('Обладнання',x.C.eq,'inv:eq')}${row('Оренда, доставка, комісії та інше',x.C.exp,'inv:exp')}${x.C.cash?row('Гроші',x.C.cash,'inv:cash'):''}</div>
    <div class="lnh" style="margin-top:14px">Що зараз на балансі</div>
-   <div class="rcpt">${row('Товар і сировина на складі',x.st,'')}${row('Обладнання',x.eq,'inv:eq')}${row('Гроші від продажів',x.cash,'rev:all')}${holders?`<div class="note" style="margin:-2px 0 4px">${holders}</div>`:''}
+   <div class="rcpt">${row('Залишок товару й сировини на складі',x.st,'')}<div class="note" style="margin:-2px 0 4px">із закупленого ${f0(x.C.mat)}: продано ${f0(x.soldC)} · забрали ${f0(x.tookC)} · списано ${f0(x.adjC)} (за собівартістю)</div>${row('Обладнання',x.eq,'inv:eq')}${row('Гроші від продажів',x.cash,'rev:all')}${holders?`<div class="note" style="margin:-2px 0 4px">${holders}</div>`:''}
    <div class="ln2 tot"><span>Разом на балансі</span><b>${f0(x.bal)}</b></div></div>
    <div class="calc"><div><span>Вкладено</span><b>${f0(x.inv)}</b></div>${x.took||x.paid?`<div><span>− забрали</span><b>${tap(f0(x.took+x.paid),'brk','inv:took|'+u)}</b></div>`:''}<div><span>${x.cum<0?'− збиток':'+ прибуток'}</span><b class="${x.cum<0?'neg':''}">${f0(Math.abs(x.cum))}</b></div><div><span>= на балансі</span><b>${f0(x.inv-x.took-x.paid+x.cum)}</b></div></div>
    </section>`}
