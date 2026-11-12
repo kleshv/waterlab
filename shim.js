@@ -8,29 +8,30 @@
 
   /* ---------- login screen ---------- */
   const css=`.lg-wrap{position:fixed;inset:0;z-index:50;background:var(--hdr,#11233f);display:flex;align-items:center;justify-content:center;padding:20px}
-  .lg{width:100%;max-width:340px;color:#fff;font-family:var(--f-body,Arial,sans-serif)}
+  .lg{width:100%;max-width:340px;color:#fff;font-family:Manrope,var(--f-body,Arial),sans-serif;-webkit-font-smoothing:antialiased}
   .lg .logo{height:46px;width:auto;color:#fff;margin-bottom:6px}.lg .logo .hole{fill:var(--hdr,#11233f)}
-  .lg h1{font-size:13px;font-weight:400;color:#a9bad8;margin:0 0 22px;letter-spacing:.02em}
-  .lg label{display:block;font-size:12px;color:#a9bad8;margin:10px 0 4px}
-  .lg input{width:100%;padding:10px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.06);color:#fff;font:inherit;font-size:16px}
+  .lg h1{font-size:15px;font-weight:500;color:#a9bad8;margin:0 0 22px;letter-spacing:.01em}
+  .lg label{display:block;font-size:13px;font-weight:500;color:#a9bad8;margin:12px 0 5px}
+  .lg input{width:100%;padding:11px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.06);color:#fff;font:inherit;font-size:16px}
   .lg input:focus{outline:2px solid #c7e4f7;outline-offset:1px}
-  .lg button{width:100%;margin-top:16px;padding:11px;border:0;border-radius:6px;background:#c7e4f7;color:#11233f;font:inherit;font-weight:700;text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
+  .lg button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:10px;background:#c7e4f7;color:#11233f;font:inherit;font-size:15px;font-weight:700;letter-spacing:.01em;cursor:pointer}
   .lg button:disabled{opacity:.6}
   .lg .lnk{background:none;color:#a9bad8;text-transform:none;font-weight:400;margin-top:10px;padding:6px;letter-spacing:0;text-decoration:underline}
   .lg .msg{min-height:18px;margin-top:10px;font-size:13px;color:#ffb4a6}.lg .msg.ok{color:#a8f0c6}
   .lg.ch{max-width:380px;text-align:center}
   .lg.ch .logo{height:52px;margin:0 auto 10px;display:block}
-  .lg.ch h1{font-size:14px;color:#9fb1d0;margin:0 0 26px;letter-spacing:.04em}
+  .lg.ch h1{font-size:17px;font-weight:500;color:#b3c2dc;margin:0 0 28px;letter-spacing:-.005em}
   .bc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .bc button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;aspect-ratio:1/1;border-radius:20px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);color:#e9eff9;font-family:var(--f-body,Arial,sans-serif);font-size:16px;font-weight:600;letter-spacing:.02em;transition:background .15s,border-color .15s,transform .15s}
+  .bc button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;aspect-ratio:1/1;border-radius:20px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);color:#e9eff9;font-family:Manrope,var(--f-body,Arial),sans-serif;font-size:17px;font-weight:600;letter-spacing:-.005em;transition:background .15s,border-color .15s,transform .15s}
   .bc button:hover,.bc button:focus-visible{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.22);transform:translateY(-2px)}
   .bc button:active{transform:translateY(0)}
   .bc .ic{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center}
   .bc .w .ic{background:rgba(160,205,240,.16);color:#a9d2f2}
   .bc .f .ic{background:rgba(168,190,255,.16);color:#b3c4ff}
   .bc .ic svg{width:40px;height:40px}
-  .lg.ch .lnk{margin-top:22px;color:#8597b8;font-size:13px}`;
+  .lg.ch .lnk{margin-top:24px;color:#8597b8;font-size:13.5px;font-weight:500;text-decoration:none}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+  {const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap';document.head.appendChild(l)}
   function logoSvg(){const l=document.querySelector('header .logo');return l?l.outerHTML:''}
   function show(mode){
     let w=document.getElementById('lgw'); if(!w){w=document.createElement('div');w.id='lgw';w.className='lg-wrap';document.body.appendChild(w)}
