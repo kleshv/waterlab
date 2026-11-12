@@ -54,26 +54,26 @@
   /* ---------- data ---------- */
   function emit(col){const docs=Object.entries(store[col]||{}).map(([id,d])=>({id,data:()=>d}));(subs[col]||[]).forEach(cb=>cb({docs,metadata:{fromCache:false,hasPendingWrites:false}}))}
   async function loadAll(){
-    const page=1000;let from=0;
-    for(;;){const {data,error}=await sb.from('docs').select('col,id,data').order('col').order('id').range(from,from+page-1);
+    const page=1000;let from=0;const ONLY=window.WL_ONLY;
+    for(;;){let q=sb.from('docs').select('col,id,data');if(ONLY)q=q.in('col',ONLY);const {data,error}=await q.order('col').order('id').range(from,from+page-1);
       if(error)throw error;for(const r of data){(store[r.col]=store[r.col]||{})[r.id]=r.data}
       if(data.length<page)break;from+=page}
     if(role==='accountant'){const {data:a,error:ae}=await sb.rpc('acct_data');if(ae)throw ae;for(const r of a||[]){(store[r.col]=store[r.col]||{})[r.id]=r.data}}
-    if(role==='tech'){const {data:a,error:ae}=await sb.rpc('tech_data');if(ae)throw ae;for(const r of a||[]){(store[r.col]=store[r.col]||{})[r.id]=r.data}}
+    if(role==='tech'&&!ONLY){const {data:a,error:ae}=await sb.rpc('tech_data');if(ae)throw ae;for(const r of a||[]){(store[r.col]=store[r.col]||{})[r.id]=r.data}}
     try{const {data:u}=await sb.from('allowed_users').select('email,name');(u||[]).forEach(x=>names[x.email.toLowerCase()]=x.name)}catch(_){}
     loaded=true;Object.keys(subs).forEach(emit);
     channel=sb.channel('docs-live').on('postgres_changes',{event:'*',schema:'public',table:'docs'},p=>{
-      const r=p.new&&p.new.col?p.new:p.old; if(!r||!r.col)return;
+      const r=p.new&&p.new.col?p.new:p.old; if(!r||!r.col)return; if(ONLY&&!ONLY.includes(r.col))return;
       if(p.eventType==='DELETE'){if(store[r.col])delete store[r.col][r.id]} else {(store[r.col]=store[r.col]||{})[r.id]=p.new.data}
       emit(r.col)}).subscribe();
   }
   function ref(col,id){
     return {id,path:col+'/'+id,
-      async set(data){if(role==='tech'&&col!=='svc')throw {code:'invalid_argument',message:'Немає прав'};
+      async set(data){if(role==='tech'&&col!=='svc'&&!col.startsWith('f_'))throw {code:'invalid_argument',message:'Немає прав'};
         if(role==='accountant'&&!ACCT_COLS.includes(col)){(store[col]=store[col]||{})[id]=data;emit(col);return}
         const {error}=await sb.from('docs').upsert({col,id,data});if(error)throw {code:error.code==='42501'?'invalid_argument':'unavailable',message:error.message};(store[col]=store[col]||{})[id]=data;emit(col)},
       async update(data){const cur=(store[col]||{})[id];if(!cur)throw {code:'invalid_argument',message:'not found'};return this.set({...cur,...data})},
-      async delete(){if((role==='accountant'&&!ACCT_COLS.includes(col))||(role==='tech'&&col!=='svc'))throw {code:'invalid_argument',message:'Немає прав'};
+      async delete(){if((role==='accountant'&&!ACCT_COLS.includes(col))||(role==='tech'&&col!=='svc'&&!col.startsWith('f_')))throw {code:'invalid_argument',message:'Немає прав'};
         const {error}=await sb.from('docs').delete().eq('col',col).eq('id',id);if(error)throw {code:'unavailable',message:error.message};if(store[col])delete store[col][id];emit(col)}};
   }
   const rid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
