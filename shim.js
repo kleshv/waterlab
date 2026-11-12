@@ -26,9 +26,8 @@
   .bc button:hover,.bc button:focus-visible{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.22);transform:translateY(-2px)}
   .bc button:active{transform:translateY(0)}
   .bc .ic{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center}
-  .bc .w .ic{background:#c7e4f7;color:#11233f}
-  .bc .f .ic{background:#2f5fa8;color:#d4e3ff}
-  .bc .f{background:rgba(47,95,168,.16);border-color:rgba(120,160,230,.25)}
+  .bc .w .ic{background:rgba(160,205,240,.16);color:#a9d2f2}
+  .bc .f .ic{background:rgba(168,190,255,.16);color:#b3c4ff}
   .bc .ic svg{width:40px;height:40px}
   .lg.ch .lnk{margin-top:22px;color:#8597b8;font-size:13px}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
