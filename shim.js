@@ -25,7 +25,7 @@
   .bc .ic{flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center}
   .bc .w .ic{background:#c7e4f7;color:#11233f}.bc .f .ic{background:#d4e3ff;color:#1f4a8a}
   .bc .ic svg{width:22px;height:22px}
-  .bc b{display:block;font-size:17px;letter-spacing:.02em}.bc small{display:block;font-size:12.5px;color:#c9d6ea;margin-top:2px;line-height:1.35}`;
+  .bc b{display:block;font-size:18px;letter-spacing:.02em}.bc small{display:block;font-size:12.5px;color:#c9d6ea;margin-top:2px;line-height:1.35}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
   function logoSvg(){const l=document.querySelector('header .logo');return l?l.outerHTML:''}
   function show(mode){
@@ -64,8 +64,8 @@
     const drop='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5c-.3 0-.6.2-.8.4C9.6 5 5.5 10.4 5.5 14.3 5.5 18 8.4 21 12 21s6.5-3 6.5-6.7c0-3.9-4.1-9.3-5.7-11.4-.2-.2-.5-.4-.8-.4z"/></svg>';
     const filt='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M7 8h10M7 16h10"/></svg>';
     w.innerHTML=`<div class="lg">${logoSvg()}<h1>Оберіть базу</h1><div class="bc">
-      <button type="button" class="w" data-b="w"><span class="ic">${drop}</span><span><b>Вода</b><small>${role==='tech'?'Регламент заміни фільтрів':'Точки, виручка, витрати, комуналка'}</small></span></button>
-      <button type="button" class="f" data-b="f"><span class="ic">${filt}</span><span><b>Фільтри</b><small>Склад, виробництво й продажі картриджів</small></span></button></div>
+      <button type="button" class="w" data-b="w"><span class="ic">${drop}</span><span><b>Вода</b></span></button>
+      <button type="button" class="f" data-b="f"><span class="ic">${filt}</span><span><b>Фільтри</b></span></button></div>
       <button type="button" class="lnk" id="lg_out">Вийти з облікового запису</button></div>`;
     w.hidden=false;
     w.querySelector('[data-b=w]').onclick=()=>{ss.set('wlBase','w');if(location.search)history.replaceState(null,'',location.pathname);w.hidden=true;res()};
