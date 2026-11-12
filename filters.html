@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261112w">
+<meta name="wl-build" content="20261112x">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Фільтри</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -259,7 +259,8 @@ p.note{margin:6px 0 0}
 @media (max-width:520px){.acts4{grid-template-columns:1fr 1fr}}
 .rcpt{margin-top:8px}.ln2{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:15px}.ln2 b{font-variant-numeric:tabular-nums;font-weight:600}.ln2.mut{color:var(--muted)}.ln2.tot{border-bottom:0;font-weight:700;font-size:17px}.ln2.tot b{font-weight:800}.rcpt .ln2.tot{border-top:2px solid var(--navy);margin-top:2px}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.split div{background:var(--chip);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column}.split span{font-size:12px;color:var(--muted)}.split b{font-size:18px;font-variant-numeric:tabular-nums}
-.pb tr.sum td{background:var(--chip)}.pb tr.initr td{background:#e8f0fd;font-size:15px}.pb tr.grp2 td{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;padding-top:12px}
+.pb tr.sum td{background:var(--chip)}.ln2.sb2{font-size:13.5px;padding:4px 0 4px 10px}.ln2 .note .tapn{font-size:12px}
+.calc{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:12px;padding:10px 12px;background:var(--chip);border-radius:10px;font-size:13px}.calc div{display:flex;flex-direction:column}.calc span{color:var(--muted);font-size:11.5px}.calc b{font-variant-numeric:tabular-nums}.pb tr.initr td{background:#e8f0fd;font-size:15px}.pb tr.grp2 td{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;padding-top:12px}
 .tapn{all:unset;cursor:pointer;border-bottom:1px dashed currentColor;font:inherit;font-variant-numeric:tabular-nums}.tapn:hover{color:var(--accent)}.tapn.neg{color:var(--bad)}
 .stat{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:10px;margin-left:auto}.stat.op{background:#fff3d6;color:#8a5a00}.stat.cl{background:#e9f7ef;color:#16804a}
 .brkl .ln2{font-size:14px}
@@ -276,7 +277,7 @@ p.note{margin:6px 0 0}
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>window.WL_ONLY=['f_items','f_moves','f_months'];</script>
-<script src="shim.js?v=20261112w"></script>
+<script src="shim.js?v=20261112x"></script>
 <script>
 const COLS=['f_items','f_moves','f_months'];
 const S={f_items:{},f_moves:{},f_months:{}};
@@ -392,21 +393,43 @@ function bookKey(m,E){const t=mvTotal(m);
   if(m.type==='sale')return {p:m.recv||'Даниїл',c:'sold',v:t};
   if(m.type==='take')return {p:m.partner,c:'took',v:m.total!=null&&m.total!==''?+m.total:(E.cogs[m.id]||0)};return null}
 const tap=(v,act,id,cls='')=>`<button type="button" class="tapn ${cls}" data-act="${act}" data-id="${esc(id)}">${v}</button>`;
-function receipt(E,mon){const r=plMonth(E,mon);const row=(l,v,k,cls='')=>`<div class="ln2 ${cls}"><span>${l}</span><b>${tap(v,'brk',k+'|'+mon,cls.includes('neg')?'neg':'')}</b></div>`;
-  return `<div class="rcpt">${row('Продали',f0(r.rev),'rev')}${row('− товар за собівартістю',f0(r.cogs),'cogs','mut')}${row('− витрати',f0(r.exp+r.adj),'exp','mut')}${row('Прибуток',f0(r.res),'res','tot'+(r.res<0?' neg':''))}</div>`}
-function partnersCard(E,upTo){
-  const B=partBook(E,upTo);let cum=0;for(const mo of allMons())if(!upTo||mo<=upTo)cum+=plMonth(E,mo).res;const P=['Даниїл','Анатолій'];
-  const inn=b=>b.mat+b.eq+b.exp+b.cash, out=b=>b.sold+b.took+b.paid;
+function receipt(E,mon){const r=plMonth(E,mon);
+  const row=(l,v,k,cls='')=>`<div class="ln2 ${cls}"><span>${l}</span><b>${k?tap(v,'brk',k+'|'+mon,cls.includes('neg')?'neg':''):v}</b></div>`;
+  return `<div class="rcpt">${row('Дохід (продажі)',f0(r.rev),'rev')}${row('Витрати періоду',f0(r.cogs+r.exp+r.adj),'')}
+   ${row('· собівартість проданого товару',f0(r.cogs),'cogs','mut sb2')}${row('· оренда, доставка та інше',f0(r.exp+r.adj),'exp','mut sb2')}
+   ${row('Прибуток',f0(r.res),'res','tot'+(r.res<0?' neg':''))}</div>`}
+function invest(E,upTo){/* upTo = 'YYYY-MM' or null */
+  const inM=m=>!upTo||m.date.slice(0,7)<=upTo;
+  const P={};for(const k of PARTNERS)P[k]={init:0,after:0};
+  const C={mat:0,eq:0,exp:0,cash:0};let took=0,paid=0,cash=0;const hold={};
+  for(const m of moves()){if(!inM(m))continue;const t=mvTotal(m);
+    const who=m.payer||m.partner;
+    const contrib=(['buy','eq','exp'].includes(m.type)&&PARTNERS.includes(m.payer))||m.type==='contrib'||(m.type==='cash'&&m.dir==='in');
+    if(contrib){P[who][m.init?'init':'after']+=t;C[m.type==='buy'||m.type==='contrib'?'mat':m.type==='eq'?'eq':m.type==='exp'?'exp':'cash']+=t}
+    if(m.type==='sale'){const r=m.recv||'Даниїл';hold[r]=(hold[r]||0)+t;cash+=t}
+    if(m.type==='take')took+=(m.total!=null&&m.total!==''?+m.total:(E.cogs[m.id]||0));
+    if(m.type==='cash'&&m.dir==='out'){paid+=t;hold[m.partner]=(hold[m.partner]||0)-t;cash-=t}
+    if(['buy','eq','exp'].includes(m.type)&&m.payer==='Каса проекту'){cash-=t;hold['Каса проекту']=(hold['Каса проекту']||0)-t}}
+  const EE=upTo?engine(upTo+'-31'):E;const st=Object.values(EE.V).reduce((a,v)=>a+v,0);
+  const eq=moves().filter(m=>m.type==='eq'&&inM(m)).reduce((a,m)=>a+(+m.total||0),0);
+  let cum=0;for(const mo of allMons())if(!upTo||mo<=upTo)cum+=plMonth(E,mo).res;
+  const inv=PARTNERS.reduce((a,k)=>a+P[k].init+P[k].after,0);
+  return {P,C,took,paid,cash,hold,st,eq,cum,inv,bal:st+eq+cash}}
+function partnersCard(E,upTo){const x=invest(E,upTo);const u=upTo||'';
+  const row=(l,v,k,cls='')=>`<div class="ln2 ${cls}"><span>${l}</span><b>${k?tap(f0(v),'brk',k+'|'+u,v<0?'neg':''):f0(v)}</b></div>`;
   const initLocked=fClosed(START_MON);
-  const tr=(l,c,cls='')=>`<tr class="${cls}"><td>${l}</td>${P.map(k=>{const v=c==='inn'?inn(B[k]):c==='out'?out(B[k]):c==='pl'?cum/2:B[k][c];return `<td class="num">${c==='inn'||c==='out'?`<b>${f0(v)}</b>`:tap(c==='init'?`<b>${f0(v)}</b>`:f0(v),'brk','p:'+c+':'+k+'|'+(upTo||''),c==='pl'&&v<0?'neg':'')}</td>`}).join('')}</tr>`;
-  return `<section class="card"><h2>Партнери${upTo?' · на кінець '+mLabel(upTo).toLowerCase():''}</h2><div class="tbl"><table class="pl ut pb"><thead><tr><th></th>${P.map(k=>`<th class="num">${k}</th>`).join('')}</tr></thead><tbody>
-   ${tr(`<b>Стартові вкладення</b> <span class="stat ${initLocked?'cl':'op'}" style="margin-left:4px">${initLocked?'зафіксовано':'не зафіксовано'}</span>`,'init','initr')}
-   <tr class="grp2"><td colspan="3">Після запуску</td></tr>
-   ${tr('Сировина й товар','mat')}${tr('Обладнання','eq')}${tr('Оренда й витрати','exp')}${P.some(k=>B[k].cash)?tr('Гроші','cash'):''}
-   ${tr('<b>Довклав</b>','inn','sum')}${tr('Продав (гроші в нього)','sold')}${tr('Забрав товаром','took')}${P.some(k=>B[k].paid)?tr('Виплачено','paid'):''}
-   ${tr('<b>Отримав</b>','out','sum')}
-   </tbody><tfoot><tr class="final"><td>Вкладено й не повернуто</td>${P.map(k=>`<td class="num">${f0(B[k].init+inn(B[k])-out(B[k]))}</td>`).join('')}</tr></tfoot></table></div>
-   <p class="note">Натисніть на будь-яку цифру, щоб побачити, з чого вона складається.</p></section>`}
+  const holders=Object.entries(x.hold).filter(([,v])=>Math.abs(v)>.5).map(([k,v])=>`${k==='Каса проекту'?'в касі':'у '+k.replace('Даниїл','Даниїла').replace('Анатолій','Анатолія')} ${f0(v)}`).join(' · ');
+  return `<section class="card"><h2>Вкладення і баланс${upTo?' · на кінець '+mLabel(upTo).toLowerCase():''}</h2>
+   <div class="lnh">Вкладено <span class="stat ${initLocked?'cl':'op'}" style="margin-left:6px">старт ${initLocked?'зафіксовано':'не зафіксовано'}</span></div>
+   <div class="rcpt">${PARTNERS.map(k=>`<div class="ln2"><span>${k}<div class="note">старт ${tap(f0(x.P[k].init),'brk','p:init:'+k+'|'+u)} · після запуску ${tap(f0(x.P[k].after),'brk','inv:after:'+k+'|'+u)}</div></span><b>${f0(x.P[k].init+x.P[k].after)}</b></div>`).join('')}
+   <div class="ln2 tot"><span>Разом вкладено</span><b>${f0(x.inv)}</b></div></div>
+   <div class="lnh" style="margin-top:14px">На що пішли</div>
+   <div class="rcpt">${row('Сировина й товар',x.C.mat,'inv:mat')}${row('Обладнання',x.C.eq,'inv:eq')}${row('Оренда, доставка, комісії та інше',x.C.exp,'inv:exp')}${x.C.cash?row('Гроші',x.C.cash,'inv:cash'):''}</div>
+   <div class="lnh" style="margin-top:14px">Що зараз на балансі</div>
+   <div class="rcpt">${row('Товар і сировина на складі',x.st,'')}${row('Обладнання',x.eq,'inv:eq')}${row('Гроші від продажів',x.cash,'rev:all')}${holders?`<div class="note" style="margin:-2px 0 4px">${holders}</div>`:''}
+   <div class="ln2 tot"><span>Разом на балансі</span><b>${f0(x.bal)}</b></div></div>
+   <div class="calc"><div><span>Вкладено</span><b>${f0(x.inv)}</b></div>${x.took||x.paid?`<div><span>− забрали</span><b>${tap(f0(x.took+x.paid),'brk','inv:took|'+u)}</b></div>`:''}<div><span>${x.cum<0?'− збиток':'+ прибуток'}</span><b class="${x.cum<0?'neg':''}">${f0(Math.abs(x.cum))}</b></div><div><span>= на балансі</span><b>${f0(x.inv-x.took-x.paid+x.cum)}</b></div></div>
+   </section>`}
 function viewHome(){
   const E=engine(), mon=todayISO().slice(0,7), cl=fClosed(mon);
   let h=actBtns();
@@ -447,6 +470,15 @@ function brk(arg){const [key,mon]=arg.split('|');const E=engine();let title='',r
   else if(key==='exp'){title='Витрати · '+mLabel(mon);for(const m of moves())if(m.date.slice(0,7)===mon&&(m.type==='exp'||m.type==='adj'))rows.push(line(m,m.type==='exp'?+m.total:(E.cogs[m.id]||0)))}
   else if(key==='res'){const r=plMonth(E,mon);title='Прибуток · '+mLabel(mon);
     return sheetInfo(title,`<div class="ln2"><span>Продали</span><b>${f0(r.rev)}</b></div><div class="ln2 mut"><span>− товар за собівартістю</span><b>${f0(r.cogs)}</b></div><div class="ln2 mut"><span>− витрати</span><b>${f0(r.exp)}</b></div>${r.adj?`<div class="ln2 mut"><span>− списання</span><b>${f0(r.adj)}</b></div>`:''}<div class="ln2 tot"><span>Прибуток</span><b>${f0(r.res)}</b></div>`)}
+  else if(key.startsWith('inv:')||key==='rev:all'){const [,c,p]=key.split(':');const N={mat:'Сировина й товар',eq:'Обладнання',exp:'Оренда, доставка, комісії та інше',cash:'Гроші',after:'Вкладено після запуску',took:'Забрали',all:'Гроші від продажів'};
+    title=(p?p+' · ':'')+N[key==='rev:all'?'all':c]+(mon?' · до кінця '+mLabel(mon).toLowerCase():'');
+    for(const m of moves()){if(mon&&m.date.slice(0,7)>mon)continue;const t=mvTotal(m);
+      const contrib=(['buy','eq','exp'].includes(m.type)&&PARTNERS.includes(m.payer))||m.type==='contrib'||(m.type==='cash'&&m.dir==='in');
+      const cat=m.type==='buy'||m.type==='contrib'?'mat':m.type==='eq'?'eq':m.type==='exp'?'exp':'cash';
+      if(key==='rev:all'){if(m.type==='sale')rows.push(line(m,t,'гроші у '+(m.recv||'Даниїл')))}
+      else if(c==='took'){if(m.type==='take')rows.push(line(m,m.total!=null&&m.total!==''?+m.total:(E.cogs[m.id]||0)));if(m.type==='cash'&&m.dir==='out')rows.push(line(m,t))}
+      else if(c==='after'){if(contrib&&!m.init&&(m.payer||m.partner)===p)rows.push(line(m,t))}
+      else if(contrib&&cat===c)rows.push(line(m,t,m.init?'стартове':''))}}
   else if(key.startsWith('p:')){const [,c,p]=key.split(':');const N={init:'Стартові вкладення',mat:'Сировина й товар',eq:'Обладнання',exp:'Оренда й витрати',cash:'Гроші',sold:'Продав (гроші в нього)',took:'Забрав товаром',paid:'Виплачено',pl:'Прибуток 50%'};
     title=p+' · '+N[c]+(mon?' · до кінця '+mLabel(mon).toLowerCase():'');
     if(c==='pl'){let h='';let s=0;for(const mo of allMons()){if(mon&&mo>mon)continue;const x=plMonth(E,mo).res/2;s+=x;h+=`<div class="ln2"><span>${mLabel(mo)}</span><b class="${x<0?'neg':''}">${f0(x)}</b></div>`}return sheetInfo(title,h+`<div class="ln2 tot"><span>Разом</span><b>${f0(s)}</b></div>`)}
