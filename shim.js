@@ -7,29 +7,29 @@
   const store={}, subs={}, errs={}; let loaded=false, channel=null; const names={};
 
   /* ---------- login screen ---------- */
-  const css=`.lg-wrap{position:fixed;inset:0;z-index:50;background:var(--hdr,#11233f);display:flex;align-items:center;justify-content:center;padding:20px}
-  .lg{width:100%;max-width:340px;color:#fff;font-family:var(--f-body,Arial,sans-serif)}
-  .lg .logo{height:46px;width:auto;color:#fff;margin-bottom:6px}.lg .logo .hole{fill:var(--hdr,#11233f)}
-  .lg h1{font-size:13px;font-weight:400;color:#a9bad8;margin:0 0 22px;letter-spacing:.02em}
-  .lg label{display:block;font-size:12px;color:#a9bad8;margin:10px 0 4px}
-  .lg input{width:100%;padding:10px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.06);color:#fff;font:inherit;font-size:16px}
-  .lg input:focus{outline:2px solid #c7e4f7;outline-offset:1px}
-  .lg button{width:100%;margin-top:16px;padding:11px;border:0;border-radius:6px;background:#c7e4f7;color:#11233f;font:inherit;font-weight:700;text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
+  const css=`.lg-wrap{position:fixed;inset:0;z-index:50;background:#f7f8fa;display:flex;align-items:center;justify-content:center;padding:20px}
+  .lg{width:100%;max-width:340px;color:#232333;font-family:var(--f-body,Arial,sans-serif)}
+  .lg .logo{height:46px;width:auto;color:#0b5cff;margin-bottom:6px}.lg .logo .hole{fill:#f7f8fa}
+  .lg h1{font-size:13px;font-weight:400;color:#a9bad8;margin:0 0 22px;letter-spacing:.02em;color:#6e7680}
+  .lg label{display:block;font-size:12px;color:#6e7680;margin:10px 0 4px}
+  .lg input{width:100%;padding:10px 12px;border-radius:6px;border:1px solid #d9dde3;background:#fff;color:#232333;font:inherit;font-size:16px}
+  .lg input:focus{outline:2px solid #9cbcff;outline-offset:1px}
+  .lg button{width:100%;margin-top:16px;padding:11px;border:0;border-radius:10px;background:#0b5cff;color:#fff;font:inherit;font-weight:600;letter-spacing:.01em;cursor:pointer}
   .lg button:disabled{opacity:.6}
-  .lg .lnk{background:none;color:#a9bad8;text-transform:none;font-weight:400;margin-top:10px;padding:6px;letter-spacing:0;text-decoration:underline}
-  .lg .msg{min-height:18px;margin-top:10px;font-size:13px;color:#ffb4a6}.lg .msg.ok{color:#a8f0c6}
+  .lg .lnk{background:none;color:#6e7680;text-transform:none;font-weight:400;margin-top:10px;padding:6px;letter-spacing:0;text-decoration:underline}
+  .lg .msg{min-height:18px;margin-top:10px;font-size:13px;color:#c23a2b}.lg .msg.ok{color:#16804a}
   .lg.ch{max-width:380px;text-align:center}
   .lg.ch .logo{height:52px;margin:0 auto 10px;display:block}
-  .lg.ch h1{font-size:14px;color:#9fb1d0;margin:0 0 26px;letter-spacing:.04em}
+  .lg.ch h1{font-size:14px;color:#6e7680;margin:0 0 26px;letter-spacing:.04em}
   .bc{display:grid;grid-template-columns:repeat(2,auto);justify-content:center;gap:36px;margin-top:6px}
-  .bc button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:14px;color:#e9eff9;font-family:var(--f-body,Arial,sans-serif);font-size:15px;font-weight:600;letter-spacing:.02em;-webkit-tap-highlight-color:transparent}
-  .bc .ic{width:112px;height:112px;border-radius:30px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 26px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .18s,box-shadow .18s,border-color .18s}
-  .bc .w .ic{background:linear-gradient(150deg,rgba(160,205,240,.22),rgba(160,205,240,.08));color:#a9d2f2}
-  .bc .f .ic{background:linear-gradient(150deg,rgba(168,190,255,.22),rgba(168,190,255,.08));color:#b3c4ff}
+  .bc button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:14px;color:#232333;font-family:var(--f-body,Arial,sans-serif);font-size:15px;font-weight:600;letter-spacing:.02em;-webkit-tap-highlight-color:transparent}
+  .bc .ic{width:112px;height:112px;border-radius:30px;display:flex;align-items:center;justify-content:center;border:0;box-shadow:0 10px 24px rgba(11,92,255,.22);transition:transform .18s,box-shadow .18s,border-color .18s}
+  .bc .w .ic{background:linear-gradient(150deg,#3d8bff,#0b5cff);color:#fff}
+  .bc .f .ic{background:linear-gradient(150deg,#3d8bff,#0b5cff);color:#fff}
   .bc .ic svg{width:66px;height:66px}
-  .bc button:hover .ic,.bc button:focus-visible .ic{transform:translateY(-3px);border-color:rgba(255,255,255,.26);box-shadow:0 14px 32px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.1)}
+  .bc button:hover .ic,.bc button:focus-visible .ic{transform:translateY(-3px);box-shadow:0 14px 30px rgba(11,92,255,.3)}
   .bc button:active .ic{transform:scale(.96)}
-  .lg.ch .lnk{margin-top:34px;color:#8597b8;font-size:13px}`;
+  .lg.ch .lnk{margin-top:34px;color:#6e7680;font-size:13px}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
   function logoSvg(){const l=document.querySelector('header .logo');return l?l.outerHTML:''}
   function show(mode){
@@ -66,7 +66,7 @@
   function chooseBase(){return new Promise(res=>{
     let w=document.getElementById('lgw'); if(!w){w=document.createElement('div');w.id='lgw';w.className='lg-wrap';document.body.appendChild(w)}
     const drop='<svg viewBox="0 0 48 48"><defs><linearGradient id="wac" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f9ff"/><stop offset="1" stop-color="#9cc9f4"/></linearGradient><linearGradient id="whc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#bcdcfa"/></linearGradient><linearGradient id="wdc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ad8ff"/><stop offset="1" stop-color="#2f8fe8"/></linearGradient></defs><rect x="3" y="40.5" width="20" height="5.5" rx="1.8" fill="url(#wac)"/><path d="M13.5 41V21L29 11" fill="none" stroke="url(#wac)" stroke-width="6.4" stroke-linejoin="round"/><circle cx="13.5" cy="21" r="5" fill="url(#whc)"/><circle cx="13.5" cy="21" r="2.6" fill="#3d82d6"/><rect x="28" y="2.5" width="17" height="10.5" rx="3" fill="url(#whc)"/><rect x="33" y="13" width="7.5" height="4.2" rx="1.2" fill="#d5e9fc"/><path d="M36.75 20.5c-2.8 3.6-5.9 7.4-5.9 11a5.9 5.9 0 0 0 11.8 0c0-3.6-3.1-7.4-5.9-11z" fill="url(#wdc)"/><path d="M34.2 30.5c-.2 1.8.6 3.4 2 4.2" fill="none" stroke="#e6f6ff" stroke-width="1.3" stroke-linecap="round" opacity=".8"/></svg>';
-    const filt='<svg viewBox="0 0 48 48"><rect x="6" y="9" width="36" height="8" rx="4" fill="currentColor" opacity=".4"/><rect x="6" y="20" width="36" height="8" rx="4" fill="currentColor" opacity=".7"/><rect x="6" y="31" width="36" height="8" rx="4" fill="currentColor"/></svg>';
+    const filt='<svg viewBox="0 0 48 48"><defs><linearGradient id="fac" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfe3fb"/></linearGradient><linearGradient id="fbc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6f1fe"/><stop offset="1" stop-color="#9cc9f4"/></linearGradient><linearGradient id="fcc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ad8ff"/><stop offset="1" stop-color="#2f8fe8"/></linearGradient></defs><rect x="6" y="8" width="36" height="9" rx="4.5" fill="url(#fac)"/><rect x="6" y="19.5" width="36" height="9" rx="4.5" fill="url(#fbc)"/><rect x="6" y="31" width="36" height="9" rx="4.5" fill="url(#fcc)"/><path d="M11 34.2h14" stroke="#e6f6ff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></svg>';
     w.innerHTML=`<div class="lg ch">${logoSvg()}<h1>Оберіть базу</h1><div class="bc">
       <button type="button" class="w" data-b="w"><span class="ic">${drop}</span>Вода</button>
       <button type="button" class="f" data-b="f"><span class="ic">${filt}</span>Фільтри</button></div>
