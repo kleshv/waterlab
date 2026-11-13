@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261113b">
+<meta name="wl-build" content="20261113c">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Фільтри</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -301,7 +301,7 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>window.WL_ONLY=['f_items','f_moves','f_months'];</script>
-<script src="shim.js?v=20261113b"></script>
+<script src="shim.js?v=20261113c"></script>
 <script>
 const COLS=['f_items','f_moves','f_months'];
 const S={f_items:{},f_moves:{},f_months:{}};
@@ -459,7 +459,7 @@ function partnersCard(E,upTo){const x=invest(E,upTo);const u=upTo||'';const L=['
   const tr=(l,k,f,cls='')=>`<tr class="${cls}"><td>${l}</td>${L.map(n=>`<td class="num">${f(V[n][k],n)}</td>`).join('')}<td class="num tcol">${f(T(k),'')}</td></tr>`;
   const initLocked=fClosed(START_MON);
   const holders=Object.entries(x.hold).filter(([,v])=>Math.abs(v)>.5).map(([k,v])=>k==='Каса проекту'?'в касі':'у '+k.replace('Даниїл','Даниїла').replace('Анатолій','Анатолія')).join(', ');
-  const row=(l,v,k,note='')=>`<div class="ln2"><span>${l}${note?`<div class="note">${note}</div>`:''}</span><b>${k?tap(f0(v),'brk',k+'|'+u):f0(v)}</b></div>`;
+  const row=(l,v,k,note='')=>`<div class="ln2"><span>${l}${note?`<div class="note">${note}</div>`:''}</span><b>${k==='stock'?tap(f0(v),'goTab','stock'):k?tap(f0(v),'brk',k+'|'+u):f0(v)}</b></div>`;
   return `<section class="card"><h2>Партнери${upTo?' · на кінець '+mLabel(upTo).toLowerCase():''}</h2><div class="tbl"><table class="pl ut pb"><thead><tr><th></th>${L.map(k=>`<th class="num">${k}</th>`).join('')}<th class="num tcol">Разом</th></tr></thead><tbody>
    ${tr('Старт','init',(v,n)=>n?tap(f0(v),'brk','p:init:'+n+'|'+u):f0(v))}
    ${tr('Після запуску','after',(v,n)=>n?tap(f0(v),'brk','inv:after:'+n+'|'+u):f0(v))}
@@ -470,7 +470,7 @@ function partnersCard(E,upTo){const x=invest(E,upTo);const u=upTo||'';const L=['
    <div class="ln2 tot" style="margin-top:6px"><span style="text-align:left">${x.cum<0?'Збиток':'Прибуток'} з початку<div class="note" style="font-weight:400">поки не розподілено між партнерами</div></span><b>${tap(f0(x.cum),'brk','p:pl:x|'+u,x.cum<0?'neg':'')}</b></div>
    <div class="ln2 tot"><span>Вкладення ${x.cum<0?'− збиток':'+ прибуток'}</span><b>${f0(T('own')+x.cum)}</b></div>
    <div class="lnh" style="margin-top:14px">В чому зараз гроші</div>
-   <div class="rcpt">${row('Товар і сировина на складі',x.st,'',`із закупленого ${f0(x.C.mat)}: продано ${f0(x.soldC)} · забрали ${f0(x.tookC)}${x.adjC?' · списано '+f0(x.adjC):''}`)}
+   <div class="rcpt">${row('Товар і сировина на складі',x.st,'stock',`із закупленого ${f0(x.C.mat)}: продано ${f0(x.soldC)} · забрали ${f0(x.tookC)}${x.adjC?' · списано '+f0(x.adjC):''}`)}
    ${row('Обладнання',x.eq,'inv:eq')}${row('Гроші від продажів',x.cash,'rev:all',holders)}
    <div class="ln2 tot"><span>Разом</span><b>${f0(x.bal)}</b></div></div>
    </section>`}
