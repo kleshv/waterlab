@@ -152,7 +152,7 @@
       if(!ch&&ss.get('wlBase')==='f'){location.replace('filters.html');return}
       if(ch||!ss.get('wlBase'))await chooseBase()}
     try{await loadAll()}catch(e){Object.values(errs).flat().forEach(f=>f&&f({code:'unavailable',message:e.message}))}
-    window.WL_NAME=names[((session&&session.user.email)||'').toLowerCase()]||'';
+    window.WL_NAME=names[((session&&session.user.email)||'').toLowerCase()]||'';window.WL_NAMES=names;
     readyResolve()}
   sb.auth.onAuthStateChange((ev,s)=>{session=s;if(ev==='PASSWORD_RECOVERY'){show('newpass');return}if(s&&ev!=='SIGNED_OUT')start()});
   sb.auth.getSession().then(({data})=>{session=data.session;if(location.hash.includes('type=recovery'))return;if(session)start();else show('login')});
