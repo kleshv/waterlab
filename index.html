@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261113d">
+<meta name="wl-build" content="20261114a">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -278,7 +278,7 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261113d"></script>
+<script src="shim.js?v=20261114a"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday'];
@@ -635,12 +635,12 @@ function viewSvc(){
   ${canWrite?`<div class="bigacts one" style="margin:0 0 12px"><button class="btn pri main" data-act="addSvc" type="button">+ Заміна / ТО</button></div>`:''}
   <div class="tiles t3"><div class="tile"><div class="l">Прострочено</div><div class="v ${n('over')?'neg':''}">${n('over')}</div><div class="s">точок</div></div><div class="tile"><div class="l">Скоро (до 14 днів)</div><div class="v">${n('soon')}</div><div class="s">точок</div></div><div class="tile"><div class="l">У нормі</div><div class="v">${n('ok')}</div><div class="s">точок</div></div></div>
   <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Фільтри: пройшло</th><th class="num hide-sm">Мембрани</th><th class="num hide-sm">ТО</th></tr></thead><tbody>${rows}</tbody></table></div>
-  <p class="note">Скільки води пройшло через фільтри = лічильник води на вході автомата (Gwaters) мінус показник при заміні. Якщо лічильника немає — оцінка: продані літри з Gwaters від дня заміни × коефіцієнт точки (скільки літрів проходить через фільтри на 1 проданий літр — за лічильником автомата на попередніх замінах). Продажі оновлено: ${salesUpd()?dmy(salesUpd().slice(0,10))+(salesUpd().slice(11)?' '+salesUpd().slice(11,16):''):'—'}. Натисніть точку, щоб побачити історію.</p></section>`;
+  ${role==='tech'?'<p class="note">Скільки води пройшло через фільтри = лічильник води на вході автомата мінус показник при заміні.</p>':`<p class="note">Скільки води пройшло через фільтри = лічильник води на вході автомата (Gwaters) мінус показник при заміні. Якщо лічильника немає — оцінка: продані літри з Gwaters від дня заміни × коефіцієнт точки (скільки літрів проходить через фільтри на 1 проданий літр — за лічильником автомата на попередніх замінах). Продажі оновлено: ${salesUpd()?dmy(salesUpd().slice(0,10))+(salesUpd().slice(11)?' '+salesUpd().slice(11,16):''):'—'}. Натисніть точку, щоб побачити історію.</p>`}</section>`;
 }
 function svcPoint(pid){
   const p=S.points[pid]||{}, x=svcState(pid), E=svcEv(pid).filter(e=>SVC_T[e.type]).reverse();
   const kv=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
-  let h=x.last?(x.src==='meter'?kv('Лічильник на вході (Gwaters)',f0(x.meter.w)+' л · '+dmy(x.meter.date)):'')+kv('Продано з заміни',f0(x.sold)+' л · '+(x.src==='meter'&&x.kAct?'факт. коеф. '+fmt1(x.kAct):(x.kOwn?'коеф. точки ':'коеф. мережі ')+fmt1(x.k)))+kv('Остання заміна фільтрів',dmy(x.last.date)+(x.last.reading!=null?' · лічильник '+f0(x.last.reading):''))+kv('Регламент',f0(x.interval)+' л')+kv('Пройшло',f0(x.used)+' л ('+Math.round(x.pct*100)+'%)')+kv('Наступна заміна',x.left<=0?'<span class="neg">прострочено</span>':(x.due?'≈ '+dmy(x.due)+' · через '+x.days+' дн.':'—'))+(x.last.reading!=null?kv('Лічильник зараз (оцінка)',f0(x.last.reading+x.used)):''):'';
+  let h=x.last?(x.src==='meter'?kv('Лічильник на вході (Gwaters)',f0(x.meter.w)+' л · '+dmy(x.meter.date)):'')+(role==='tech'?'':kv('Продано з заміни',f0(x.sold)+' л · '+(x.src==='meter'&&x.kAct?'факт. коеф. '+fmt1(x.kAct):(x.kOwn?'коеф. точки ':'коеф. мережі ')+fmt1(x.k))))+kv('Остання заміна фільтрів',dmy(x.last.date)+(x.last.reading!=null?' · лічильник '+f0(x.last.reading):''))+kv('Регламент',f0(x.interval)+' л')+kv('Пройшло',f0(x.used)+' л ('+Math.round(x.pct*100)+'%)')+kv('Наступна заміна',x.left<=0?'<span class="neg">прострочено</span>':(x.due?'≈ '+dmy(x.due)+' · через '+x.days+' дн.':'—'))+(x.last.reading!=null?kv('Лічильник зараз (оцінка)',f0(x.last.reading+x.used)):''):'';
   if(x.memL)h+=kv('Мембрани',dmy(x.memL.date)+' · пройшло '+f0(x.memUsed||0)+' л');if(x.toL)h+=kv('ТО',dmy(x.toL.date)+(x.toL.note?' · '+esc(x.toL.note):''));
   const SH={in:'вхідні',post:'пост',mem:'мембрани',to:'ТО'}, G=[];for(const e of E){const g=G.find(g=>g.date===e.date);if(g)g.L.push(e);else G.push({date:e.date,L:[e]})}
   h+=`<div class="sub">Історія</div>`+G.slice(0,30).map(g=>{const o=['in','post','mem','to'], L=g.L.sort((a,b)=>o.indexOf(a.type)-o.indexOf(b.type)), rd=L.find(e=>e.reading!=null), iv=L.find(e=>e.interval&&e.type!=='mem'), nt=L.map(e=>e.note).filter(Boolean).join('; ');
