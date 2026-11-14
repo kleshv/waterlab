@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261114m">
+<meta name="wl-build" content="20261114n">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -75,6 +75,7 @@ a.lnk{color:var(--acc,#2a6fdb);text-decoration:underline;cursor:pointer}
 .gwthru{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
 label.chk{display:inline-flex;align-items:center;gap:6px;margin:4px 12px 4px 0;font-size:14px}label.chk input{width:auto;min-height:0}
 .svt .eqc{width:29%}@media (max-width:640px){.svt .eqc{width:31%}}.svt td.num .pbar{width:100%}
+.tarch{text-align:center;margin:4px 0 2px}.tarch-l{background:none;border:0;padding:6px 10px;font:inherit;font-size:12px;color:var(--muted);opacity:.55;cursor:pointer}.tarch-l:hover{opacity:1}.tarch-c{opacity:.85}.tarch-c .trow{padding:6px 0}
 .card.bkdue{border-color:#f0c96b;background:#fffaf0}.bkdue .shead{gap:10px;align-items:center}
 .pbar{height:5px;border-radius:3px;background:var(--line);margin-top:4px;overflow:hidden}.pbar i{display:block;height:100%;background:#2e9e5b}.pbar i.soon{background:#e6a700}.pbar i.over{background:#d23c3c}
 td.hi-warn,td.hi-bad{position:relative}td.hi-warn>*:first-child,td.hi-warn{color:#b86e00}td.hi-bad>*:first-child,td.hi-bad{color:#c4413b;font-weight:600}
@@ -284,7 +285,7 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261114m"></script>
+<script src="shim.js?v=20261114n"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday'];
@@ -719,13 +720,16 @@ function taskRow(t,withPt){const late=t.due&&!t.done&&t.due<todayISO2();
   return `<div class="trow ${t.done?'done':''}">${t.kind==='note'?'<span class="tk nt">✎</span>':`<button type="button" class="tk ${t.done?'on':''}" data-act="taskToggle" data-id="${t.id}" aria-label="Виконано">${t.done?'✓':''}</button>`}
    <div class="tx click" data-act="editTask" data-id="${t.id}">${withPt?`<div class="tp">${esc(ptName(t.point))}</div>`:''}<div class="tt">${esc(t.text)}</div>
    <div class="note"><b class="tw">${t.kind==='note'?'нотатка':'задача'} · від ${esc(whoN(t.by))} → ${esc(t.to||'усім')}</b> · ${dmy(t.date)}${t.due?` · <span class="${late?'neg':''}">до ${dmy(t.due)}</span>`:''}${t.done?` · виконано ${t.doneAt?dmy(t.doneAt):''}${t.doneBy?' ('+esc(whoN(t.doneBy))+')':''}`:''}</div></div>${t.kind!=='note'&&canWrite?`<button type="button" class="btn sm ${t.done?'':'pri'} tdone" data-act="taskToggle" data-id="${t.id}">${t.done?'Повернути':'✓ Виконано'}</button>`:''}</div>`}
-function viewTasks(){const A=tasksAll(), O=A.filter(t=>t.kind!=='note'&&!t.done), N=A.filter(t=>t.kind==='note'), D=A.filter(t=>t.kind!=='note'&&t.done).sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||'')).slice(0,20);
+function viewTasks(){const A=tasksAll(), O=A.filter(t=>t.kind!=='note'&&!t.done), N=A.filter(t=>t.kind==='note'), D=A.filter(t=>t.kind!=='note'&&t.done).sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||''));
   const grp=L=>{const G={};for(const t of L)(G[t.point||'']||(G[t.point||'']=[])).push(t);return Object.entries(G).sort((a,b)=>ptName(a[0]).localeCompare(ptName(b[0]))).map(([pid,l])=>`<div class="lnh" style="margin-top:10px">${esc(ptName(pid))}</div>${l.map(t=>taskRow(t,false)).join('')}`).join('')};
   return `<section class="card"><div class="shead"><h2>Задачі й нотатки по точках</h2></div>
    ${canWrite?`<div class="jacts"><button class="btn pri" data-act="addTask" data-id="task" type="button">+ Задача</button><button class="btn" data-act="addTask" data-id="note" type="button">+ Нотатка</button></div>`:''}
    ${O.length?grp(O):'<p class="note">Відкритих задач немає.</p>'}</section>
    ${N.length?`<section class="card"><h2>Нотатки</h2>${grp(N)}</section>`:''}
-   ${D.length?`<section class="card"><h2>Виконано нещодавно</h2>${D.map(t=>taskRow(t,true)).join('')}</section>`:''}`}
+   ${D.length?`<div class="tarch"><button type="button" class="tarch-l" data-act="taskArch">${taskArch?'сховати архів':'архів · '+D.length}</button></div>`:''}
+   ${D.length&&taskArch?`<section class="card tarch-c">${(()=>{const G={};for(const t of D){const m=(t.doneAt||t.date||'').slice(0,7);(G[m]||(G[m]=[])).push(t)}return Object.entries(G).map(([m,l])=>`<div class="lnh" style="margin-top:6px">${m?mLabel(m):'—'}</div>${l.map(t=>taskRow(t,true)).join('')}`).join('')})()}</section>`:''}`}
+let taskArch=false;
+function toggleTaskArch(){taskArch=!taskArch;render()}
 function taskForm(t){const pts=pointsList().filter(p=>p.id!=='p00'&&p.active!==false);
   return sel('kind','Що це',t.kind||'task',[['task','Задача'],['note','Нотатка']],true)+sel('to','Для кого',t.to||(window.WL_NAME==='Анатолій'?'Даниїл':'Анатолій'),[['Анатолій','Анатолій'],['Даниїл','Даниїл'],['Влад','Влад'],['усім','Усім']],true)+sel('point','Точка',t.point??'',[['','— загальне —'],...pts.map(p=>[p.id,p.name])],true)
    +`<label class="full">Текст<textarea name="text" rows="4" style="width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;margin-top:4px">${esc(t.text||'')}</textarea></label>`
@@ -2181,7 +2185,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
