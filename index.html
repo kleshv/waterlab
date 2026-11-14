@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261114n">
+<meta name="wl-build" content="20261114o">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -285,7 +285,7 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261114n"></script>
+<script src="shim.js?v=20261114o"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday'];
@@ -1284,6 +1284,19 @@ function utilInfo(v){
   infoSheet((W?'Вода':'Світло')+' · '+(p.name||pid),mLabel(m)+(lit?' · продано '+nf1.format(lit)+' л':''),h,editable(m)&&canWrite&&m===cur?()=>editUtil(pid):null);
 }
 function billInfo(v){const [m,pid]=v.split('|');const x=payRow(m,pid);reconRows=[{k:'u',m,pid,doc:'Комуналка за '+mLabel(m).toLowerCase()+(x.py.utilBill!=null?'':' · за показниками')}];reconInfo(0)}
+function utilMeterTables(m,pts,ed){
+  const n1=x=>x==null||x===''?'—':nf1.format(+x);
+  const one=k=>{const W=k==='w';let T=0,TL=0,TU=0,rows='';
+    for(const p of pts){const u=S.util[m+'_'+p.id], lit=+(S.pm[m+'_'+p.id]||{}).liters||0;
+      if(!u){rows+=`<tr class="mut"><td>${esc(p.name)}</td><td colspan="3"><span class="pill open">немає показників</span></td></tr>`;continue}
+      const a=W?u.w0:u.e0,b=W?u.w1:u.e1,use=+(W?u.wUse:u.eUse)||0,off=u.noCharge,nm=utilNorm(m,p.id,k)||{};
+      if(!off){T+=use;if(lit){TL+=lit;TU+=use}}
+      rows+=`<tr class="${ed?'click':''}${off?' mut':''}" data-act="${ed?'editUtil':''}" data-id="${p.id}"><td>${esc(p.name)}${off?' <span class="pill">не нараховуємо</span>':''}</td><td class="num">${n1(a)}</td><td class="num">${n1(b)}</td><td class="num tap ${nm.lvl?'hi-'+nm.lvl:''}" data-act="utilInfo" data-id="${m}|${p.id}|${k}"><b>${n1(use)}</b>${lit&&use?`<div class="note" style="white-space:nowrap">${fmt1(perL(use,lit))} ${W?'л/л':'Вт·год/л'}</div>`:''}</td></tr>`}
+    return `<div class="sub" style="margin-top:14px">${W?'Вода, м³':'Світло, кВт·год'}</div><div class="tbl"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Було</th><th class="num">Стало</th><th class="num">Спожито</th></tr></thead><tbody>${rows}</tbody>
+      <tfoot><tr class="final"><td>Разом</td><td></td><td></td><td class="num tap" data-act="utilTot" data-id="${m}|${k}">${nf1.format(Math.round(T*10)/10)}${TL?`<div class="note" style="white-space:nowrap">${fmt1(perL(TU,TL))} ${W?'л/л':'Вт·год/л'}</div>`:''}</td></tr></tfoot></table></div>`};
+  return `<section class="card"><div class="shead"><h2>Показники · ${mLabel(m)}</h2><span class="note">спожито та на 1 проданий літр</span></div>${one('w')}${one('e')}
+   <p class="note" style="margin:8px 0 0">Жовтим і червоним виділено перевитрату на 1 проданий літр (понад ${NORM_WARN*100}% і ${NORM_BAD*100}%). Натисніть на «Спожито» — деталі й норма.</p></section>`;
+}
 function viewUtil(m){
   const pts=utilPts(m), ed=editable(m);
   let wU=0,wS=0,eU=0,eS=0,done=0,L=0,LW=0,LE=0,tcN=0;
@@ -1314,6 +1327,7 @@ function viewUtil(m){
   <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Вода за міс., ₴</th><th class="num">Світло за міс., ₴</th><th class="num">Разом за міс., ₴</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="note">У цьому місяці немає точок.</td></tr>'}</tbody><tfoot><tr class="final"><td>Разом</td><td class="num tap" data-act="utilTot" data-id="${m}|w">${f0(wS)}</td><td class="num tap" data-act="utilTot" data-id="${m}|e">${f0(eS)}</td><td class="num tap" data-act="utilTot" data-id="${m}|t">${f0(wS+eS)}</td></tr></tfoot></table></div><!--normlegend-->
   </section>`;
   {const na=normAlerts(m);if(na.m===m&&na.L.length)h=h.replace('<!--normlegend-->',`<div class="normlg"><span><i class="w"></i>перевитрата понад ${NORM_WARN*100}%</span><span><i class="b"></i>понад ${NORM_BAD*100}%</span><span class="x">на 1 проданий літр, порівняно з мережею або з минулими місяцями точки</span></div>`)}
+  h+=utilMeterTables(m,pts,ed);
   h+=utilPaySection(m)+billIssuesHtml(m);
   // history
   const all=pointsList(); if(!utilPoint||!S.points[utilPoint]) utilPoint=(pts[0]||all[0]||{}).id||'';
