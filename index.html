@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261115a">
+<meta name="wl-build" content="20261115b">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -286,7 +286,7 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261115a"></script>
+<script src="shim.js?v=20261115b"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday'];
@@ -781,7 +781,7 @@ function editJob(id){const j=S.svc[id];if(!j)return;const owner=role==='owner';
 async function jobOk(id){const j=S.svc[id];if(!j||j.st!=='new')return;
   let m=j.date.slice(0,7);if(isClosed(m)||!S.months[m]){const op=monthsList().filter(x=>!isClosed(x)).pop();if(!op){toast('Немає відкритого місяця');return}m=op}
   const amt=(+j.amount||0)+(+j.filt||0);const eid=db.collection('exp').doc().id;
-  const e={cat:'ТОіР',article:JOBART[j.kind]||'Сервіс і заміна фільтрів',amount:Math.round(amt*100)/100,month:m,date:j.date,point:j.point||'',payer:'Даниїл',note:(JOBK[j.kind]||'')+(j.filt?` (робота ${f0(j.amount)} + фільтри ${nf2.format(j.filt)})`:'')+(j.note?' · '+j.note:''),recurring:false,by:me||'',src:'svc:'+id};
+  const e={cat:'ТОіР',article:JOBART[j.kind]||'Сервіс і заміна фільтрів',amount:Math.round(amt*100)/100,month:m,date:j.date,point:j.point||'',payer:'Даниїл',note:(JOBK[j.kind]||'')+(j.filt?` (робота ${f0(j.amount)} + фільтри ${nf2.format(j.filt)})`:'')+(j.note?' · '+j.note:''),recurring:false,by:me||'',src:'svc:'+id,ana1:true};
   if(!await w(()=>db.doc('exp/'+eid).set(e)))return;
   await w(()=>db.doc('svc/'+id).set({...j,st:'ok',expId:eid,okBy:me||''}));toast('Підтверджено · у витратах '+mLabel(m))}
 function viewMyExp(){
@@ -852,14 +852,17 @@ function viewSettle(){
   const debt=b; // >0: Влад винен; <0: у Даниїла гроші понад розрахунок
   let cut=-1;L.forEach((it,i)=>{if(Math.abs(it.bal)<0.5)cut=i});
   const P=L.slice(cut+1).filter(it=>it.kind==='p'), M=L.slice(cut+1).filter(it=>it.kind==='m');
-  const danExp=om?Object.values(S.exp).filter(e=>e.month===om&&e.payer==='Даниїл').reduce((a,e)=>a+(+e.amount||0),0):0;
+  const danExp=om?Object.values(S.exp).filter(e=>e.month===om&&e.payer==='Даниїл'&&!e.ana1).reduce((a,e)=>a+(+e.amount||0),0):0;
   const got=debt<0?-debt:0;
+  const ANA=Object.values(S.exp).filter(e=>e.ana1&&!isClosed(e.month)), anaSum=ANA.reduce((a,e)=>a+(+e.amount||0),0);
   let h=`<section class="card"><div class="shead"><h2>Взаєморозрахунки партнерів</h2>${canWrite?`<button class="btn sm pri" data-act="addPay" type="button">+ Переказ</button>`:''}</div>`;
   const tiles=[];
   if(debt>0.5) tiles.push(`<div class="tile main"><div class="l">Влад винен Даниїлу</div><div class="v">${f0(debt)}</div><div class="s">за закритими місяцями</div></div>`);
   if(om&&(got>0.5||danExp>0.5)){const left=got-danExp;
     tiles.push(`<div class="tile ${debt>0.5?'':'main'}"><div class="l">Баланс Даниїла · ${mLabel(om).toLowerCase()}</div><div class="v">${f0(Math.abs(left))}${left<-0.5?' <span style="font-size:13px;font-weight:400">витрачено зі своїх</span>':''}</div><div class="s">отримав ${f0(got)} · витрати ${f0(danExp)}</div></div>`)}
+  if(anaSum>0.5) tiles.push(`<div class="tile"><div class="l">Анатолію · до виплати 1-го</div><div class="v">${f0(anaSum)}</div><div class="s">${ANA.length} ${ANA.length===1?'робота':'робіт'} · входить у переказ Влада → Даниїл</div></div>`);
   if(tiles.length)h+=`<div class="tiles">${tiles.join('')}</div>`;
+  if(anaSum>0.5)h+=`<p class="note" style="margin:6px 0 0">Роботи Анатолія не рахуються як витрачене Даниїлом зі своїх: 1-го Влад переказує гроші, Даниїл вносить «+ Виплата» Анатолію в Регламенті.</p>`;
   if(om)h+=`<p class="note" style="margin:6px 0 0">Після закриття ${mGen(om)} перекази й витрати зведуться в розподіл прибутку 50/50.</p>`;
   if(P.length||M.length){
     h+=`<div class="tbl" style="margin-top:12px"><table><thead><tr><th>Дата</th><th>Операція</th><th class="num">Сума</th></tr></thead><tbody>`;
