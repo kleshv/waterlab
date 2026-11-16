@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261115c">
+<meta name="wl-build" content="20261116a">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -286,7 +286,7 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261115c"></script>
+<script src="shim.js?v=20261116a"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday'];
@@ -635,7 +635,7 @@ function svcState(pid){
     r.due=r.rate&&r.left>0?addDay(today,Math.round(r.left/r.rate)):null}
   if(memL){r.memUsed=k*soldBetween(pid,memL.date,today).L;const ML=meterOf(pid), mt=ML[ML.length-1];
     if(mt&&memL.reading!=null&&memL.reading>0&&mt.date>=memL.date&&+mt.w>=memL.reading){const rt=r.rate||0;r.memUsed=mt.w-memL.reading+rt*Math.max(0,dayDiff(mt.date,today))}
-    r.memInt=MEM_INT;r.memPct=r.memUsed/MEM_INT;r.memLeft=MEM_INT-r.memUsed;r.memSt=r.memLeft<=0?'over':r.memPct>=0.85?'soon':'ok';
+    r.memInt=+memL.memInt||MEM_INT;r.memPct=r.memUsed/r.memInt;r.memLeft=r.memInt-r.memUsed;r.memSt=r.memLeft<=0?'over':r.memPct>=0.85?'soon':'ok';
     r.memDays=r.rate?Math.round(r.memLeft/r.rate):null}
   return r;
 }
@@ -646,7 +646,7 @@ function viewSvc(){
   const rows=L.map(x=>{const bar=x.last?`<div class="pbar"><i style="width:${Math.min(100,Math.round(x.pct*100))}%" class="${x.st}"></i></div>`:'';
     return `<tr class="click" data-act="svcPoint" data-id="${x.p.id}"><td>${esc(x.p.name)}<div class="note">${x.last?'заміна '+dmy(x.last.date):'немає даних'}${x.last&&x.src!=='meter'?' · оцінка':''}${x.last&&x.last.chk&&Object.keys(SVC_CHK).some(k=>!x.last.chk[k])?`<div class="note warnc">без обслуговування: ${Object.keys(SVC_CHK).filter(k=>!x.last.chk[k]).map(k=>SVC_CHK[k]).join(', ')}</div>`:''}</div></td>
       <td class="num">${x.last?`${f0(x.used)} з ${f0(x.interval/1000)}к${bar}<div class="note ${x.st==='over'?'neg':''}">${x.st==='over'?'прострочено на '+f0(-x.left)+' л':x.days!=null?'≈ '+x.days+' дн.'+(x.due?' · '+dmy(x.due):''):''}</div>`:'—'}</td>
-      <td class="num">${x.memL?`${f0(x.memUsed||0)} з ${f0(MEM_INT/1000)}к<div class="pbar"><i style="width:${Math.min(100,Math.round((x.memPct||0)*100))}%" class="${x.memSt}"></i></div><div class="note ${x.memSt==='over'?'neg':''}">${x.memSt==='over'?'прострочено':x.memDays!=null&&x.memDays<400?'≈ '+x.memDays+' дн.':mo(x.memL.date)}</div>`:'—'}</td>
+      <td class="num">${x.memL?`${f0(x.memUsed||0)} з ${f0(x.memInt/1000)}к<div class="pbar"><i style="width:${Math.min(100,Math.round((x.memPct||0)*100))}%" class="${x.memSt}"></i></div><div class="note ${x.memSt==='over'?'neg':''}">${x.memSt==='over'?'прострочено':x.memDays!=null&&x.memDays<400?'≈ '+x.memDays+' дн.':mo(x.memL.date)}</div>`:'—'}</td>
       <td class="num hide-sm">${x.toL?dmy(x.toL.date)+`<div class="note">${esc(x.toL.note||'')}</div>`:'—'}</td></tr>`}).join('');
   return `<section class="card"><div class="shead"><h2>Регламент заміни фільтрів</h2></div>
   ${canWrite?`<div class="bigacts one" style="margin:0 0 12px"><button class="btn pri main" data-act="addSvc" type="button">+ Заміна / ТО</button></div>`:''}
@@ -668,7 +668,7 @@ function svcPoint(pid){
   const p=S.points[pid]||{}, x=svcState(pid), E=svcEv(pid).filter(e=>SVC_T[e.type]).reverse();
   const kv=(a,b)=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`;
   let h=x.last?(x.src==='meter'?kv('Лічильник на вході (Gwaters)',f0(x.meter.w)+' л · '+dmy(x.meter.date)):'')+(role==='tech'?'':kv('Продано з заміни',f0(x.sold)+' л · '+(x.src==='meter'&&x.kAct?'факт. коеф. '+fmt1(x.kAct):(x.kOwn?'коеф. точки ':'коеф. мережі ')+fmt1(x.k))))+kv('Остання заміна фільтрів',dmy(x.last.date)+(x.last.reading!=null?' · лічильник '+f0(x.last.reading):''))+kv('Регламент',f0(x.interval)+' л')+kv('Пройшло',f0(x.used)+' л ('+Math.round(x.pct*100)+'%)')+kv('Наступна заміна',x.left<=0?'<span class="neg">прострочено</span>':(x.due?'≈ '+dmy(x.due)+' · через '+x.days+' дн.':'—'))+(x.last.reading!=null?kv('Лічильник зараз (оцінка)',f0(x.last.reading+x.used)):''):'';
-  if(x.memL)h+=kv('Мембрани',dmy(x.memL.date)+' · пройшло '+f0(x.memUsed||0)+' з '+f0(MEM_INT)+' л'+(x.memSt==='over'?' · <span class="neg">пора міняти</span>':''));if(x.toL)h+=kv('ТО',dmy(x.toL.date)+(x.toL.note?' · '+esc(x.toL.note):''));
+  if(x.memL)h+=kv('Мембрани',dmy(x.memL.date)+' · пройшло '+f0(x.memUsed||0)+' з '+f0(x.memInt)+' л'+(x.memSt==='over'?' · <span class="neg">пора міняти</span>':''));if(x.toL)h+=kv('ТО',dmy(x.toL.date)+(x.toL.note?' · '+esc(x.toL.note):''));
   const SH={in:'вхідні',post:'пост',mem:'мембрани',to:'ТО'}, G=[];for(const e of E){const g=G.find(g=>g.date===e.date);if(g)g.L.push(e);else G.push({date:e.date,L:[e]})}
   h+=`<div class="sub">Історія</div>`+G.slice(0,30).map(g=>{const o=['in','post','mem','to'], L=g.L.sort((a,b)=>o.indexOf(a.type)-o.indexOf(b.type)), rd=L.find(e=>e.reading!=null), iv=L.find(e=>e.interval&&e.type!=='mem'), nt=L.map(e=>e.note).filter(Boolean).join('; ');
     return `<div class="kv bi"><span>${dmy(g.date)} · ${L.map(e=>canWrite?`<a class="lnk" data-act="editSvc" data-id="${e.id}">${SH[e.type]||e.type}</a>`:(SH[e.type]||e.type)).join(', ')}${(()=>{const c=(L.find(e=>e.chk)||{}).chk;return c?`<div class="note">обслуговування: ${Object.keys(SVC_CHK).map(k=>(c[k]?'✓ ':'✗ ')+SVC_CHK[k]).join(' · ')}</div>`:''})()}${nt?`<div class="note">${esc(nt)}</div>`:''}</span><b>${rd?f0(rd.reading):''}${iv?`<div class="note">наступна +${f0(iv.interval)} л</div>`:''}</b></div>`}).join('');
@@ -683,32 +683,45 @@ function svcForm(pid,e){
   const x=pid?svcState(pid):null;
   return sel('point','Точка',pid||'',pts.map(p=>[p.id,p.name]),true)+fld('date','Дата',e?e.date:todayISO2(),{type:'date'})+
     (e?sel('type','Що',e.type,Object.entries(SVC_T),true):`<div class="full">${ck('t_in','Вхідні фільтри',1)} ${ck('t_post','Пост-фільтри',1)} ${ck('t_mem','Мембрани',0)} ${ck('t_to','ТО',0)}</div>`)+
-    fld('reading','Лічильник на автоматі, л'+(!e&&x&&x.last&&x.last.reading!=null?' (орієнтовно '+f0(x.last.reading+x.used)+')':''),e?(e.reading??''):'')+sel('interval','Наступна заміна фільтрів через',String(e?(e.interval??(x?x.interval:20000)):(x?(x.interval>30000?40000:20000):20000)),[['20000','20 000 л (10″)'],['40000','40 000 л (20ВВ)']],false)+
+    fld('reading','Лічильник на автоматі, л'+(!e&&x&&x.last&&x.last.reading!=null?' (орієнтовно '+f0(x.last.reading+x.used)+')':''),e?(e.reading??''):'')+`<div class="full rdHint note" style="margin-top:-4px;color:var(--accent)"></div>`+sel('interval','Наступна заміна фільтрів через',String(e?(e.interval??(x?x.interval:20000)):(x?(x.interval>30000?40000:20000):20000)),[['20000','20 000 л (10″)'],['40000','40 000 л (20ВВ)']],false)+
+    ((!e||e.type==='mem')?`<div class="full memBox" style="display:${e?'block':'none'}">${sel('memInt','Наступна заміна мембран через',String((e&&e.memInt)||lastMemInt(pid)),[['60000','60 000 л'],['80000','80 000 л']],false)}</div>`:'')+
     (e?'':`<div class="full chkbox"><div class="l">Обслуговування при заміні</div>${ck('c_coin','Монетник',0)} ${ck('c_bill','Купюрник',0)} ${ck('c_lift','Конліфт',0)}</div>`)+
-    (e?'':fld('work','Оплата за роботу, грн',1000)+fld('filt','Фільтри для WaterLab, грн',lastFilt(pid))+(kitStock().q>0?`<div class="full">${ck('fromStock','Фільтри взяв з нашого складу (є '+kitStock().q+' к-т) — тоді за фільтри не платимо',0)}</div>`:''))+
+    (e?'':`<div class="full workBox" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${fld('work','Оплата за роботу, грн',1000)+fld('filt','Фільтри для WaterLab, грн',lastFilt(pid))+(kitStock().q>0?`<div class="full" style="grid-column:1/-1">${ck('fromStock','Фільтри взяв з нашого складу (є '+kitStock().q+' к-т) — тоді за фільтри не платимо',0)}</div>`:'')}</div><p class="full note memOnly" style="display:none;margin:0">Окрема заміна мембран — без оплати, входить у 1 000 за заміну фільтрів.</p>`)+
     fld('note','Коментар',e?(e.note||''):'',{type:'text',full:true});
 }
+function lastMemInt(pid){const L=Object.values(S.svc).filter(x=>x.type==='mem'&&x.point===pid&&x.memInt).sort((a,b)=>a.date.localeCompare(b.date));return L.length?+L[L.length-1].memInt:MEM_INT}
+function rdRef(pid){let r=null;for(const x of Object.values(S.svc))if(x.point===pid&&+x.reading>=10000&&(r==null||x.date>r.d))r={d:x.date,v:+x.reading};for(const x of Object.values(S.meter||{}))if(x.point===pid&&+x.w>0&&(r==null||x.date>r.d))r={d:x.date,v:+x.w};return r?r.v:null}
+/* лічильник: «267» або «472,26» — це тисячі літрів → 267 000 / 472 260; точне число лишається як є */
+function normRd(v,pid){if(v==null||!(v>0))return v;const ref=rdRef(pid);return v<10000&&(ref==null||ref>=10000)?Math.round(v*1000):v}
+function wireSvc(){const f=document.getElementById('sf');if(!f)return;const g=n=>f.querySelector('[name="'+n+'"]');
+  const upd=()=>{const pid=(g('point')||{}).value||'';const r=g('reading'),h=f.querySelector('.rdHint');
+    if(r&&h){const v=parseNum(String(r.value||''));const n=normRd(v,pid);h.textContent=v>0&&n!==v?'= '+f0(n)+' л (введено в тисячах)':''}
+    const tm=g('t_mem'),tin=g('t_in'),tp=g('t_post');if(tm){const mb=f.querySelector('.memBox');if(mb)mb.style.display=tm.checked?'block':'none';
+      const memOnly=tm.checked&&!(tin&&tin.checked)&&!(tp&&tp.checked)&&!(g('t_to')&&g('t_to').checked);const wb=f.querySelector('.workBox'),mo=f.querySelector('.memOnly');if(wb)wb.style.display=memOnly?'none':'grid';if(mo)mo.style.display=memOnly?'block':'none'}};
+  f.addEventListener('input',upd);f.addEventListener('change',upd);upd()}
 function lastFilt(pid){const L=jobsAll().filter(j=>j.type==='work'&&j.kind==='kit'&&+j.filt>0);const a=L.filter(j=>j.point===pid).pop()||L.pop();return a?a.filt:1151.5}
 function addSvc(pid){
   openSheet('Заміна / ТО','Внесіть, що замінили. Лічильник — з табло автомата (якщо є).',svcForm(pid||'',null),async fd=>{
     if(!fd.point)return 'Оберіть точку';if(!fd.date)return 'Вкажіть дату';
     const types=['in','post','mem','to'].filter(t=>fd['t_'+t]);if(!types.length)return 'Позначте, що замінили';
-    const rd=String(fd.reading||'').trim()===''?null:parseNum(String(fd.reading)), iv=String(fd.interval||'').trim()===''?null:parseNum(String(fd.interval));
+    const rd=String(fd.reading||'').trim()===''?null:normRd(parseNum(String(fd.reading)),fd.point), iv=String(fd.interval||'').trim()===''?null:parseNum(String(fd.interval));
+    const memOnly=types.length===1&&types[0]==='mem';
     const chk={coin:!!fd.c_coin,bill:!!fd.c_bill,lift:!!fd.c_lift};
-    for(const t of types){const d={point:fd.point,type:t,date:fd.date,note:fd.note||'',by:me||''};if(t!=='to'){if(rd!=null)d.reading=rd;if(iv&&t!=='mem')d.interval=iv}if(t==='in'||(t==='post'&&!types.includes('in')))d.chk=chk;if(t==='in'&&fd.fromStock)d.fromStock=true;
+    for(const t of types){const d={point:fd.point,type:t,date:fd.date,note:fd.note||'',by:me||''};if(t!=='to'){if(rd!=null)d.reading=rd;if(iv&&t!=='mem')d.interval=iv}if(t==='in'||(t==='post'&&!types.includes('in')))d.chk=chk;if(t==='in'&&fd.fromStock)d.fromStock=true;if(t==='mem')d.memInt=parseNum(String(fd.memInt||MEM_INT))||MEM_INT;
       if(!await w(()=>db.doc('svc/'+db.collection('svc').doc().id).set(d)))return 'Не збереглося'}
-    const wk=parseNum(String(fd.work||0))||0, fl=(types.includes('in')||types.includes('post'))&&!fd.fromStock?(parseNum(String(fd.filt||0))||0):0;
+    const wk=memOnly?0:(parseNum(String(fd.work||0))||0), fl=memOnly?0:(types.includes('in')||types.includes('post'))&&!fd.fromStock?(parseNum(String(fd.filt||0))||0):0;
     if(wk||fl){const kind=types.includes('in')||types.includes('post')?'kit':types.includes('mem')?'mem':'svc';
       const j={type:'work',kind,point:fd.point,date:fd.date,amount:wk,st:'new',by:me||'',note:fd.note||''};if(fl)j.filt=fl;
       if(!await w(()=>db.doc('svc/'+db.collection('svc').doc().id).set(j)))return 'Не збереглося'}
-    toast('Записано')});
+    toast(memOnly?'Записано · без оплати':'Записано')});
+  wireSvc();
 }
 function svcGroup(e){return Object.entries(S.svc).filter(([,x])=>x.point===e.point&&x.date===e.date&&(SVC_T[x.type]||(x.type==='work'&&x.st==='new'))).map(([i])=>i)}
 function editSvc(id){const e=S.svc[id];if(!e)return;const G=svcGroup(e), okJob=Object.values(S.svc).some(x=>x.type==='work'&&x.st==='ok'&&x.point===e.point&&x.date===e.date&&x.src!=='anatoliy');
   openSheet('Запис регламенту',((S.points[e.point]||{}).name||'')+' · '+dmy(e.date)+'. «Видалити» прибирає всю заміну цього дня ('+G.filter(i=>SVC_T[S.svc[i].type]).map(i=>SVC_T[S.svc[i].type].toLowerCase()).join(', ')+(G.some(i=>S.svc[i].type==='work')?', непідтверджена оплата':'')+') — лічильники повертаються до попередньої заміни.'+(okJob?' Оплату вже підтверджено — її приберіть у витратах окремо.':''),svcForm(e.point,e),async fd=>{
-    const rd=String(fd.reading||'').trim()===''?null:parseNum(String(fd.reading)), iv=String(fd.interval||'').trim()===''?null:parseNum(String(fd.interval));
-    const d={...e,point:fd.point,type:fd.type,date:fd.date,note:fd.note||''};delete d.id;if(rd!=null)d.reading=rd;else delete d.reading;if(iv)d.interval=iv;else delete d.interval;
-    if(!await w(()=>db.doc('svc/'+id).set(d)))return 'Не збереглося';toast('Збережено')},async()=>{for(const i of G)await w(()=>db.doc('svc/'+i).delete());toast('Заміну видалено');return true})}
+    const rd=String(fd.reading||'').trim()===''?null:normRd(parseNum(String(fd.reading)),fd.point), iv=String(fd.interval||'').trim()===''?null:parseNum(String(fd.interval));
+    const d={...e,point:fd.point,type:fd.type,date:fd.date,note:fd.note||''};delete d.id;if(rd!=null)d.reading=rd;else delete d.reading;if(iv)d.interval=iv;else delete d.interval;if(fd.type==='mem'&&fd.memInt)d.memInt=parseNum(String(fd.memInt))||MEM_INT;else delete d.memInt;
+    if(!await w(()=>db.doc('svc/'+id).set(d)))return 'Не збереглося';toast('Збережено')},async()=>{for(const i of G)await w(()=>db.doc('svc/'+i).delete());toast('Заміну видалено');return true});wireSvc()}
 /* ---------- роботи Анатолія й розрахунок ---------- */
 let svcSub='reg';
 function setSvcSub(v){svcSub=['job','task'].includes(v)?v:'reg';render()}
