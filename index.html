@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261116b">
+<meta name="wl-build" content="20261116c">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -286,7 +286,7 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261116b"></script>
+<script src="shim.js?v=20261116c"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday'];
@@ -686,7 +686,7 @@ function svcForm(pid,e){
     fld('reading','Лічильник на автоматі, л'+(!e&&x&&x.last&&x.last.reading!=null?' (орієнтовно '+f0(x.last.reading+x.used)+')':''),e?(e.reading??''):'')+`<div class="full rdHint note" style="margin-top:-4px;color:var(--accent)"></div>`+`<div class="full ivBox" style="display:${e&&(e.type==='mem'||e.type==='to')?'none':'block'}">${sel('interval','Наступна заміна фільтрів через',String(e?(e.interval??(x?x.interval:20000)):(x?(x.interval>30000?40000:20000):20000)),[['20000','20 000 л (10″)'],['40000','40 000 л (20ВВ)']],false)}</div>`+
     ((!e||e.type==='mem')?`<div class="full memBox" style="display:${e?'block':'none'}">${sel('memInt','Наступна заміна мембран через',String((e&&e.memInt)||lastMemInt(pid)),[['60000','60 000 л'],['80000','80 000 л']],false)}</div>`:'')+
     (e?'':`<div class="full chkbox"><div class="l">Обслуговування при заміні</div>${ck('c_coin','Монетник',0)} ${ck('c_bill','Купюрник',0)} ${ck('c_lift','Конліфт',0)}</div>`)+
-    (e?'':`<div class="full workBox" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${fld('work','Оплата за роботу, грн',1000)+fld('filt','Фільтри для WaterLab, грн',lastFilt(pid))+(kitStock().q>0?`<div class="full" style="grid-column:1/-1">${ck('fromStock','Фільтри взяв з нашого складу (є '+kitStock().q+' к-т) — тоді за фільтри не платимо',0)}</div>`:'')}</div><p class="full note memOnly" style="display:none;margin:0">Окрема заміна мембран — без оплати, входить у 1 000 за заміну фільтрів.</p>`)+
+    (e?'':`<div class="full workBox" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${fld('work','Оплата за роботу, грн',1000)+fld('filt','Фільтри для WaterLab, грн',lastFilt(pid))+(kitStock().q>0?`<div class="full" style="grid-column:1/-1">${ck('fromStock','Фільтри взяв з нашого складу (є '+kitStock().q+' к-т) — тоді за фільтри не платимо',0)}</div>`:'')}</div>`)+
     fld('note','Коментар',e?(e.note||''):'',{type:'text',full:true});
 }
 function lastMemInt(pid){const L=Object.values(S.svc).filter(x=>x.type==='mem'&&x.point===pid&&x.memInt).sort((a,b)=>a.date.localeCompare(b.date));return L.length?+L[L.length-1].memInt:MEM_INT}
@@ -697,7 +697,8 @@ function wireSvc(){const f=document.getElementById('sf');if(!f)return;const g=n=
   const upd=()=>{const pid=(g('point')||{}).value||'';const r=g('reading'),h=f.querySelector('.rdHint');
     if(r&&h){const v=parseNum(String(r.value||''));const n=normRd(v,pid);h.textContent=v>0&&n!==v?'= '+f0(n)+' л (введено в тисячах)':''}
     const tm=g('t_mem'),tin=g('t_in'),tp=g('t_post');const ivb=f.querySelector('.ivBox');if(ivb&&tin)ivb.style.display=(tin.checked||(tp&&tp.checked))?'block':'none';if(tm){const mb=f.querySelector('.memBox');if(mb)mb.style.display=tm.checked?'block':'none';
-      const memOnly=tm.checked&&!(tin&&tin.checked)&&!(tp&&tp.checked)&&!(g('t_to')&&g('t_to').checked);const wb=f.querySelector('.workBox'),mo=f.querySelector('.memOnly');if(wb)wb.style.display=memOnly?'none':'grid';if(mo)mo.style.display=memOnly?'block':'none'}};
+      const fl=(tin&&tin.checked)||(tp&&tp.checked), pay=fl||(g('t_to')&&g('t_to').checked);const wb=f.querySelector('.workBox');if(wb)wb.style.display=pay?'grid':'none';
+      const fi=g('filt');if(fi){const fw=fi.closest('.fld,.field,label,div');if(fw&&fw!==wb)fw.style.display=fl?'':'none'}const fs=g('fromStock');if(fs){const sw=fs.closest('.full');if(sw)sw.style.display=fl?'':'none'}}};
   f.addEventListener('input',upd);f.addEventListener('change',upd);upd()}
 function lastFilt(pid){const L=jobsAll().filter(j=>j.type==='work'&&j.kind==='kit'&&+j.filt>0);const a=L.filter(j=>j.point===pid).pop()||L.pop();return a?a.filt:1151.5}
 function addSvc(pid){
@@ -705,11 +706,11 @@ function addSvc(pid){
     if(!fd.point)return 'Оберіть точку';if(!fd.date)return 'Вкажіть дату';
     const types=['in','post','mem','to'].filter(t=>fd['t_'+t]);if(!types.length)return 'Позначте, що замінили';
     const rd=String(fd.reading||'').trim()===''?null:normRd(parseNum(String(fd.reading)),fd.point), iv=String(fd.interval||'').trim()===''?null:parseNum(String(fd.interval));
-    const memOnly=types.length===1&&types[0]==='mem';
+    const hasF=types.includes('in')||types.includes('post'), pay=hasF||types.includes('to'), memOnly=!pay;
     const chk={coin:!!fd.c_coin,bill:!!fd.c_bill,lift:!!fd.c_lift};
     for(const t of types){const d={point:fd.point,type:t,date:fd.date,note:fd.note||'',by:me||''};if(t!=='to'){if(rd!=null)d.reading=rd;if(iv&&t!=='mem')d.interval=iv}if(t==='in'||(t==='post'&&!types.includes('in')))d.chk=chk;if(t==='in'&&fd.fromStock)d.fromStock=true;if(t==='mem')d.memInt=parseNum(String(fd.memInt||MEM_INT))||MEM_INT;
       if(!await w(()=>db.doc('svc/'+db.collection('svc').doc().id).set(d)))return 'Не збереглося'}
-    const wk=memOnly?0:(parseNum(String(fd.work||0))||0), fl=memOnly?0:(types.includes('in')||types.includes('post'))&&!fd.fromStock?(parseNum(String(fd.filt||0))||0):0;
+    const wk=pay?(parseNum(String(fd.work||0))||0):0, fl=!hasF?0:(types.includes('in')||types.includes('post'))&&!fd.fromStock?(parseNum(String(fd.filt||0))||0):0;
     if(wk||fl){const kind=types.includes('in')||types.includes('post')?'kit':types.includes('mem')?'mem':'svc';
       const j={type:'work',kind,point:fd.point,date:fd.date,amount:wk,st:'new',by:me||'',note:fd.note||''};if(fl)j.filt=fl;
       if(!await w(()=>db.doc('svc/'+db.collection('svc').doc().id).set(j)))return 'Не збереглося'}
