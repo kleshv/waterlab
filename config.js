@@ -1,4 +1,4 @@
 // Адрес проекта Supabase и публичный ключ (anon). Секретов здесь нет: без входа по паролю ключ ничего не открывает.
 window.WATERLAB_CONFIG={url:'https://twqreeajibvoelzqkvru.supabase.co',anonKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3cXJlZWFqaWJ2b2VsenFrdnJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM2NTU4ODEsImV4cCI6MjEwOTIzMTg4MX0.Y6TTkZ6lc5l7V7nWMavpRD9XW7oY1cnR_E4_-MWdRYY',
   // Google Диск для резервних копій: OAuth Client ID (не секрет). Порожньо — кнопка зберігає файл на пристрій.
-  googleClientId:''};
+  googleClientId:'876068415458-1svngkmv95aj3l4mnvkkdkfeo3v0c4t9.apps.googleusercontent.com'};
