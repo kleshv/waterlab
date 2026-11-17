@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261117b">
+<meta name="wl-build" content="20261117c">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -285,9 +285,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=202611091530"></script>
+<script src="config.js?v=20261117c"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261117b"></script>
+<script src="shim.js?v=20261117c"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday'];
@@ -969,7 +969,7 @@ function viewTrend(){
     svg+=`<rect x="${x-bw/2+5}" y="${y(Math.max(c.op,0))}" width="${bw-10}" height="${y(0)-y(Math.max(c.op,0))}" rx="2" fill="var(--link)"/>`;
     svg+=`<text x="${x}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)">${mShort(c.m)}</text>`;});
   svg+=`</svg>`;
-  let h=`<section class="card"><div class="shead"><h2>Резервна копія</h2><div style="display:flex;gap:6px;flex-wrap:wrap">${bkMe()?`<button class="btn sm pri" data-act="backupJson" type="button" id="bkBtn">Повна копія бази</button>`:''}<button class="btn sm" data-act="exportXlsx" type="button" id="xlsxBtn">Таблиці в Excel</button></div></div>${bkMe()?`<p class="note" style="margin:6px 0 0">Повна копія — файл з усіма даними обох баз (вода й фільтри), з нього базу можна відновити повністю. Зберігайте його окремо (iCloud / Google Drive / пошта). Остання копія: ${bkLast()?dmy(bkLast().date)+(bkLast().by?' · '+esc(bkLast().by):''):'ще не робилась'}.</p>`:''}</section>`;
+  let h=`<section class="card"><div class="shead"><h2>Резервна копія</h2><div style="display:flex;gap:6px;flex-wrap:wrap">${bkMe()?`<button class="btn sm pri" data-act="backupJson" type="button" id="bkBtn">${GD_CID()?'Повна копія → Google Диск':'Повна копія бази'}</button>`:''}<button class="btn sm" data-act="exportXlsx" type="button" id="xlsxBtn">Таблиці в Excel</button></div></div>${bkMe()?`<p class="note" style="margin:6px 0 0">Повна копія — файл з усіма даними обох баз (вода й фільтри), з нього базу можна відновити повністю. Зберігайте його окремо (iCloud / Google Drive / пошта). Остання копія: ${bkLast()?dmy(bkLast().date)+(bkLast().by?' · '+esc(bkLast().by):''):'ще не робилась'}.</p>`:''}</section>`;
   h+=`<section class="card chart"><h2>Виручка й операційний прибуток · ${Y}</h2>${svg}<div class="legend"><span><i style="background:var(--cyan);border:1px solid var(--line)"></i>виручка</span><span><i style="background:var(--link)"></i>операційний прибуток</span></div></section>`;
   const tr=(lab,x,cls='')=>`<tr class="${cls}"><td>${lab}</td><td class="num hide-sm">${f0(x.L)}</td><td class="num hide-sm">${x.L?nf2.format(x.R/x.L):'—'}</td><td class="num">${f0(x.R)}</td><td class="num hide-sm">${f0(x.opex)}</td><td class="num ${sgn(x.op)}">${f0(x.op)}</td><td class="num">${x.R?(x.op/x.R*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="num hide-sm">${x.capex?f0(x.capex):'—'}</td><td class="num ${sgn(x.net)}">${f0(x.net)}</td></tr>`;
   const Z=()=>({L:0,R:0,opex:0,op:0,capex:0,net:0});
@@ -1190,7 +1190,7 @@ function homeTodo(m){
 const pct=(a,b)=>b?(a/b*100).toFixed(1).replace('.',',')+'%':'—';
 function viewHome(m){
   const c=calc(m), mt=monthTable(c), md=S.months[m]||{}, ed=canWrite&&!md.closed;
-  let h=bkDue()?`<section class="card bkdue"><div class="shead"><div><b>Пора зробити резервну копію</b><div class="note">${bkLast()?'Остання — '+dmy(bkLast().date)+'. ':''}Раз на тиждень: один файл з усіма даними — збережіть його в iCloud / Google Drive.</div></div><button class="btn sm pri" data-act="backupJson" type="button" id="bkBtn2">Зберегти копію</button></div></section>`:'';
+  let h=bkDue()?`<section class="card bkdue"><div class="shead"><div><b>Пора зробити резервну копію</b><div class="note">${bkLast()?'Остання — '+dmy(bkLast().date)+'. ':''}${GD_CID()?'Раз на тиждень: один файл з усіма даними — у папку «WaterLab — резервні копії» на Google Диску.':'Раз на тиждень: один файл з усіма даними — збережіть його в iCloud / Google Drive.'}</div></div><button class="btn sm pri" data-act="backupJson" type="button" id="bkBtn2">${GD_CID()?'Зберегти в Google Диск':'Зберегти копію'}</button></div></section>`:'';
   h+=`<section class="card"><div class="shead"><h2>${mLabel(m)}</h2><span class="pill ${md.closed?'closed':'open'}">${md.closed?'закритий':'відкритий'}</span></div>
   <div class="tiles t4">
     ${(()=>{const inn=`<div class="l">Виручка${md.gwThru&&md.gwThru<monthEnd(m)?` <span class="gwd">по ${dmy(md.gwThru).slice(0,5)}</span>`:''}</div><div class="v">${f0(mt.T.rv)}</div><div class="s">${nf1.format(Math.round(mt.T.L))} л продано</div><div class="s">банк ${c.bank?f0(c.bank):'—'} · готівка ${c.cash?f0(c.cash):'не внесено'}</div>`;return ed&&m===cur?`<button type="button" class="tile tapt" data-act="editMoney" title="Внести банк і готівку">${inn}</button>`:`<div class="tile">${inn}</div>`})()}
@@ -2182,18 +2182,37 @@ document.addEventListener('change',e=>{const id=e.target.id;if(id==='rc_pt'){rec
 /* ---------- export ---------- */
 function loadXLSX(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';sc.onload=ok;sc.onerror=no;document.head.appendChild(sc)})}
 function bkLast(){const b=(S.meta||{}).backup;return b&&b.date?b:null}
-function bkMe(){return role==='owner'&&window.WL_NAME==='Влад'}
+function bkMe(){const r=role==='owner'&&window.WL_NAME==='Влад';if(r&&GD_CID())gdLoad().catch(()=>{});return r}
 function bkDue(){if(!bkMe())return false;const b=bkLast();return !b||dayDiff(b.date,todayISO2())>=7}
+/* ---- Google Диск: лише доступ drive.file — сайт бачить тільки файли, які сам створив ---- */
+const GD_CID=()=>(window.WATERLAB_CONFIG||{}).googleClientId||'';
+let gdTok=null,gdExp=0,gdLoading=null;
+function gdLoad(){if(window.google&&google.accounts&&google.accounts.oauth2)return Promise.resolve();if(gdLoading)return gdLoading;
+  gdLoading=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.async=true;sc.onload=()=>res();sc.onerror=()=>{gdLoading=null;rej(new Error('Google не завантажився'))};document.head.appendChild(sc)});return gdLoading}
+function gdToken(){if(gdTok&&Date.now()<gdExp)return Promise.resolve(gdTok);
+  return new Promise((res,rej)=>{const tc=google.accounts.oauth2.initTokenClient({client_id:GD_CID(),scope:'https://www.googleapis.com/auth/drive.file',login_hint:'waterlabaratory@gmail.com',
+    callback:r=>{if(r.error)return rej(new Error(r.error));gdTok=r.access_token;gdExp=Date.now()+((+r.expires_in||3600)-60)*1000;res(gdTok)},
+    error_callback:e=>rej(new Error(e&&e.type==='popup_closed'?'вікно Google закрито':'Google: '+(e&&e.type||'помилка')))});tc.requestAccessToken({prompt:''})})}
+async function gdApi(url,opt={}){const r=await fetch(url,{...opt,headers:{Authorization:'Bearer '+gdTok,...(opt.headers||{})}});if(!r.ok)throw new Error('Google Диск: '+r.status);return r.json()}
+async function gdFolder(){const q=encodeURIComponent("appProperties has { key='wl' and value='backup' } and mimeType='application/vnd.google-apps.folder' and trashed=false");
+  const f=await gdApi('https://www.googleapis.com/drive/v3/files?fields=files(id)&q='+q);if(f.files&&f.files.length)return f.files[0].id;
+  const c=await gdApi('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'WaterLab — резервні копії',mimeType:'application/vnd.google-apps.folder',appProperties:{wl:'backup'}})});return c.id}
+async function gdUpload(name,text){const fid=await gdFolder(),B='wl'+Math.random().toString(36).slice(2);
+  const body=`--${B}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name,parents:[fid],mimeType:'application/json'})}\r\n--${B}\r\nContent-Type: application/json\r\n\r\n${text}\r\n--${B}--`;
+  return gdApi('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+B},body})}
 async function backupJson(){
   if(!bkMe())return;
-  const dl=await window.claude?.use?.('downloads');const sb=window.__sb;
-  if(!dl||!sb){toast('Копія недоступна в цьому перегляді');return}
+  const sb=window.__sb, gd=!!GD_CID();
+  if(!sb){toast('Копія недоступна в цьому перегляді');return}
+  let tokP=null;if(gd){if(!(window.google&&google.accounts&&google.accounts.oauth2)){toast('Google ще завантажується — натисніть ще раз');gdLoad().catch(()=>{});return}tokP=gdToken()}
+  const dl=gd?null:await window.claude?.use?.('downloads');if(!gd&&!dl){toast('Копія недоступна в цьому перегляді');return}
   document.querySelectorAll('#bkBtn,#bkBtn2').forEach(b=>{b.disabled=true;b.textContent='Готую…'});
-  try{const rows=[];for(let a=0;;a+=1000){const {data,error}=await sb.from('docs').select('col,id,data').order('col').order('id').range(a,a+999);if(error)throw error;rows.push(...data);if(data.length<1000)break}
-    const ds=todayISO2();
-    await dl.save({filename:`WaterLab-копія-${ds}.json`,data:new Blob([JSON.stringify({app:'WaterLab',made:new Date().toISOString(),by:window.WL_NAME||'',count:rows.length,rows})],{type:'application/json'})});
-    await w(()=>db.doc('meta/backup').set({date:ds,by:window.WL_NAME||'',count:rows.length}));
-    toast('Копію збережено: '+rows.length+' записів');
+  try{if(tokP)await tokP;
+    const rows=[];for(let a=0;;a+=1000){const {data,error}=await sb.from('docs').select('col,id,data').order('col').order('id').range(a,a+999);if(error)throw error;rows.push(...data);if(data.length<1000)break}
+    const ds=todayISO2(), name=`WaterLab-копія-${ds}.json`, text=JSON.stringify({app:'WaterLab',made:new Date().toISOString(),by:window.WL_NAME||'',count:rows.length,rows});
+    if(gd)await gdUpload(name,text);else await dl.save({filename:name,data:new Blob([text],{type:'application/json'})});
+    await w(()=>db.doc('meta/backup').set({date:ds,by:window.WL_NAME||'',count:rows.length,...(gd?{to:'gdrive'}:{})}));
+    toast((gd?'Збережено в Google Диск: ':'Копію збережено: ')+rows.length+' записів');
   }catch(e){toast('Не вдалося: '+(e.message||e))}
   render();
 }
