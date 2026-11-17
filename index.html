@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261116c">
+<meta name="wl-build" content="20261117a">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -77,6 +77,7 @@ label.chk{display:inline-flex;align-items:center;gap:6px;margin:4px 12px 4px 0;f
 .svt .eqc{width:29%}@media (max-width:640px){.svt .eqc{width:31%}}.svt td.num .pbar{width:100%}
 .tarch{text-align:center;margin:4px 0 2px}.tarch-l{background:none;border:0;padding:6px 10px;font:inherit;font-size:12px;color:var(--muted);opacity:.55;cursor:pointer}.tarch-l:hover{opacity:1}.tarch-c{opacity:.85}.tarch-c .trow{padding:6px 0}
 .seg2.umode{display:flex}.seg2.umode button{flex:1;padding:6px 6px;font-size:12px}
+tr.pln td{background:var(--accent-soft)}tr.plq td{background:#fff8e8}.pill.plan{background:var(--accent);color:#fff}
 .card.bkdue{border-color:#f0c96b;background:#fffaf0}.bkdue .shead{gap:10px;align-items:center}
 .pbar{height:5px;border-radius:3px;background:var(--line);margin-top:4px;overflow:hidden}.pbar i{display:block;height:100%;background:#2e9e5b}.pbar i.soon{background:#e6a700}.pbar i.over{background:#d23c3c}
 td.hi-warn,td.hi-bad{position:relative}td.hi-warn>*:first-child,td.hi-warn{color:#b86e00}td.hi-bad>*:first-child,td.hi-bad{color:#c4413b;font-weight:600}
@@ -286,7 +287,7 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 
 <script src="config.js?v=202611091530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261116c"></script>
+<script src="shim.js?v=20261117a"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday'];
@@ -932,8 +933,10 @@ function viewPrices(){
   h+=`</section>`;
   const L14=last?addDay(last,-13):'', P14a=last?addDay(last,-27):'', P14b=last?addDay(last,-14):'';
   const rows=act.map(p=>{const a=last?winLR([p.id],L14,last):{lpd:0,pr:0,n:0}, b=last?winLR([p.id],P14a,P14b):{lpd:0,n:0};const ch=b.lpd&&a.lpd?a.lpd/b.lpd-1:null;
-    return `<tr class="${canWrite?'click':''}" data-act="${canWrite?'editPrice':''}" data-id="${p.id}"><td>${esc(p.name)}${pHist(p).length?`<div class="note">змінено ${dmy(pHist(p).pop().d)}</div>`:''}</td><td class="num">${pf(p.priceW)} / ${pf(p.priceM)}</td><td class="num">${a.pr?nf2.format(a.pr):'—'}</td><td class="num">${a.lpd?f0(a.lpd):'—'}<div class="note">${pct(ch)}</div></td><td class="num">${a.npd!=null?f0(a.npd):'—'}<div class="note">${a.lpn?nf1.format(Math.round(a.lpn*10)/10)+' л':''}</div></td></tr>`}).join('');
+    const pl=p.planW!=null&&p.planM!=null;
+    return `<tr class="${canWrite?'click':''}${pl?(p.planQ?' plq':' pln'):''}" data-act="${canWrite?'editPrice':''}" data-id="${p.id}"><td>${esc(p.name)}${pHist(p).length?`<div class="note">змінено ${dmy(pHist(p).pop().d)}</div>`:''}${pl?`<div><span class="pill ${p.planQ?'open':'plan'}">${p.planQ?'під питанням':'план'} → ${pf(p.planW)} / ${pf(p.planM)}</span></div>`:''}</td><td class="num">${pf(p.priceW)} / ${pf(p.priceM)}</td><td class="num">${a.pr?nf2.format(a.pr):'—'}</td><td class="num">${a.lpd?f0(a.lpd):'—'}<div class="note">${pct(ch)}</div></td><td class="num">${a.npd!=null?f0(a.npd):'—'}<div class="note">${a.lpn?nf1.format(Math.round(a.lpn*10)/10)+' л':''}</div></td></tr>`}).join('');
   h+=`<section class="card"><h2>Ціни по точках</h2><p class="note">Ціна: звичайна / мінералізована, грн/л. Середня ціна, літри й покупки — за день, останні 14 днів; % — проти попередніх 14; під покупками — середній об’єм покупки.</p>
+  ${act.some(p=>p.planW!=null)?`<p class="note" style="margin:4px 0 0"><span class="pill plan">план</span> — плануємо підняти ціну, <span class="pill open">під питанням</span> — ще не вирішили. Разом у плані: ${act.filter(p=>p.planW!=null).length} точок.</p>`:''}
   <div class="tbl"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Ціна</th><th class="num">Сер.</th><th class="num">Л/день</th><th class="num">Покупок</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
   return h;
 }
@@ -941,10 +944,14 @@ function editPrice(pid){const p=S.points[pid];if(!p)return;const H=pHist(p);
   const hist=H.length?`<div class="full note">${H.slice().reverse().map(x=>`${dmy(x.d)}: ${pf(x.w0)}/${pf(x.m0)} → ${pf(x.w)}/${pf(x.m)}`).join('<br>')}</div>`:'';
   openSheet('Ціна · '+p.name,'Звичайна / мінералізована, грн за літр',
     fld('priceW','Звичайна',p.priceW??'')+fld('priceM','Мінералізована',p.priceM??'')+fld('pdate','Дата зміни (якщо ціну змінено)','',{type:'date'})+
-    `<p class="note full" style="margin:-4px 0 0">Вкажіть дату, з якої діє нова ціна на автоматі — від неї рахується тест. Якщо тільки виправляєте запис — дату не заповнюйте.</p>`+hist,
+    `<p class="note full" style="margin:-4px 0 0">Вкажіть дату, з якої діє нова ціна на автоматі — від неї рахується тест. Якщо тільки виправляєте запис — дату не заповнюйте.</p>`+
+    `<div class="glabel full" style="margin-top:6px">Плануємо підняти до</div>`+fld('planW','Звичайна (план)',p.planW??'')+fld('planM','Мінералізована (план)',p.planM??'')+
+    `<label class="chk full"><input type="checkbox" name="planQ" ${p.planQ?'checked':''}> Ще під питанням</label><p class="note full" style="margin:-4px 0 0">Щоб прибрати точку з плану — очистіть обидва поля.</p>`+hist,
     async fd=>{const pw=parseNum(String(fd.priceW||'')), pmn=parseNum(String(fd.priceM||''));if(pw===null||pmn===null)return 'Вкажіть обидві ціни';
       const ph=(p.priceHist||[]).slice(); if(fd.pdate&&(pw!==+p.priceW||pmn!==+p.priceM))ph.push({d:fd.pdate,w0:p.priceW??null,m0:p.priceM??null,w:pw,m:pmn});
-      if(!await w(()=>db.doc('points/'+pid).set({...p,priceW:pw,priceM:pmn,priceHist:ph})))return 'Не збереглося';toast('Ціну збережено')});
+      const qw=parseNum(String(fd.planW||'')), qm=parseNum(String(fd.planM||''));const d={...p,priceW:pw,priceM:pmn,priceHist:ph};
+      if(qw!=null&&qm!=null&&!(qw===pw&&qm===pmn)){d.planW=qw;d.planM=qm;if(fd.planQ)d.planQ=true;else delete d.planQ}else{delete d.planW;delete d.planM;delete d.planQ}
+      if(!await w(()=>db.doc('points/'+pid).set(d)))return 'Не збереглося';toast('Ціну збережено')});
 }
 function viewTrend(){
   const all_=monthsList(), Y=(cur||all_[all_.length-1]||'').slice(0,4), ms=all_.filter(m=>m.startsWith(Y)); const cs=ms.map(m=>({m,...calc(m)}));
