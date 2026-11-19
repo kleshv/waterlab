@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261119b">
+<meta name="wl-build" content="20261119c">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -78,6 +78,7 @@ label.chk{display:inline-flex;align-items:center;gap:6px;margin:4px 12px 4px 0;f
 .tarch{text-align:center;margin:4px 0 2px}.tarch-l{background:none;border:0;padding:6px 10px;font:inherit;font-size:12px;color:var(--muted);opacity:.55;cursor:pointer}.tarch-l:hover{opacity:1}.tarch-c{opacity:.85}.tarch-c .trow{padding:6px 0}
 .seg2.umode{display:flex}.seg2.umode button{flex:1;padding:6px 6px;font-size:12px}
 tr.pln td{background:var(--accent-soft)}tr.plq td{background:#fff8e8}.pill.plan{background:var(--accent);color:#fff}
+.mcard .kv.final{border-bottom:0;font-weight:700}.mcard .kv.final span{color:var(--fg)}.mcard .kv.mut b{color:var(--muted);font-weight:500}
 .card.bkdue{border-color:#f0c96b;background:#fffaf0}.bkdue .shead{gap:10px;align-items:center}
 .pbar{height:5px;border-radius:3px;background:var(--line);margin-top:4px;overflow:hidden}.pbar i{display:block;height:100%;background:#2e9e5b}.pbar i.soon{background:#e6a700}.pbar i.over{background:#d23c3c}
 td.hi-warn,td.hi-bad{position:relative}td.hi-warn>*:first-child,td.hi-warn{color:#b86e00}td.hi-bad>*:first-child,td.hi-bad{color:#c4413b;font-weight:600}
@@ -285,12 +286,12 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261119b"></script>
+<script src="config.js?v=20261119c"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261119b"></script>
+<script src="shim.js?v=20261119c"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
-const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday'];
+const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop'];
 const ARTS=[
  {g:'Обслуговування мережі',cat:'ТОіР',items:['Сервіс і заміна фільтрів','Фільтри та мембрани','Ремонт і запчастини','Електрика та монтаж','Інкасація','Пальне','Зв’язок, SIM, CRM','Клінінг','Доставка','Інше']},
  {g:'Податки і банк',cat:'ФА',items:['Єдиний податок','Військовий збір','Банк і РКО','Банк 1,3% еквайринг','Checkbox','Бухгалтер / юрист']},
@@ -1812,7 +1813,8 @@ function balState(){
   let cur_={bank:+op.bank||0,cash:+op.cash||0};
   for(const m of ms){
     const md=S.months[m]||{};
-    const ex={bank:0,cash:0};for(const e of Object.values(S.exp))if(e.month===m){if(e.payer==='Даниїл')ex.cash+=+e.amount||0;else ex.bank+=+e.amount||0}
+    const ex={bank:0,cash:0};for(const e of Object.values(S.exp))if(e.month===m){if(e.payer==='Даниїл')ex.cash+=+e.amount||0;else if(e.payer!=='Сервіс')ex.bank+=+e.amount||0}
+    for(const j of Object.values(S.svc))if(j.type==='pay'&&(j.date||'').slice(0,7)===m)ex.cash+=+j.amount||0; /* роботи Анатолія: нараховані на «Сервіс», гроші йдуть з готівки при виплаті */
     let rent=0,util=0,rentCashOut=0;
     for(const p of Object.values(S.pay)){
       if(p.rentPaid){const d=p.rentDate||monthEnd(p.month);if(inM(d,m)){rent+=(+p.rentPaid)-(+p.rentCash||0);rentCashOut+=(+p.rentCash||0)}}
@@ -1825,7 +1827,8 @@ function balState(){
     for(const k of ['bank','cash']){
       const rev=+(k==='bank'?md.bank:md.cash)||0, ru=k==='bank'?rent+util:0;
       const inc=rev+mv[k].in, out=ex[k]+(k==='bank'?rent+util:0)+pay[k]+mv[k].out;
-      const open=cur_[k], close=Math.round((open+inc-out)*100)/100, f=(S.bal[m+'_'+k]||{}).fact, fact=f==null||f===''?null:+f;
+      const open=cur_[k], close=Math.round((open+inc-out)*100)/100, f=(S.bal[m+'_'+k]||{}).fact;let fact=f==null||f===''?null:+f;
+      if(fact==null&&k==='bank'&&(S.bankop&&Object.keys(S.bankop).length)&&bankCovered(monthEnd(m))){const b=bankBalBefore(addDays(monthEnd(m),1));if(b!=null)fact=b}
       st[k].push({m,k,open,rev,mvIn:mv[k].in,mvOut:mv[k].out,mv:mv[k].list,exp:ex[k],rent:k==='bank'?rent:0,rentF2:k==='bank'?rentCashOut:0,util:k==='bank'?util:0,pay:pay[k],inc,out,close,fact,diff:fact==null?null:Math.round((fact-close)*100)/100,note:(S.bal[m+'_'+k]||{}).note||''});
       cur_[k]=fact??close;
     }
@@ -1833,12 +1836,183 @@ function balState(){
   return st;
 }
 function balSub(r){if(!r)return '';if(r.fact!=null)return 'факт на кінець '+mLabel(r.m).toLowerCase();if(!isClosed(r.m)&&!r.rev)return mLabel(r.m).toLowerCase()+': виручку ще не внесено, лише оплати';return 'розрахунок на кінець '+mLabel(r.m).toLowerCase()}
+/* ---------- рух по рахунку: розрахунок бази + звірка з випискою ПриватБанку ---------- */
+let flowAcc='bank';
+const BANK_FEE_RE=/ОБСЛУГ|ДЕБЕТУВАННЯ|Комiсiя|Комісія/i;
+const isAcq=o=>o.name==='Розрахунки з еквайрингу';
+const bankOps=()=>Object.entries(S.bankop||{}).filter(([,o])=>o.type!=='st').map(([id,o])=>({id,...o}));
+const bankSts=()=>Object.entries(S.bankop||{}).filter(([,o])=>o.type==='st').map(([id,o])=>({id,...o})).sort((a,b)=>(a.to||'').localeCompare(b.to||''));
+const cleanPurp=s=>String(s||'').replace(/\bUA\d{20,}\b/gi,'…').replace(/\b\d{10,}\b/g,'…').slice(0,300);
+/* залишок на рахунку ПЕРЕД днем d за випискою (null — виписка не покриває) */
+function bankBalBefore(d){const st=bankSts().filter(s=>s.anchor&&s.anchorBal!=null).pop();if(!st)return null;
+  const ops=bankOps();let b=+st.anchorBal;
+  if(d>=st.anchor){if(d>addDays(st.to,1))return null;for(const o of ops)if(o.date>=st.anchor&&o.date<d)b+=+o.amt}
+  else{for(const o of ops)if(o.date>=d&&o.date<st.anchor)b-=+o.amt}
+  return Math.round(b*100)/100}
+const bankCovered=d=>bankSts().some(s=>s.from<=d&&d<=(s.last||s.to));
+function salesByDay(m){const D={};for(const s of Object.values(S.sales||{}))if(s.month===m)for(const [dd,v] of Object.entries(s.d||{})){const k=m+'-'+dd,o=D[k]||(D[k]={card:0,cash:0});o.card+=+(v&&v[1])||0;o.cash+=+(v&&v[2])||0}return D}
+/* операції, які мають бути за даними бази */
+function flowBase(m,k){const it=[],add=(date,amt,label,kind,ref)=>{if(Math.abs(amt)>0.004)it.push({date,amt:Math.round(amt*100)/100,label,kind,ref})};
+  const pn=id=>(S.points[id]||{}).name||'';
+  const SD=salesByDay(m), prev=salesByDay(addDays(m+'-01',-1).slice(0,7));
+  if(k==='bank'){
+    for(const [d,v] of Object.entries(SD))if(v.card>0){const cd=addDays(d,1);if(cd.slice(0,7)===m)add(cd,v.card,'Оплати карткою за '+dmy(d),'card',d)}
+    {const ld=addDays(m+'-01',-1);const v=prev[ld];if(v&&v.card>0)add(m+'-01',v.card,'Оплати карткою за '+dmy(ld),'card',ld)}
+    for(const [id,e] of Object.entries(S.exp))if(e.month===m&&e.payer!=='Даниїл'&&e.payer!=='Сервіс'){
+      add(e.date||monthEnd(m),-(+e.amount||0),e.article+(e.cp?' · '+e.cp:e.purpose?' · '+e.purpose:'')+(e.point?' · '+pn(e.point):''),e.auto==='bank13'?'acqfee':/Банк і РКО/.test(e.article)?'fee':'exp','exp/'+id)}
+    for(const [id,p] of Object.entries(S.pay)){
+      if(p.rentPaid){const d=p.rentDate||monthEnd(p.month),a=(+p.rentPaid)-(+p.rentCash||0);if(d.slice(0,7)===m)add(d,-a,'Оренда '+mLabel(p.month).toLowerCase()+' · '+pn(p.point),'rent','pay/'+id)}
+      if(p.utilPaid){const d=p.utilDate||monthEnd(p.month);if(d.slice(0,7)===m)add(d,-(+p.utilPaid),'Комуналка '+mLabel(p.month).toLowerCase()+' · '+pn(p.point),'util','pay/'+id)}
+      if(p.utilPaidW){const d=p.utilDateW||monthEnd(p.month);if(d.slice(0,7)===m)add(d,-(+p.utilPaidW),'Вода (водоканал) '+mLabel(p.month).toLowerCase()+' · '+pn(p.point),'util','pay/'+id)}}
+  }else{
+    for(const [d,v] of Object.entries(SD))if(v.cash>0)add(d,v.cash,'Готівка з автоматів','cashin',d);
+    for(const [id,e] of Object.entries(S.exp))if(e.month===m&&e.payer==='Даниїл')add(e.date||monthEnd(m),-(+e.amount||0),e.article+(e.cp?' · '+e.cp:e.purpose?' · '+e.purpose:'')+(e.point?' · '+pn(e.point):''),'exp','exp/'+id);
+    for(const [id,j] of Object.entries(S.svc))if(j.type==='pay'&&(j.date||'').slice(0,7)===m&&+j.amount)add(j.date,-(+j.amount),'Виплата Анатолію','svcpay','svc/'+id);
+  }
+  for(const [id,x] of Object.entries(S.mov))if((x.date||'').slice(0,7)===m){const a=+x.amount||0;
+    if(x.to===k)add(x.date,a,(ACC[x.from]||x.from)+' → '+(ACC[k]||k)+(x.note?' · '+x.note:''),'mov','mov/'+id);
+    if(x.from===k)add(x.date,-a,(ACC[k]||k)+' → '+(ACC[x.to]||x.to)+(x.note?' · '+x.note:''),'mov','mov/'+id)}
+  return it.sort((a,b)=>a.date.localeCompare(b.date)||b.amt-a.amt);
+}
+/* звірка: рядки «база ↔ банк» */
+function flowRows(m){
+  const base=flowBase(m,'bank'), ops=bankOps().filter(o=>o.date.slice(0,7)===m);
+  const rows=[];
+  // 1) картки: еквайринг групуємо за днем продажу (дата зарахування − 1)
+  const acq={};for(const o of ops)if(isAcq(o)){const mm=String(o.purp).match(/Вiдшк ([\d.]+)грн\. Ком бан ([\d.]+)грн/);const sd=addDays(o.date,-1),g=acq[sd]||(acq[sd]={gross:0,net:0,fee:0,n:0,date:o.date});g.net+=+o.amt;g.n++;if(mm){g.gross+=+mm[1]+ +mm[2];g.fee+=+mm[2]}else g.gross+=+o.amt}
+  const used=new Set();
+  for(const b of base.filter(x=>x.kind==='card')){const g=acq[b.ref];if(g){used.add(b.ref);const df=Math.round((g.gross-b.amt)*100)/100;const okd=Math.abs(df)<=Math.max(2,b.amt*0.03);rows.push({date:b.date,label:b.label,base:b.amt,bank:Math.round(g.net*100)/100,st:okd?'ok':'diff',card:1,gross:g.gross,note:`банк: ${nf2.format(g.gross)} − комісія ${nf2.format(g.fee)}`+(Math.abs(df)>=0.5?` · різниця з базою ${nf2.format(df)}${okd?' (межа дня)':''}`:'')})}
+    else rows.push({date:b.date,label:b.label,base:b.amt,bank:null,st:bankCovered(b.date)?'base':'wait'})}
+  for(const [sd,g] of Object.entries(acq))if(!used.has(sd))rows.push({date:g.date,label:'Еквайринг за '+dmy(sd),base:null,bank:Math.round(g.net*100)/100,st:'bank',note:'у базі немає продажів карткою за цей день'});
+  // 2) комісія еквайрингу (утримана банком) ↔ авто-витрата «Банк 1,3%»
+  const feeAcq=Object.values(acq).reduce((s,g)=>s+g.fee,0);
+  for(const b of base.filter(x=>x.kind==='acqfee'))rows.push({date:b.date,label:b.label,base:b.amt,bank:null,st:'info',note:`банк утримує з кожного зарахування · у виписці за місяць ${nf2.format(feeAcq)}`});
+  // 3) списання/надходження: точна сума ±7 днів
+  const bo=ops.filter(o=>!isAcq(o)).map(o=>({...o,used:false}));
+  const feeOps=bo.filter(o=>o.amt<0&&BANK_FEE_RE.test(o.name+' '+o.purp)&&!/КЛЕЩИНСЬК/i.test(o.name));
+  const dd=(a,b)=>Math.abs((new Date(a)-new Date(b))/864e5);
+  for(const b of base.filter(x=>!['card','acqfee'].includes(x.kind))){
+    let best=null;for(const o of bo)if(!o.used&&Math.abs(+o.amt-b.amt)<0.011&&dd(o.date,b.date)<=7&&(!best||dd(o.date,b.date)<dd(best.date,b.date)))best=o;
+    if(best){best.used=true;rows.push({date:best.date,label:b.label,base:b.amt,bank:+best.amt,st:'ok',note:best.date!==b.date?'у базі '+dmy(b.date):'',ref:b.ref})}
+    else if(b.kind==='fee'){const fs=feeOps.filter(o=>!o.used),sum=Math.round(fs.reduce((s,o)=>s+(+o.amt),0)*100)/100;
+      if(fs.length&&Math.abs(sum-b.amt)<=1){fs.forEach(o=>o.used=true);rows.push({date:b.date,label:b.label,base:b.amt,bank:sum,st:'ok',note:fs.length+' комісій банку за місяць',ref:b.ref})}
+      else rows.push({date:b.date,label:b.label,base:b.amt,bank:null,st:bankCovered(b.date)?'base':'wait',ref:b.ref})}
+    else rows.push({date:b.date,label:b.label,base:b.amt,bank:null,st:bankCovered(b.date)?'base':'wait',ref:b.ref})}
+  // 3б) одна оплата банком за кілька точок (оренда/комуналка одному отримувачу)
+  {const un=()=>rows.filter(x=>x.st==='base'&&/^pay\//.test(x.ref||''));
+   for(const o of bo.filter(o=>!o.used&&o.amt<0)){const U=un();let hit=null;
+     for(let i=0;i<U.length&&!hit;i++)for(let j=i+1;j<U.length&&!hit;j++){if(Math.abs(U[i].base+U[j].base-o.amt)<0.011&&dd(U[i].date,o.date)<=7&&dd(U[j].date,o.date)<=7)hit=[U[i],U[j]];
+       for(let k=j+1;k<U.length&&!hit;k++)if(Math.abs(U[i].base+U[j].base+U[k].base-o.amt)<0.011&&dd(U[i].date,o.date)<=7)hit=[U[i],U[j],U[k]]}
+     if(hit){o.used=true;hit.forEach((x,n)=>{x.st='ok';x.bank=n?null:+o.amt;x.note='одним платежем '+nf2.format(o.amt)+' · '+(o.name||'')})}}}
+  // 4) групи: перекази собі (у базі часто однією сумою за місяць) і дрібні комісії банку
+  {const own=bo.filter(o=>!o.used&&/КЛЕЩИНСЬК/i.test(o.name)),ownSum=Math.round(own.reduce((s,o)=>s+(+o.amt),0)*100)/100;
+   const bm=rows.filter(x=>x.st==='base'&&String(x.ref||'').startsWith('mov/')&&x.base<0),bmSum=Math.round(bm.reduce((s,x)=>s+x.base,0)*100)/100;
+   if(own.length&&bm.length){own.forEach(o=>o.used=true);const eq=Math.abs(ownSum-bmSum)<=1;
+     bm.forEach((x,n)=>{x.st=eq?'ok':'diff';x.bank=n?null:ownSum;x.note=own.length+' переказів собі у виписці: '+own.map(o=>dmy(o.date)+' '+nf2.format(o.amt)).join(', ')+(eq?'':' · різниця '+nf2.format(ownSum-bmSum))})}}
+  {const fs=bo.filter(o=>!o.used&&o.amt<0&&BANK_FEE_RE.test(o.name+' '+o.purp)),sum=Math.round(fs.reduce((s,o)=>s+(+o.amt),0)*100)/100;
+   if(fs.length){fs.forEach(o=>o.used=true);rows.push({date:fs[fs.length-1].date,label:'Комісії банку · '+fs.length+' операцій',base:null,bank:sum,st:'bank',feeGroup:m,note:'за платежі й обслуговування рахунку'})}}
+  for(const o of bo)if(!o.used)rows.push({date:o.date,label:(o.name||'')+(o.purp?' · '+o.purp:''),base:null,bank:+o.amt,st:'bank',op:o.id,own:/КЛЕЩИНСЬК/i.test(o.name),fee:false});
+  return rows.sort((a,b)=>a.date.localeCompare(b.date)||(b.base??b.bank)-(a.base??a.bank));
+}
+const FST={ok:['ok','✓ збігається'],diff:['open','≠ сума'],base:['bad','немає у виписці'],bank:['bad','немає в базі'],wait:['','виписки ще немає'],info:['','утримано банком']};
+function viewFlow(m){
+  if(!m)return '';
+  const st=balState(), r=(st[flowAcc]||[]).find(x=>x.m===m);
+  const hasSt=bankSts().length>0, sts=bankSts(), lastSt=sts[sts.length-1];
+  let h=`<section class="card"><div class="shead"><h2>Рух по рахунку · ${mLabel(m)}</h2>
+    ${flowAcc==='bank'&&canWrite?`<label class="btn sm pri" style="cursor:pointer">Завантажити виписку<input type="file" accept=".xls,.xlsx" data-bankup="1" hidden></label>`:''}</div>
+  <div class="seg2 umode" role="tablist" style="margin:2px 0 10px">${[['bank',ACC.bank],['cash',ACC.cash]].map(([x,l])=>`<button type="button" class="${flowAcc===x?'on':''}" data-act="setFlowAcc" data-id="${x}">${l}</button>`).join('')}</div>`;
+  if(!r){h+=`<p class="note">Рух рахується з ${balStartTxt()}.</p></section>`;return h}
+  if(flowAcc==='bank'){
+    const end=monthEnd(m), td=todayISO2(), upTo=lastSt&&lastSt.to<end?lastSt.to:end, bEnd=hasSt?bankBalBefore(addDays(upTo,1)):null;
+    const rows=flowRows(m);let run=r.open;const cnt={ok:0,bad:0};
+    for(const x of rows){if(x.base!=null)run+=x.base;x.run=Math.round(run*100)/100;if(x.st==='ok')cnt.ok++;if(['base','bank','diff'].includes(x.st))cnt.bad++}
+    const baseAt=d=>{let b=r.open;for(const x of rows)if(x.base!=null&&x.date<=d)b+=x.base;return Math.round(b*100)/100};
+    const bAt=hasSt&&upTo>=m+'-01'?baseAt(upTo):null, dif=bEnd!=null&&bAt!=null?Math.round((bEnd-bAt)*100)/100:null;
+    h+=`<div class="tiles t3"><div class="tile"><div class="l">За базою${upTo<end?' на '+dmy(upTo):' на кінець місяця'}</div><div class="v">${f0(bAt??r.close)}</div><div class="s">на початок ${f0(r.open)}</div></div>
+      <div class="tile"><div class="l">За випискою${bEnd!=null?' на '+dmy(upTo):''}</div><div class="v">${bEnd!=null?f0(bEnd):'—'}</div><div class="s">${lastSt?'виписка '+dmy(lastSt.from)+'–'+dmy(lastSt.to):'виписку не завантажено'}</div></div>
+      <div class="tile ${dif!=null&&Math.abs(dif)>1?'warn':''}"><div class="l">Різниця</div><div class="v">${dif!=null?nf2.format(dif):'—'}</div><div class="s">${cnt.ok} збігається · ${cnt.bad} потребує уваги</div></div></div>`;
+    if(!hasSt)h+=`<p class="note">Завантажте виписку ПриватБанку (.xls) — кожна операція позначиться: збігається з базою, є лише в банку чи лише в базі. Номери рахунків і РНОКПП з виписки не зберігаються.</p>`;
+    {const C=rows.filter(x=>x.card),cb=C.reduce((s,x)=>s+x.base,0),cg=C.reduce((s,x)=>s+x.gross,0);if(C.length)h+=`<p class="note" style="margin:8px 0 0">Оплати карткою за ${C.length} дн.: у базі ${f0(cb)}, банк зарахував ${f0(cg)} разом із комісією — різниця ${nf2.format(cg-cb)}${Math.abs(cg-cb)<=Math.max(5,cb*0.005)?' ✓':''}.</p>`}
+    h+=`<div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Дата · операція</th><th class="num">База</th><th class="num">Банк</th><th class="num hide-sm">Залишок</th></tr></thead><tbody>`;
+    for(const x of rows){const [c,l]=FST[x.st]||['',''];
+      const act=x.feeGroup&&canWrite?`<button class="btn sm" type="button" data-act="flowAddFees" data-id="${x.feeGroup}">+ Внести як «Банк і РКО»</button>`:x.st==='bank'&&canWrite&&!x.fee&&!x.own&&x.bank<0?`<button class="btn sm" type="button" data-act="flowAddExp" data-id="${esc(x.op)}">+ Внести витрату</button>`:x.st==='bank'&&canWrite&&x.own?`<button class="btn sm" type="button" data-act="flowAddMov" data-id="${esc(x.op)}">+ Рух коштів</button>`:'';
+      h+=`<tr class="${x.ref&&canWrite?'click':''} fl-${x.st}" ${x.ref&&canWrite?`data-act="flowOpen" data-id="${esc(x.ref)}"`:''}><td><span class="mut">${dmy(x.date)}</span> ${esc(x.label)}<div><span class="pill ${c}">${l}</span>${x.note?` <span class="note">${esc(x.note)}</span>`:''}</div>${act?`<div style="margin-top:4px">${act}</div>`:''}</td>
+        <td class="num">${x.base!=null?nf2.format(x.base):'<span class="mut">—</span>'}</td><td class="num">${x.bank!=null?nf2.format(x.bank):'<span class="mut">—</span>'}</td><td class="num hide-sm">${x.run!=null?f0(x.run):''}</td></tr>`}
+    h+=`</tbody></table></div><p class="note">Оплати карткою банк зараховує наступного дня мінус комісія еквайрингу — тому «Банк» трохи менший за «База». «Немає в базі» — внесіть витрату або рух коштів кнопкою в рядку. «Немає у виписці» — перевірте дату чи суму в базі.</p></section>`;
+  }else{
+    const rows=flowBase(m,'cash');let run=r.open;
+    h+=`<div class="tiles t3"><div class="tile"><div class="l">На початок</div><div class="v">${f0(r.open)}</div></div><div class="tile"><div class="l">Надійшло / списано</div><div class="v">+${f0(r.inc)} / −${f0(r.out)}</div></div><div class="tile main"><div class="l">На кінець за базою</div><div class="v">${f0(r.close)}</div><div class="s">${r.fact!=null?'факт '+f0(r.fact)+' · різниця '+nf2.format(r.diff):'факт не внесено'}</div></div></div>
+    <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Дата · операція</th><th class="num">Сума</th><th class="num">Залишок</th></tr></thead><tbody>`;
+    for(const x of rows){run+=x.amt;h+=`<tr class="${x.ref&&x.ref.includes('/')&&canWrite?'click':''}" ${x.ref&&x.ref.includes('/')&&canWrite?`data-act="flowOpen" data-id="${esc(x.ref)}"`:''}><td><span class="mut">${dmy(x.date)}</span> ${esc(x.label)}</td><td class="num">${nf2.format(x.amt)}</td><td class="num">${f0(run)}</td></tr>`}
+    h+=`</tbody></table></div><p class="note">Готівку банк не бачить — звіряйте з фактом у касі: внесіть фактичний залишок на кінець місяця в таблиці «${ACC.cash}» нижче.</p></section>`;
+  }
+  return h;
+}
+function setFlowAcc(v){flowAcc=v;render()}
+function flowOpen(ref){const [c,id]=String(ref).split('/');if(c==='exp')editExp(id);else if(c==='mov')editMov(id);else if(c==='pay'){const p=S.pay[id];if(p){cur=p.month;tab='rent';render()}}else if(c==='svc')editJob(id)}
+function flowAddExp(opId){const o=(S.bankop||{})[opId];if(!o)return;const m=o.date.slice(0,7);
+  if(!S.months[m]){toast('Місяця '+mLabel(m).toLowerCase()+' ще немає');return}
+  const pre={payer:'Влад',amount:Math.abs(+o.amt),date:o.date,purpose:o.purp||'',cp:o.name||'',month:m};
+  const id=db.collection('exp').doc().id;openSheet('Нова витрата з виписки',dmy(o.date)+' · '+(o.name||''),expForm(pre),saveExp(id,{month:m}));wireStk()}
+function flowAddFees(m){const r=flowRows(m).find(x=>x.feeGroup);if(!r)return;const id=db.collection('exp').doc().id;
+  openSheet('Комісії банку',mLabel(m),expForm({payer:'Влад',article:'Банк і РКО',amount:Math.abs(r.bank),date:r.date,purpose:'Комісії банку за '+mLabel(m).toLowerCase()+' (з виписки)'}),saveExp(id,{month:m}));wireStk()}
+function flowAddMov(opId){const o=(S.bankop||{})[opId];if(!o)return;const id=db.collection('mov').doc().id;
+  openSheet('Рух коштів з виписки',dmy(o.date),movForm({date:o.date,amount:Math.abs(+o.amt),from:o.amt<0?'bank':'vlad',to:o.amt<0?'vlad':'bank',note:cleanPurp(o.purp).slice(0,80)}),saveMov(id))}
+async function bankUpload(input){
+  const f=input.files&&input.files[0];if(!f)return;const sb=window.__sb;if(!sb){toast('Недоступно в цьому перегляді');return}
+  try{toast('Читаю виписку…');const rows=await readRows(f);await bankSave(parseBank(rows))}
+  catch(e){toast('Не вдалося: '+(e.message||e))}
+  input.value='';render()}
+async function bankSave(p){const sb=window.__sb;
+  {
+    const from=p.ops.reduce((a,o)=>o.date<a?o.date:a,'9999'), to=p.to||p.ops.reduce((a,o)=>o.date>a?o.date:a,'');
+    const pf=p.from||from, start=balStart()+'-01', keepFrom=pf>start?pf:start;
+    let anchorBal=null;if(p.open!=null){anchorBal=+p.open;for(const o of p.ops)if(o.date>=pf&&o.date<keepFrom)anchorBal+=o.amt;anchorBal=Math.round(anchorBal*100)/100}
+    const keep=p.ops.filter(o=>o.date>=keepFrom);
+    const hid=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0;return h.toString(36)};
+    const seen={}, docs=keep.map(o=>{const k=o.ref||(o.date+'|'+o.time+'|'+o.amt+'|'+o.purp);let id='b'+o.date.replace(/-/g,'')+'_'+hid(k);seen[id]=(seen[id]||0)+1;if(seen[id]>1)id+='_'+seen[id];
+      return {col:'bankop',id,data:{date:o.date,time:o.time||'',amt:Math.round(o.amt*100)/100,name:String(o.name||'').slice(0,120),purp:cleanPurp(o.purp)}}});
+    for(let i=0;i<docs.length;i+=200){const {error}=await sb.from('docs').upsert(docs.slice(i,i+200));if(error)throw error}
+    const stId='st_'+pf.replace(/-/g,'')+'_'+to.replace(/-/g,'');
+    const stDoc={type:'st',from:pf,to,last:p.ops.reduce((a,o)=>o.date>a?o.date:a,''),open:p.open,close:p.close,anchor:keepFrom,anchorBal,n:keep.length,at:new Date().toISOString(),by:window.WL_NAME||''};
+    await w(()=>db.doc('bankop/'+stId).set(stDoc));
+    S.bankop={...(S.bankop||{})};for(const d of docs)S.bankop[d.id]=d.data;S.bankop[stId]=stDoc;
+    toast('Виписку завантажено: '+keep.length+' операцій з '+dmy(keepFrom))}}
+document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.bankup)bankUpload(t)});
+/* «Де гроші й де прибуток» — як у фільтрах */
+function moneyCard(){
+  const st=balState(), op=balOpen()||{bank:0,cash:0}, last=k=>(st[k]||[]).slice(-1)[0];
+  const sts=bankSts(), ls=sts[sts.length-1], bFact=ls?bankBalBefore(addDays(ls.to,1)):null;
+  const lb=last('bank'), lc=last('cash');
+  const bank=bFact!=null?bFact:(lb?(lb.fact??lb.close):+op.bank||0), cash=lc?(lc.fact??lc.close):+op.cash||0;
+  const ms=monthsList().filter(m=>m>=balStart());
+  const profit=ms.reduce((s,m)=>s+calc(m).net,0);
+  let wd=0,inj=0;for(const x of Object.values(S.mov))if((x.date||'')>=balStart()){const a=+x.amount||0;const own=['bank','cash'];if(own.includes(x.from)&&!own.includes(x.to))wd+=a;if(!own.includes(x.from)&&own.includes(x.to))inj+=a}
+  const JA=jobsAll(), ana=Math.max(0,JA.reduce((a,j)=>a+(j.type==='pay'?-(+j.amount||0):j.st==='new'?0:(+j.amount||0)),0));
+  let unpaid=0;const ps=balStart();for(const mm of monthsList())if(mm>=ps)for(const p of pointsList()){if(!S.pm[mm+'_'+p.id])continue;const x=payRow(mm,p.id);unpaid+=Math.max(0,x.rentDue-(x.rentPaid||0))+Math.max(0,x.utilDue-(x.utilPaid||0))}
+  const money=bank+cash, obl=ana+unpaid, start=(+op.bank||0)+(+op.cash||0), gap=Math.round((money-(start+profit-wd+inj))*100)/100;
+  const kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`;
+  return `<section class="card info mcard"><div class="shead"><h2>Де гроші й де прибуток</h2><span class="note">з ${balStartTxt()}</span></div>
+  <div class="tiles t3"><div class="tile"><div class="l">${ACC.bank}</div><div class="v">${f0(bank)}</div><div class="s">${bFact!=null?'за випискою на '+dmy(ls.to):'розрахунок бази'}</div></div>
+    <div class="tile"><div class="l">${ACC.cash}</div><div class="v">${f0(cash)}</div><div class="s">${lc&&lc.fact!=null?'факт '+mLabel(lc.m).toLowerCase():'розрахунок бази'}</div></div>
+    <div class="tile main"><div class="l">Гроші разом</div><div class="v">${f0(money)}</div><div class="s">вільні після боргів: ${f0(money-obl)}</div></div></div>
+  <div class="cols2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:12px">
+   <div><div class="glabel">Звідки ці гроші</div>
+    ${kv('Залишок на '+balStartTxt(),f0(start))}${kv('+ Прибуток з '+balStartTxt(),f0(profit))}${kv('− Виведено партнерам',f0(-wd))}${inj?kv('+ Внесено',f0(inj)):''}
+    ${kv('± Різниця в часі оплат',f0(gap),'mut')}${kv('= Гроші разом',f0(money),'final')}
+    <p class="note" style="margin:4px 0 0">«Різниця в часі оплат» — рахунки, нараховані в одному місяці, а сплачені в іншому, і операції, які ще не внесено в базу.</p></div>
+   <div><div class="glabel">Кому ми винні</div>
+    ${kv('Анатолію за роботи',f0(ana))}${kv('Оренда й комуналка з '+balStartTxt()+' — не сплачено',f0(unpaid))}${kv('= Разом боргів',f0(obl),'final')}
+    ${kv('Вільні гроші',f0(money-obl),'final')}</div></div></section>`;
+}
+
 function viewBal(){
   const st=balState(), op=balOpen(), Y=(cur||'').slice(0,4)||String(new Date().getFullYear());
   const last=k=>{const a=st[k];return a.filter(r=>r.fact!=null).pop()||a.filter(r=>r.rev>0).pop()||a[a.length-1]||null};
   const endV=(r,k)=>r?(r.fact??r.close):(op?+op[k]||0:0);
   const lb=last('bank'), lc=last('cash');
-  let h=`<section class="card"><div class="shead"><h2>Баланс і рух коштів</h2>${canWrite?`<button class="btn sm pri" data-act="addMov" type="button">+ Рух коштів</button>`:''}</div>
+  let h=moneyCard()+viewFlow(cur||monthsList().slice(-1)[0])+`<section class="card"><div class="shead"><h2>Баланс по місяцях</h2>${canWrite?`<button class="btn sm pri" data-act="addMov" type="button">+ Рух коштів</button>`:''}</div>
   ${!op?`<div class="calc">Не внесено залишки на ${balStartTxt()} — розрахунок іде від нуля.${canWrite?` <button class="btn sm" data-act="editBalOpen" type="button">Внести залишки</button>`:''}</div>`:''}
   <div class="tiles t3"><div class="tile"><div class="l">${ACC.bank}</div><div class="v">${f0(endV(lb,'bank'))}</div><div class="s">${balSub(lb)}</div></div>
     <div class="tile"><div class="l">${ACC.cash}</div><div class="v">${f0(endV(lc,'cash'))}</div><div class="s">${balSub(lc)}</div></div>
@@ -1895,12 +2069,14 @@ function parseBank(rows){
   if(hi<0)throw new Error('Не схоже на виписку ПриватБанку: немає колонок «Дата операції» і «Сума»');
   const H=rows[hi].map(c=>String(c||'').trim()), ci=n=>H.indexOf(n);
   const cD=ci('Дата операції'),cS=ci('Сума'),cP=ci('Призначення платежу'),cN=ci('Назва контрагента');
-  let open=null;for(const r of rows.slice(0,hi))for(const c of r||[]){const m=String(c||'').match(/Вхідний залишок:\s*(-?[\d\s.,]+)/);if(m)open=nnum(m[1])}
+  let open=null,close=null,from=null,to=null;for(const r of rows.slice(0,hi))for(const c of r||[]){const t=String(c||'');let m=t.match(/Вхідний залишок:\s*(-?[\d\s.,]+)/);if(m)open=nnum(m[1]);m=t.match(/Вихідний залишок:\s*(-?[\d\s.,]+)/);if(m)close=nnum(m[1]);
+    m=t.match(/з\s*(\d\d)\.(\d\d)\.(\d{4})\s*по\s*(\d\d)\.(\d\d)\.(\d{4})/);if(m){from=`${m[3]}-${m[2]}-${m[1]}`;to=`${m[6]}-${m[5]}-${m[4]}`}}
+  const cT=ci('Час операції'),cR=ci('Референс');
   const ops=[];
   for(const r of rows.slice(hi+1)){if(!r||!r[cD])continue;const d=String(r[cD]).match(/(\d\d)\.(\d\d)\.(\d{4})/);if(!d)continue;
-    ops.push({date:`${d[3]}-${d[2]}-${d[1]}`,amt:nnum(r[cS]),purp:String(r[cP]||''),name:String(r[cN]||'')})}
+    ops.push({date:`${d[3]}-${d[2]}-${d[1]}`,amt:nnum(r[cS]),purp:String(r[cP]||''),name:String(r[cN]||''),time:cT>=0?String(r[cT]||''):'',ref:cR>=0?String(r[cR]||''):''})}
   if(!ops.length)throw new Error('У виписці немає операцій');
-  return {open,ops};
+  return {open,close,from,to,ops};
 }
 function parseCrm(rows){
   const hi=rows.findIndex(r=>r&&r.includes('Тип оплати')&&r.includes('Торгівельна точка'));
@@ -2272,7 +2448,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({setUtilMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({setFlowAcc,flowOpen,flowAddFees,flowAddExp,flowAddMov,setUtilMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
