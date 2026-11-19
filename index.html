@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261119j">
+<meta name="wl-build" content="20261120a">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261119j"></script>
+<script src="config.js?v=20261120a"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261119j"></script>
+<script src="shim.js?v=20261120a"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop'];
@@ -1073,6 +1073,7 @@ function expForm(e){
     `<label class="full amount">Сума, грн<input id="f_amount" name="amount" value="${esc(e.amount??'')}" inputmode="decimal" autocomplete="off" placeholder="0"></label>`+
     `<label class="full">Призначення платежу<input id="f_purpose" name="purpose" value="${esc(e.purpose||'')}" autocomplete="off" placeholder="напр.: мембрани Vatron 6 шт · ремонт купюроприймача · пальне 40 л"></label>`+
     `<div class="full stkbox" style="display:${e.article===STK_ART?'grid':'none'};grid-template-columns:1fr 1fr;gap:8px"><div class="glabel" style="grid-column:1/-1">На склад (регламент)</div>${fld('memQ','Мембрани, к-т (3 шт)',e.memQ??'')}${fld('kitQ','Фільтри, комплектів',e.kitQ??'')}</div>`+
+    (credits().length||e.credit?`<div class="full crBox" style="display:${e.credit||CR_ARTS.includes(e.article)?'block':'none'}">${sel('credit','Це платіж по кредиту / розстрочці?',e.credit||'',[['','Ні']].concat(credits().map(c=>[c.id,c.name+' · залишок '+f0(crLeft(c.id))])))}</div>`:'')+
     sel('point','Точка',e.point||'',popts)+
     `<label class="chk full cpTog" style="font-size:13px;color:var(--muted)"><input type="checkbox" name="cpOn" ${e.cp?'checked':''}> Вказати контрагента</label>`+
     `<div class="full cpBox" style="display:${e.cp?'block':'none'}"><div class="glabel">Контрагент</div><div class="chips cpChips">${cpChips(e.point||'',e.cp||'')}</div>`+
@@ -1095,6 +1096,7 @@ function saveExp(id,base){return async fd=>{
   const known=artCat(fd.article);
   const doc={...base,by:base.by||me||'',month,date:fd.date||'',article:fd.article,amount:a,cat:known||base.cat||'ТОіР',payer:payerOf({payer:fd.payer||'Даниїл'}),paidFrom:fd.payer==='Сервіс'?undefined:(fd.src||(fd.payer==='Даниїл'?'cash':'bank')),point:fd.point||'',purpose:(fd.purpose||'').trim(),note:fd.note||'',recurring:known?REC.has(fd.article):!!base.recurring};
   const cpv=fd.cpOn?(fd.cp==='__other'||!fd.cp?(fd.cpOther||'').trim():fd.cp):'';if(cpv)doc.cp=cpv;else delete doc.cp;
+  if(fd.credit&&CR_ARTS.includes(fd.article))doc.credit=fd.credit;else delete doc.credit;
   if(fd.article===STK_ART){const mq=parseNum(String(fd.memQ||''))||0,kq=parseNum(String(fd.kitQ||''))||0;if(mq)doc.memQ=mq;else delete doc.memQ;if(kq)doc.kitQ=kq;else delete doc.kitQ}else{delete doc.memQ;delete doc.kitQ}
   ls.set('wl_payer',doc.payer);
   if(!await w(()=>db.doc('exp/'+id).set(doc)))return 'Не збереглося';toast('Збережено')}}
@@ -1103,7 +1105,7 @@ function wireStk(){const f=document.getElementById('sf');if(!f)return;
   f.addEventListener('change',e=>{const n=e.target.name;
     if(n==='payer'&&!f.dataset.srcTouched){const v=e.target.value==='Даниїл'?'cash':'bank';const r=f.querySelector(`input[name=src][value=${v}]`);if(r)r.checked=true}
     if(n==='src')f.dataset.srcTouched='1';
-    if(n==='article'){const b=f.querySelector('.stkbox');if(b)b.style.display=e.target.value===STK_ART?'grid':'none'}
+    if(n==='article'){const b=f.querySelector('.stkbox');if(b)b.style.display=e.target.value===STK_ART?'grid':'none';const c=f.querySelector('.crBox');if(c)c.style.display=CR_ARTS.includes(e.target.value)?'block':'none'}
     if(n==='cpOn'){const b=f.querySelector('.cpBox');if(b)b.style.display=e.target.checked?'block':'none';if(e.target.checked&&!f.querySelector('input[name=cp]:checked')){const L=cpList(f.querySelector('[name=point]').value);if(!L.length){const r=f.querySelector('input[name=cp][value=__other]');if(r)r.checked=true;oth()}}}
     if(n==='point'){const c=f.querySelector('.cpChips');if(c){c.innerHTML=cpChips(e.target.value,'');oth()}}
     if(n==='cp')oth()})}
@@ -1771,6 +1773,10 @@ function viewInv(){
   <tfoot><tr class="final"><td>Разом</td><td class="num">${fUsd(usd)}<div class="note">${f0(hrn)}&nbsp;грн</div></td></tr></tfoot></table></div>
   </section>`;
 }
+const CR_ARTS=['Обладнання','Нова точка / будівництво'];
+const credits=()=>((S.meta||{}).invloc||{}).credits||[];
+const crPaid=id=>Object.values(S.exp).filter(e=>e.credit===id).reduce((s,e)=>s+(+e.amount||0),0);
+const crLeft=id=>{const c=credits().find(x=>x.id===id);return c?Math.max(0,Math.round((+c.total-crPaid(id))*100)/100):0};
 const ICAT=[['A','Автомати'],['R','Ремонт і облаштування'],['E','Підключення й електрика'],['O','Інше']];
 const invLoc=()=>(S.meta||{}).invloc||{pts:{},gen:{}};
 function viewInvLoc(){const L=invLoc(), P=L.pts||{}, sum=o=>ICAT.reduce((s,[k])=>s+(+((o||{})[k])||0),0);
@@ -1779,13 +1785,14 @@ function viewInvLoc(){const L=invLoc(), P=L.pts||{}, sum=o=>ICAT.reduce((s,[k])=
   const tot={};for(const [k] of ICAT)tot[k]=ids.reduce((s,id)=>s+(+P[id][k]||0),0)+(+(L.gen||{})[k]||0);
   const all=sum(tot), invH=invList().reduce((s,i)=>s+(+i.hrn||0),0);
   const cell=(o,k)=>`<td class="num hide-sm">${+o[k]?f0(o[k]):'<span class="mut">—</span>'}</td>`;
-  const row=(id,o,nm,sub)=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editInvLoc':''}" data-id="${id}"><td>${nm}${o.est!==false?' <span class="pill open">оцінка</span>':''}${sub?`<div class="note">${sub}</div>`:''}${o.note?`<div class="note">${esc(o.note)}</div>`:''}</td>${ICAT.map(([k])=>cell(o,k)).join('')}<td class="num"><b>${f0(sum(o))}</b>${all?`<div class="note">${Math.round(sum(o)/all*1000)/10}%</div>`:''}</td></tr>`;
-  const body=ids.map(id=>{const p=known[id];return row(id,P[id],esc(p?p.name:(P[id].name||id)),p?(+p.dep>0?'страховий платіж '+f0(p.dep)+((p.depSt||'paid')==='paid'?'':' · '+DEPST[p.depSt].toLowerCase()):''):(P[id].note?'':'ще не в списку точок'))}).join('')+row('_gen',L.gen||{},'<i>Загальне, не розподілено по точках</i>','склад, інструмент, транспорт, перші закупівлі, рахунки без адреси');
-  const dep=depList().filter(p=>(p.depSt||'paid')==='paid').reduce((s,p)=>s+(+p.dep||0),0);
+  const row=(id,o,nm,sub)=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editInvLoc':''}" data-id="${id}"><td>${nm}${o.est!==false?' <span class="pill open">оцінка</span>':''}${sub?`<div class="note">${sub}</div>`:''}${o.note?`<div class="note">${esc(o.note)}</div>`:''}${crNote(id)?`<div class="note">${crNote(id)}</div>`:''}</td>${ICAT.map(([k])=>cell(o,k)).join('')}<td class="num"><b>${f0(sum(o))}</b>${all?`<div class="note">${Math.round(sum(o)/all*1000)/10}%</div>`:''}</td></tr>`;
+  const crNote=id=>credits().filter(c=>c.point===id).map(c=>`${esc(c.name)}: ${f0(c.total)}, сплачено ${f0(crPaid(c.id))}, залишок ${f0(crLeft(c.id))}`).join('; ');
+  const body=ids.map(id=>{const p=known[id];return row(id,P[id],esc(p?p.name:(P[id].name||id)),p?'':(P[id].note?'':'ще не в списку точок'))}).join('')+row('_gen',L.gen||{},'<i>Загальне, не розподілено по точках</i>','склад, інструмент, транспорт, перші закупівлі, рахунки без адреси');
+  const crL=credits().reduce((s,c)=>s+crLeft(c.id),0);
   return `<section class="card"><div class="shead"><h2>Куди вкладено</h2><span class="note">грн</span></div>
   <div class="tiles t3"><div class="tile main"><div class="l">Вкладено в точки й обладнання</div><div class="v">${f0(all)}</div><div class="s">з них по точках ${f0(all-sum(L.gen||{}))}</div></div>
    <div class="tile"><div class="l">Внески інвесторів</div><div class="v">${f0(invH)}</div><div class="s">різниця ${f0(all-invH)} — докладено з прибутку / власних</div></div>
-   <div class="tile"><div class="l">Страхові платежі</div><div class="v">${f0(dep)}</div><div class="s">у орендодавців, повернуться</div></div></div>
+   <div class="tile"><div class="l">Ще не сплачено (кредити)</div><div class="v">${f0(crL)}</div><div class="s">входить у «вкладено», борг — у балансі</div></div></div>
   <div class="tiles t3" style="margin-top:8px">${ICAT.map(([k,l])=>`<div class="tile"><div class="l">${l}</div><div class="v">${f0(tot[k])}</div><div class="s">${all?Math.round(tot[k]/all*100):0}%</div></div>`).join('')}</div>
   <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Точка</th>${ICAT.map(([,l])=>`<th class="num hide-sm">${l}</th>`).join('')}<th class="num">Разом</th></tr></thead><tbody>${body}</tbody>
   <tfoot><tr class="final"><td>Разом</td>${ICAT.map(([k])=>`<td class="num hide-sm">${f0(tot[k])}</td>`).join('')}<td class="num">${f0(all)}</td></tr></tfoot></table></div>
@@ -2078,7 +2085,8 @@ function moneyCard(){
   const vcard=Object.values(S.exp).filter(e=>expSrc(e)==='card'&&e.month>=balStart()).reduce((s,e)=>s+(+e.amount||0),0), vOwe=Math.round((vcard-reimb)*100)/100;
   const JA=jobsAll(), ana=Math.max(0,JA.reduce((a,j)=>a+(j.type==='pay'?-(+j.amount||0):j.st==='new'?0:(+j.amount||0)),0));
   let unpaid=0;const ps=balStart();for(const mm of monthsList())if(mm>=ps)for(const p of pointsList()){if(!S.pm[mm+'_'+p.id])continue;const x=payRow(mm,p.id);unpaid+=Math.max(0,x.rentDue-(x.rentPaid||0))+Math.max(0,x.utilDue-(x.utilPaid||0))}
-  const money=bank+cash, obl=ana+unpaid+Math.max(0,vOwe), start=(+op.bank||0)+(+op.cash||0), gap=Math.round((money-(start+profit-wd+inj-reimb+vcard))*100)/100;
+  const crs=credits().map(c=>({...c,left:crLeft(c.id)})).filter(c=>c.left>0), crSum=crs.reduce((s,c)=>s+c.left,0);
+  const money=bank+cash, obl=ana+unpaid+Math.max(0,vOwe)+crSum, start=(+op.bank||0)+(+op.cash||0), gap=Math.round((money-(start+profit-wd+inj-reimb+vcard))*100)/100;
   const kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`;window._money=money;
   return `<section class="card info mcard"><div class="shead"><h2>Де гроші й де прибуток</h2><span class="note">з ${balStartTxt()}</span></div>
   <div class="tiles t3"><div class="tile"><div class="l">${ACC.bank}</div><div class="v">${f0(bank)}</div><div class="s">${bFact!=null?'за випискою на '+dmy(ls.to):'розрахунок бази'}</div></div>
@@ -2090,7 +2098,7 @@ function moneyCard(){
     ${kv('± Різниця в часі оплат',f0(gap),'mut')}${kv('= Гроші разом',f0(money),'final')}
     <p class="note" style="margin:4px 0 0">«Різниця в часі оплат» — рахунки, нараховані в одному місяці, а сплачені в іншому, і операції, які ще не внесено в базу.</p></div>
    <div><div class="glabel">Кому ми винні</div>
-    ${kv('За оплати з особистих карток (повернути)',f0(Math.max(0,vOwe)))}${kv('Анатолію за роботи',f0(ana))}${kv('Оренда й комуналка з '+balStartTxt()+' — не сплачено',f0(unpaid))}${kv('= Разом боргів',f0(obl),'final')}
+    ${kv('За оплати з особистих карток (повернути)',f0(Math.max(0,vOwe)))}${kv('Анатолію за роботи',f0(ana))}${kv('Оренда й комуналка з '+balStartTxt()+' — не сплачено',f0(unpaid))}${crs.map(c=>kv('Кредит: '+esc(c.name),f0(c.left))).join('')}${kv('= Разом боргів',f0(obl),'final')}
     ${kv('Вільні гроші',f0(money-obl),'final')}</div></div>${depBlock()}</section>`;
 }
 function depBlock(){const D=depList();if(!D.length)return '';const kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`;
