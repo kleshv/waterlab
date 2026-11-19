@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261119g">
+<meta name="wl-build" content="20261119h">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261119g"></script>
+<script src="config.js?v=20261119h"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261119g"></script>
+<script src="shim.js?v=20261119h"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop'];
@@ -1966,13 +1966,18 @@ function viewFlow(m){
       <div class="tile ${dif!=null&&Math.abs(dif)>1?'warn':''}"><div class="l">Різниця</div><div class="v">${dif!=null?nf2.format(dif):'—'}</div><div class="s">${cnt.ok} збігається · ${cnt.bad} потребує уваги</div></div></div>`;
     if(!hasSt)h+=`<p class="note">Завантажте виписку ПриватБанку (.xls) — кожна операція позначиться: збігається з базою, є лише в банку чи лише в базі. Номери рахунків і РНОКПП з виписки не зберігаються.</p>`;
     {const C=rows.filter(x=>x.card),cb=C.reduce((s,x)=>s+x.base,0),cg=C.reduce((s,x)=>s+x.gross,0);if(C.length)h+=`<p class="note" style="margin:8px 0 0">Оплати карткою за ${C.length} дн.: у базі ${f0(cb)}, банк зарахував ${f0(cg)} разом із комісією — різниця ${nf2.format(cg-cb)}${Math.abs(cg-cb)<=Math.max(5,cb*0.005)?' ✓':''}.</p>`}
-    h+=`<div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Дата · операція</th><th class="num">База</th><th class="num">Банк</th><th class="num hide-sm">Залишок</th></tr></thead><tbody>`;
-    for(const x of rows){const [c,l]=FST[x.st]||['',''];
+    const rowHtml=x=>{const [c,l]=FST[x.st]||['',''];
       const find=x.st==='bank'&&canWrite&&x.op?` <button class="btn sm" type="button" data-act="flowFind" data-id="${esc(x.op)}">Знайти серед внесених</button>`:'';
       const act0=x.feeGroup&&canWrite?`<button class="btn sm" type="button" data-act="flowAddFees" data-id="${x.feeGroup}">+ Внести як «Банк і РКО»</button>`:x.st==='bank'&&canWrite&&!x.fee&&!x.own&&x.bank<0?`<button class="btn sm" type="button" data-act="flowAddExp" data-id="${esc(x.op)}">+ Внести витрату</button>`:x.st==='bank'&&canWrite&&x.own?ownBtns(x.op):'';const act=act0+find;
-      h+=`<tr class="${x.ref&&canWrite?'click':''} fl-${x.st}" ${x.ref&&canWrite?`data-act="flowOpen" data-id="${esc(x.ref)}"`:''}><td><span class="mut">${dmy(x.date)}</span> ${esc(x.label)}<div><span class="pill ${c}">${l}</span>${x.note?` <span class="note">${esc(x.note)}</span>`:''}</div>${act?`<div style="margin-top:4px">${act}</div>`:''}</td>
-        <td class="num">${x.base!=null?nf2.format(x.base):'<span class="mut">—</span>'}</td><td class="num">${x.bank!=null?nf2.format(x.bank):'<span class="mut">—</span>'}</td><td class="num hide-sm">${x.run!=null?f0(x.run):''}</td></tr>`}
-    h+=`</tbody></table></div><p class="note">Оплати карткою банк зараховує наступного дня мінус комісія еквайрингу — тому «Банк» трохи менший за «База». «Немає в базі» — внесіть витрату або рух коштів кнопкою в рядку. «Немає у виписці» — перевірте дату чи суму в базі.</p></section>`;
+      return `<tr class="${x.ref&&canWrite?'click':''} fl-${x.st}" ${x.ref&&canWrite?`data-act="flowOpen" data-id="${esc(x.ref)}"`:''}><td><span class="mut">${dmy(x.date)}</span> ${esc(x.label)}<div><span class="pill ${c}">${l}</span>${x.note?` <span class="note">${esc(x.note)}</span>`:''}</div>${act?`<div style="margin-top:4px">${act}</div>`:''}</td>
+        <td class="num">${x.base!=null?nf2.format(x.base):'<span class="mut">—</span>'}</td><td class="num">${x.bank!=null?nf2.format(x.bank):'<span class="mut">—</span>'}</td></tr>`};
+    const sgnOf=x=>(x.base??x.bank??0), INC=rows.filter(x=>sgnOf(x)>0), OUT=rows.filter(x=>sgnOf(x)<=0);
+    const sm=(L,k)=>L.reduce((a,x)=>a+(x[k]||0),0);
+    const sec=(t,L)=>{const bad=L.filter(x=>['base','bank','diff'].includes(x.st)).length;
+      return `<div class="sub" style="margin-top:14px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>${t}</span><span class="note">база ${nf2.format(sm(L,'base'))} · банк ${nf2.format(sm(L,'bank'))}${bad?` · <b style="color:var(--neg,#c2412d)">${bad} потребує уваги</b>`:' · ✓'}</span></div>
+      <div class="tbl"><table class="pl ut"><thead><tr><th>Дата · операція</th><th class="num">База</th><th class="num">Банк</th></tr></thead><tbody>${L.map(rowHtml).join('')||'<tr><td colspan="3" class="note">Немає операцій</td></tr>'}</tbody>${L.length?`<tfoot><tr class="final"><td>Разом ${t.toLowerCase()}${L.some(x=>x.card)?`<div class="note">банк зарахував з комісією ${nf2.format(L.reduce((a,x)=>a+(x.card?x.gross:(x.bank||0)),0))}</div>`:''}</td><td class="num">${nf2.format(sm(L,'base'))}</td><td class="num">${nf2.format(sm(L,'bank'))}</td></tr></tfoot>`:''}</table></div>`};
+    h+=sec('Надходження',INC)+sec('Витрати і списання',OUT);
+    h+=`<p class="note">Оплати карткою банк зараховує наступного дня мінус комісія еквайрингу — тому «Банк» трохи менший за «База». «Немає в базі» — внесіть витрату або рух коштів кнопкою в рядку. «Немає у виписці» — перевірте дату чи суму в базі.</p></section>`;
   }else{
     const rows=flowBase(m,'cash');let run=r.open;
     h+=`<div class="tiles t3"><div class="tile"><div class="l">На початок</div><div class="v">${f0(r.open)}</div></div><div class="tile"><div class="l">Надійшло / списано</div><div class="v">+${f0(r.inc)} / −${f0(r.out)}</div></div><div class="tile main"><div class="l">На кінець за базою</div><div class="v">${f0(r.close)}</div><div class="s">${r.fact!=null?'факт '+f0(r.fact)+' · різниця '+nf2.format(r.diff):'факт не внесено'}</div></div></div>
