@@ -2063,7 +2063,7 @@ function viewBal(){
   }
   h+=viewChk();
   const mv=Object.entries(S.mov).filter(([,x])=>(x.date||'').startsWith(Y)&&(x.date||'')>=balStart()).sort((a,b)=>b[1].date.localeCompare(a[1].date));
-  h+=`<section class="card"><h2>Інший рух коштів · ${Y}</h2>${mv.length?`<div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Звідки → куди</th><th class="num">Сума</th></tr></thead><tbody>${mv.map(([id,x])=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editMov':''}" data-id="${id}"><td>${dmy(x.date)}</td><td>${esc(ACC[x.from]||x.from)} → ${esc(ACC[x.to]||x.to)}${x.note?`<div class="note">${esc(x.note)}</div>`:''}</td><td class="num">${f0(x.amount)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Тут записуються зняття собі, внесення, перекази між рахунком і готівкою, інші надходження.</p>'}</section>`;
+  h+=`<section class="card"><h2>Інший рух коштів · ${Y}</h2>${mv.length?`<div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Звідки → куди</th><th class="num">Сума</th></tr></thead><tbody>${mv.map(([id,x])=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editMov':''}" data-id="${id}"><td>${dmy(x.date)}</td><td>${esc(ACC[x.from]||x.from)} → ${esc(ACC[x.to]||x.to)} <span class="pill ${x.kind==='reimb'?'open':''}">${x.kind==='reimb'?'під оплати':'прибуток'}</span>${x.note?`<div class="note">${esc(x.note)}</div>`:''}</td><td class="num">${f0(x.amount)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Тут записуються зняття собі, внесення, перекази між рахунком і готівкою, інші надходження.</p>'}</section>`;
   return h;
 }
 function balInfo(v){
