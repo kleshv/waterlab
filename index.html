@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261119a">
+<meta name="wl-build" content="20261119b">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -285,9 +285,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261119a"></script>
+<script src="config.js?v=20261119b"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261119a"></script>
+<script src="shim.js?v=20261119b"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday'];
@@ -851,7 +851,7 @@ function viewExp(m){
   for(const e of list){
     const pn=e.point&&S.points[e.point]?S.points[e.point].name:'';
     const d=e.date?e.date.slice(8,10)+'.'+e.date.slice(5,7):'—';
-    h+=`<tr class="${ed?'click':''}" data-act="${ed?'editExp':''}" data-id="${e.id}"><td class="${e.date?'':'mut'}">${d}</td><td>${esc(e.article)}<div class="note">${[esc(e.purpose||''),esc(e.note||''),esc(pn),e.by?'вніс '+esc(who(e.by)):''].filter(Boolean).join(' · ')}</div></td><td class="hide-sm"><span class="pill ${e.cat==='ТОіР'?'toir':e.cat==='Розвиток'?'capex':''}">${CATL[e.cat]||e.cat}</span></td><td class="hide-sm">${esc(e.payer)}</td><td class="num">${f0(e.amount)}</td></tr>`;
+    h+=`<tr class="${ed?'click':''}" data-act="${ed?'editExp':''}" data-id="${e.id}"><td class="${e.date?'':'mut'}">${d}</td><td>${esc(e.article)}<div class="note">${[e.cp?'<b>'+esc(e.cp)+'</b>':'',esc(e.purpose||''),esc(e.note||''),esc(pn),e.by?'вніс '+esc(who(e.by)):''].filter(Boolean).join(' · ')}</div></td><td class="hide-sm"><span class="pill ${e.cat==='ТОіР'?'toir':e.cat==='Розвиток'?'capex':''}">${CATL[e.cat]||e.cat}</span></td><td class="hide-sm">${esc(e.payer)}</td><td class="num">${f0(e.amount)}</td></tr>`;
   }
   if(!list.length) h+=`<tr><td colspan="5" class="note">Витрат поки немає. Натисніть «+ Витрата», щоб внести першу.</td></tr>`;
   h+=`</tbody><tfoot><tr><td colspan="4">Разом${expFilter==='all'?'':' · '+esc(expFilter)}</td><td class="num">${f0(list.reduce((s,e)=>s+(+e.amount||0),0))}</td></tr></tfoot></table></div>
@@ -1069,9 +1069,19 @@ function expForm(e){
     `<label class="full">Призначення платежу<input id="f_purpose" name="purpose" value="${esc(e.purpose||'')}" autocomplete="off" placeholder="напр.: мембрани Vatron 6 шт · ремонт купюроприймача · пальне 40 л"></label>`+
     `<div class="full stkbox" style="display:${e.article===STK_ART?'grid':'none'};grid-template-columns:1fr 1fr;gap:8px"><div class="glabel" style="grid-column:1/-1">На склад (регламент)</div>${fld('memQ','Мембрани, к-т (3 шт)',e.memQ??'')}${fld('kitQ','Фільтри, комплектів',e.kitQ??'')}</div>`+
     sel('point','Точка',e.point||'',popts)+
+    `<label class="chk full cpTog" style="font-size:13px;color:var(--muted)"><input type="checkbox" name="cpOn" ${e.cp?'checked':''}> Вказати контрагента</label>`+
+    `<div class="full cpBox" style="display:${e.cp?'block':'none'}"><div class="glabel">Контрагент</div><div class="chips cpChips">${cpChips(e.point||'',e.cp||'')}</div>`+
+    `<input name="cpOther" class="cpOther" value="${esc(e.cp&&!cpList(e.point||'').includes(e.cp)?e.cp:'')}" placeholder="Назва контрагента" autocomplete="off" style="margin-top:8px;display:${e.cp&&!cpList(e.point||'').includes(e.cp)?'block':'none'}"></div>`+
     fld('date','Дата',e.date||defDate(),{type:'date'})+
     fld('note','Коментар',e.note||'',{type:'text',full:true});
 }
+/* контрагенти точки: з картки точки (отримувачі оренди/комуналки) + ті, що вже вносились у витрати по цій точці */
+function cpList(pid){const L=[];const add=v=>{v=(v||'').trim();if(v&&!L.includes(v))L.push(v)};
+  const p=S.points[pid]||{};if(pid){add(p.payee);add(p.payee2);add(p.payeeF2)}
+  for(const x of Object.values(S.exp))if((x.point||'')===pid&&x.cp)add(x.cp);return L}
+function cpChips(pid,curCp){const L=cpList(pid),oth=!!curCp&&!L.includes(curCp);
+  return L.map(c=>`<label class="chipb"><input type="radio" name="cp" value="${esc(c)}" ${c===curCp?'checked':''}><span>${esc(c)}</span></label>`).join('')+
+    `<label class="chipb"><input type="radio" name="cp" value="__other" ${oth||(!L.length&&!!curCp)?'checked':''}><span>Інший…</span></label>`}
 function saveExp(id,base){return async fd=>{
   if(!fd.article)return 'Оберіть статтю';
   const a=parseNum(fd.amount);if(a===null||!a)return 'Вкажіть суму. Можна писати 1500, 1500,50 або 150+45.';
@@ -1079,10 +1089,17 @@ function saveExp(id,base){return async fd=>{
   if(fd.date){const dm=fd.date.slice(0,7);if(dm!==month){if(!S.months[dm])return 'Місяця '+mLabel(dm).toLowerCase()+' ще немає. Створіть його або оберіть дату в '+mLabel(month).toLowerCase()+'.';if(isClosed(dm))return mLabel(dm)+' закритий. Відкрийте його або оберіть іншу дату.';month=dm}}
   const known=artCat(fd.article);
   const doc={...base,by:base.by||me||'',month,date:fd.date||'',article:fd.article,amount:a,cat:known||base.cat||'ТОіР',payer:fd.payer||'Даниїл',point:fd.point||'',purpose:(fd.purpose||'').trim(),note:fd.note||'',recurring:known?REC.has(fd.article):!!base.recurring};
+  const cpv=fd.cpOn?(fd.cp==='__other'||!fd.cp?(fd.cpOther||'').trim():fd.cp):'';if(cpv)doc.cp=cpv;else delete doc.cp;
   if(fd.article===STK_ART){const mq=parseNum(String(fd.memQ||''))||0,kq=parseNum(String(fd.kitQ||''))||0;if(mq)doc.memQ=mq;else delete doc.memQ;if(kq)doc.kitQ=kq;else delete doc.kitQ}else{delete doc.memQ;delete doc.kitQ}
   ls.set('wl_payer',doc.payer);
   if(!await w(()=>db.doc('exp/'+id).set(doc)))return 'Не збереглося';toast('Збережено')}}
-function wireStk(){const f=document.getElementById('sf');if(!f)return;f.addEventListener('change',e=>{if(e.target.name==='article'){const b=f.querySelector('.stkbox');if(b)b.style.display=e.target.value===STK_ART?'grid':'none'}})}
+function wireStk(){const f=document.getElementById('sf');if(!f)return;
+  const oth=()=>{const r=f.querySelector('input[name=cp]:checked'),o=f.querySelector('.cpOther');if(o)o.style.display=r&&r.value==='__other'?'block':'none';if(r&&r.value==='__other'&&o)o.focus()};
+  f.addEventListener('change',e=>{const n=e.target.name;
+    if(n==='article'){const b=f.querySelector('.stkbox');if(b)b.style.display=e.target.value===STK_ART?'grid':'none'}
+    if(n==='cpOn'){const b=f.querySelector('.cpBox');if(b)b.style.display=e.target.checked?'block':'none';if(e.target.checked&&!f.querySelector('input[name=cp]:checked')){const L=cpList(f.querySelector('[name=point]').value);if(!L.length){const r=f.querySelector('input[name=cp][value=__other]');if(r)r.checked=true;oth()}}}
+    if(n==='point'){const c=f.querySelector('.cpChips');if(c){c.innerHTML=cpChips(e.target.value,'');oth()}}
+    if(n==='cp')oth()})}
 function defDate(){const t=new Date();const ts=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');if(ts.slice(0,7)===cur)return ts;const[y,mm]=cur.split('-').map(Number);return cur+'-'+String(new Date(y,mm,0).getDate()).padStart(2,'0')}
 function lastExpOf(art,before){return Object.values(S.exp).filter(e=>e.article===art&&e.month<before&&+e.amount>0).sort((a,b)=>(b.month+(b.date||'')).localeCompare(a.month+(a.date||'')))[0]}
 function addExp(){openSheet('Нова витрата',mLabel(cur),expForm({}),saveExp(db.collection('exp').doc().id,{}));wireStk();
