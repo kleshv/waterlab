@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261119f">
+<meta name="wl-build" content="20261119g">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261119f"></script>
+<script src="config.js?v=20261119g"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261119f"></script>
+<script src="shim.js?v=20261119g"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop'];
@@ -1093,7 +1093,7 @@ function saveExp(id,base){return async fd=>{
   let month=base.month||cur;
   if(fd.date){const dm=fd.date.slice(0,7);if(dm!==month){if(!S.months[dm])return 'Місяця '+mLabel(dm).toLowerCase()+' ще немає. Створіть його або оберіть дату в '+mLabel(month).toLowerCase()+'.';if(isClosed(dm))return mLabel(dm)+' закритий. Відкрийте його або оберіть іншу дату.';month=dm}}
   const known=artCat(fd.article);
-  const doc={...base,by:base.by||me||'',month,date:fd.date||'',article:fd.article,amount:a,cat:known||base.cat||'ТОіР',payer:payerOf({payer:fd.payer||'Даниїл'}),src:fd.payer==='Сервіс'?undefined:(fd.src||(fd.payer==='Даниїл'?'cash':'bank')),point:fd.point||'',purpose:(fd.purpose||'').trim(),note:fd.note||'',recurring:known?REC.has(fd.article):!!base.recurring};
+  const doc={...base,by:base.by||me||'',month,date:fd.date||'',article:fd.article,amount:a,cat:known||base.cat||'ТОіР',payer:payerOf({payer:fd.payer||'Даниїл'}),paidFrom:fd.payer==='Сервіс'?undefined:(fd.src||(fd.payer==='Даниїл'?'cash':'bank')),point:fd.point||'',purpose:(fd.purpose||'').trim(),note:fd.note||'',recurring:known?REC.has(fd.article):!!base.recurring};
   const cpv=fd.cpOn?(fd.cp==='__other'||!fd.cp?(fd.cpOther||'').trim():fd.cp):'';if(cpv)doc.cp=cpv;else delete doc.cp;
   if(fd.article===STK_ART){const mq=parseNum(String(fd.memQ||''))||0,kq=parseNum(String(fd.kitQ||''))||0;if(mq)doc.memQ=mq;else delete doc.memQ;if(kq)doc.kitQ=kq;else delete doc.kitQ}else{delete doc.memQ;delete doc.kitQ}
   ls.set('wl_payer',doc.payer);
@@ -1813,7 +1813,7 @@ function editInv(id){const i=S.inv[id];if(!i)return;openSheet('Внесок',i.d
 const PAY_VC='Влад (картка)', isVlad=p=>p==='Влад'||p===PAY_VC;
 /* звідки оплачено: bank — рахунок ФОП, cash — готівка (каса Даниїла), card — особиста картка (бізнес потім компенсує) */
 const SRC={bank:'Рахунок ФОП',cash:'Готівка',card:'Особиста картка'};
-const expSrc=e=>e.src||(e.payer===PAY_VC?'card':e.payer==='Даниїл'?'cash':e.payer==='Сервіс'?'none':'bank');
+const expSrc=e=>(SRC[e.paidFrom]?e.paidFrom:null)||(e.payer===PAY_VC?'card':e.payer==='Даниїл'?'cash':e.payer==='Сервіс'?'none':'bank');
 const payerOf=e=>e.payer===PAY_VC?'Влад':e.payer;
 const MOVK={profit:'Прибуток собі',reimb:'Під оплати (компенсація витрат з картки)'};
 const ACC={bank:'Рахунок ФОП Влада',cash:'Готівка Даниїла',vlad:'Влад особисто',dan:'Даниїл особисто',ext:'Інше / зовні'};
@@ -1921,7 +1921,9 @@ function flowRows(m){
   const bo=ops.filter(o=>!isAcq(o)).map(o=>({...o,used:false}));
   const feeOps=bo.filter(o=>o.amt<0&&BANK_FEE_RE.test(o.name+' '+o.purp)&&!/КЛЕЩИНСЬК/i.test(o.name));
   const dd=(a,b)=>Math.abs((new Date(a)-new Date(b))/864e5);
+  const linkOf=ref=>{const [c,id]=String(ref||'').split('/');return ((S[c]||{})[id]||{}).bankop||null};
   for(const b of base.filter(x=>!['card','acqfee'].includes(x.kind))){
+    const lk=linkOf(b.ref);if(lk){const o=bo.find(o=>o.id===lk&&!o.used);if(o){o.used=true;rows.push({date:o.date,label:b.label,base:b.amt,bank:+o.amt,st:Math.abs(+o.amt-b.amt)<0.011?'ok':'diff',note:(o.date!==b.date?'у базі '+dmy(b.date)+' · ':'')+'пов\'язано вручну'+(Math.abs(+o.amt-b.amt)<0.011?'':' · різниця '+nf2.format(+o.amt-b.amt)),ref:b.ref});continue}}
     let best=null;for(const o of bo)if(!o.used&&(b.kind==='mov'||!/КЛЕЩИНСЬК/i.test(o.name))&&Math.abs(+o.amt-b.amt)<0.011&&dd(o.date,b.date)<=7&&(!best||dd(o.date,b.date)<dd(best.date,b.date)))best=o;
     if(best){best.used=true;rows.push({date:best.date,label:b.label,base:b.amt,bank:+best.amt,st:'ok',note:best.date!==b.date?'у базі '+dmy(b.date):'',ref:b.ref})}
     else if(b.kind==='fee'){const fs=feeOps.filter(o=>!o.used),sum=Math.round(fs.reduce((s,o)=>s+(+o.amt),0)*100)/100;
@@ -1966,7 +1968,8 @@ function viewFlow(m){
     {const C=rows.filter(x=>x.card),cb=C.reduce((s,x)=>s+x.base,0),cg=C.reduce((s,x)=>s+x.gross,0);if(C.length)h+=`<p class="note" style="margin:8px 0 0">Оплати карткою за ${C.length} дн.: у базі ${f0(cb)}, банк зарахував ${f0(cg)} разом із комісією — різниця ${nf2.format(cg-cb)}${Math.abs(cg-cb)<=Math.max(5,cb*0.005)?' ✓':''}.</p>`}
     h+=`<div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Дата · операція</th><th class="num">База</th><th class="num">Банк</th><th class="num hide-sm">Залишок</th></tr></thead><tbody>`;
     for(const x of rows){const [c,l]=FST[x.st]||['',''];
-      const act=x.feeGroup&&canWrite?`<button class="btn sm" type="button" data-act="flowAddFees" data-id="${x.feeGroup}">+ Внести як «Банк і РКО»</button>`:x.st==='bank'&&canWrite&&!x.fee&&!x.own&&x.bank<0?`<button class="btn sm" type="button" data-act="flowAddExp" data-id="${esc(x.op)}">+ Внести витрату</button>`:x.st==='bank'&&canWrite&&x.own?ownBtns(x.op):'';
+      const find=x.st==='bank'&&canWrite&&x.op?` <button class="btn sm" type="button" data-act="flowFind" data-id="${esc(x.op)}">Знайти серед внесених</button>`:'';
+      const act0=x.feeGroup&&canWrite?`<button class="btn sm" type="button" data-act="flowAddFees" data-id="${x.feeGroup}">+ Внести як «Банк і РКО»</button>`:x.st==='bank'&&canWrite&&!x.fee&&!x.own&&x.bank<0?`<button class="btn sm" type="button" data-act="flowAddExp" data-id="${esc(x.op)}">+ Внести витрату</button>`:x.st==='bank'&&canWrite&&x.own?ownBtns(x.op):'';const act=act0+find;
       h+=`<tr class="${x.ref&&canWrite?'click':''} fl-${x.st}" ${x.ref&&canWrite?`data-act="flowOpen" data-id="${esc(x.ref)}"`:''}><td><span class="mut">${dmy(x.date)}</span> ${esc(x.label)}<div><span class="pill ${c}">${l}</span>${x.note?` <span class="note">${esc(x.note)}</span>`:''}</div>${act?`<div style="margin-top:4px">${act}</div>`:''}</td>
         <td class="num">${x.base!=null?nf2.format(x.base):'<span class="mut">—</span>'}</td><td class="num">${x.bank!=null?nf2.format(x.bank):'<span class="mut">—</span>'}</td><td class="num hide-sm">${x.run!=null?f0(x.run):''}</td></tr>`}
     h+=`</tbody></table></div><p class="note">Оплати карткою банк зараховує наступного дня мінус комісія еквайрингу — тому «Банк» трохи менший за «База». «Немає в базі» — внесіть витрату або рух коштів кнопкою в рядку. «Немає у виписці» — перевірте дату чи суму в базі.</p></section>`;
@@ -1997,8 +2000,18 @@ function ownBtns(opId){const o=(S.bankop||{})[opId];if(!o)return '';const sg=own
 async function flowOwn(arg){const [opId,kind,expId]=String(arg).split('|');const o=(S.bankop||{})[opId];if(!o)return;
   const d={date:o.date,amount:Math.abs(+o.amt),from:'bank',to:'vlad',kind,bankop:opId,note:kind==='profit'?'Переказ прибутку (з виписки)':'Компенсація витрат з картки (з виписки)'};
   if(kind==='reimb'&&!expId){openSheet('Переказ під оплати',dmy(o.date)+' · '+nf2.format(Math.abs(o.amt))+' грн',movForm(d),saveMov(db.collection('mov').doc().id));return}
-  if(expId){d.exp=expId;const e=S.exp[expId];if(e&&expSrc(e)!=='card'){const ne={...e,payer:payerOf(e),src:'card'};delete ne.id;await w(()=>db.doc('exp/'+expId).set(ne))}d.note='Компенсація: '+((S.exp[expId]||{}).article||'')}
+  if(expId){d.exp=expId;const e=S.exp[expId];if(e&&expSrc(e)!=='card'){const ne={...e,payer:payerOf(e),paidFrom:'card'};delete ne.id;await w(()=>db.doc('exp/'+expId).set(ne))}d.note='Компенсація: '+((S.exp[expId]||{}).article||'')}
   if(await w(()=>db.doc('mov/'+db.collection('mov').doc().id).set(d)))toast(kind==='profit'?'Записано як прибуток':'Записано як компенсацію витрат');render()}
+function flowFind(opId){const o=(S.bankop||{})[opId];if(!o)return;const a=Math.abs(+o.amt),m=o.date.slice(0,7),pm=addDays(m+'-01',-1).slice(0,7);
+  const used=new Set([...Object.values(S.exp),...Object.values(S.mov)].map(x=>x.bankop).filter(Boolean));
+  const L=Object.entries(S.exp).filter(([id,e])=>(e.month===m||e.month===pm)&&!used.has(id)&&!e.bankop&&e.payer!=='Сервіс').map(([id,e])=>({id,...e,d:Math.abs((+e.amount||0)-a)}))
+    .sort((x,y)=>x.d-y.d||((y.month===m)-(x.month===m))||(x.date||'').localeCompare(y.date||'')).slice(0,25);
+  const pn=id=>(S.points[id]||{}).name||'';
+  infoSheet('Знайти витрату для операції',dmy(o.date)+' · '+nf2.format(o.amt)+' · '+(o.name||''),
+    (L.length?L.map(e=>`<button type="button" class="kv linkrow" data-act="flowLink" data-id="${esc(opId)}|${e.id}" style="width:100%;background:none;border:0;border-bottom:1px solid var(--line);text-align:left;font:inherit;cursor:pointer"><span>${dmy(e.date||monthEnd(e.month))} · ${esc(e.article)}${e.cp?' · '+esc(e.cp):''}${e.point?' · '+esc(pn(e.point)):''}<div class="note">${esc(e.payer)} · ${SRC[expSrc(e)]||''}${e.d<0.011?' · <b>сума збігається</b>':''}</div></span><b>${nf2.format(e.amount)}</b></button>`).join(''):'<p class="note">Немає витрат за цей і минулий місяць, які ще не пов\'язані з випискою.</p>')+
+    '<p class="note">Натисніть на витрату — вона пов\'яжеться з цією операцією банку, і «Звідки оплачено» стане «Рахунок ФОП».</p>')}
+async function flowLink(arg){const [opId,eid]=String(arg).split('|');const e=S.exp[eid];if(!e)return;const ne={...e,bankop:opId,paidFrom:'bank'};delete ne.id;
+  if(await w(()=>db.doc('exp/'+eid).set(ne))){toast('Пов\'язано');$('#modal').innerHTML=''}render()}
 function flowAddMov(opId){const o=(S.bankop||{})[opId];if(!o)return;const id=db.collection('mov').doc().id;
   openSheet('Рух коштів з виписки',dmy(o.date),movForm({date:o.date,amount:Math.abs(+o.amt),from:o.amt<0?'bank':'vlad',to:o.amt<0?'vlad':'bank',note:cleanPurp(o.purp).slice(0,80)}),saveMov(id))}
 async function bankUpload(input){
@@ -2494,7 +2507,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({setFlowAcc,flowOpen,flowAddFees,flowOwn,flowAddExp,flowAddMov,setUtilMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({setFlowAcc,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
