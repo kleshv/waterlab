@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261119i">
+<meta name="wl-build" content="20261119j">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261119i"></script>
+<script src="config.js?v=20261119j"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261119i"></script>
+<script src="shim.js?v=20261119j"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop'];
@@ -1780,7 +1780,7 @@ function viewInvLoc(){const L=invLoc(), P=L.pts||{}, sum=o=>ICAT.reduce((s,[k])=
   const all=sum(tot), invH=invList().reduce((s,i)=>s+(+i.hrn||0),0);
   const cell=(o,k)=>`<td class="num hide-sm">${+o[k]?f0(o[k]):'<span class="mut">—</span>'}</td>`;
   const row=(id,o,nm,sub)=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editInvLoc':''}" data-id="${id}"><td>${nm}${o.est!==false?' <span class="pill open">оцінка</span>':''}${sub?`<div class="note">${sub}</div>`:''}${o.note?`<div class="note">${esc(o.note)}</div>`:''}</td>${ICAT.map(([k])=>cell(o,k)).join('')}<td class="num"><b>${f0(sum(o))}</b>${all?`<div class="note">${Math.round(sum(o)/all*1000)/10}%</div>`:''}</td></tr>`;
-  const body=ids.map(id=>{const p=known[id];return row(id,P[id],esc(p?p.name:(P[id].name||id)),p?(+p.dep>0?'страховий платіж '+f0(p.dep)+((p.depSt||'paid')==='paid'?'':' · '+DEPST[p.depSt].toLowerCase()):''):'немає в списку точок')}).join('')+row('_gen',L.gen||{},'<i>Загальне, не розподілено по точках</i>','склад, інструмент, транспорт, перші закупівлі, рахунки без адреси');
+  const body=ids.map(id=>{const p=known[id];return row(id,P[id],esc(p?p.name:(P[id].name||id)),p?(+p.dep>0?'страховий платіж '+f0(p.dep)+((p.depSt||'paid')==='paid'?'':' · '+DEPST[p.depSt].toLowerCase()):''):(P[id].note?'':'ще не в списку точок'))}).join('')+row('_gen',L.gen||{},'<i>Загальне, не розподілено по точках</i>','склад, інструмент, транспорт, перші закупівлі, рахунки без адреси');
   const dep=depList().filter(p=>(p.depSt||'paid')==='paid').reduce((s,p)=>s+(+p.dep||0),0);
   return `<section class="card"><div class="shead"><h2>Куди вкладено</h2><span class="note">грн</span></div>
   <div class="tiles t3"><div class="tile main"><div class="l">Вкладено в точки й обладнання</div><div class="v">${f0(all)}</div><div class="s">з них по точках ${f0(all-sum(L.gen||{}))}</div></div>
