@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261119h">
+<meta name="wl-build" content="20261119i">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261119h"></script>
+<script src="config.js?v=20261119i"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261119h"></script>
+<script src="shim.js?v=20261119i"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop'];
@@ -433,7 +433,7 @@ function render(){
   if(tab==='exp'){h+=`<div class="seg2 rep" role="tablist">${[['list','Витрати'],['settle','Взаєморозрахунки']].map(([k,l])=>`<button type="button" class="${expSub===k?'on':''}" data-act="setExpSub" data-id="${k}">${l}</button>`).join('')}</div>`;h+=expSub==='settle'?viewSettle():(cur?viewExp(cur):'');}
   if(tab==='util') h+=cur?viewUtil(cur):'';
   if(tab==='rent') h+=cur?viewRent(cur):'';
-  if(tab==='inv'){h+=`<div class="seg2 rep" role="tablist">${[['dep','Внески'],['pct','Відсотки']].map(([k,l])=>`<button type="button" class="${invSub===k?'on':''}" data-act="setInv" data-id="${k}">${l}</button>`).join('')}</div>`;h+=invSub==='pct'?viewInvPct():viewInv();}
+  if(tab==='inv'){h+=`<div class="seg2 rep" role="tablist">${[['dep','Внески'],['loc','Куди вкладено'],['pct','Відсотки']].map(([k,l])=>`<button type="button" class="${invSub===k?'on':''}" data-act="setInv" data-id="${k}">${l}</button>`).join('')}</div>`;h+=invSub==='pct'?viewInvPct():invSub==='loc'?viewInvLoc():viewInv();}
   if(tab==='myexp') h+=viewMyExp();
   if(tab==='svc'){h+=`<div class="seg2 rep" role="tablist">${[['reg','Заміни'],['task','Задачі'],['job','Роботи й розрахунок']].map(([k,l])=>`<button type="button" class="${svcSub===k?'on':''}" data-act="setSvcSub" data-id="${k}">${l}${k==='job'&&jobPend().length&&role!=='tech'?` <span class="badge">${jobPend().length}</span>`:''}${k==='task'&&tasksOpen().length?` <span class="badge bl">${tasksOpen().length}</span>`:''}</button>`).join('')}</div>`;h+=svcSub==='job'?viewJobs():svcSub==='task'?viewTasks():viewSvc();}
   if(tab==='recon') h+=viewRecon();
@@ -1132,10 +1132,12 @@ function addPay(){openSheet('Переказ між партнерами','Вра
 function editPay(id){openSheet('Переказ між партнерами','',payForm(S.settle[id]),savePay(id),async()=>{const ok=await w(()=>db.doc('settle/'+id).delete());return ok})}
 
 function pointForm(p){return fld('name','Адреса / назва',p.name||'',{type:'text',full:true})+fld('rent','Оренда на місяць',p.rent??0)+
-  fld('openedAt','Дата відкриття',p.openedAt||'',{type:'date'})+sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Закрита']])+fld('closedAt','Дата закриття',p.closedAt||'',{type:'date'})+sel('kind','Тип',p.kind||'',[['','— не вказано —'],['автомат','Автомат'],['автоматизований пункт','Автоматизований пункт']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('payee2','Окремо за воду платимо (якщо інший отримувач)',p.payee2||'',{type:'text',full:true})+(+p.rentCash>0?fld('rentCash','ф2, грн',p.rentCash)+fld('payeeF2','ф2 — контрагент у звірці',p.payeeF2||'',{type:'text'}):'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('note','Коментар',p.note||'',{type:'text',full:true})}
+  fld('openedAt','Дата відкриття',p.openedAt||'',{type:'date'})+sel('active','Статус',p.active===false?'no':'yes',[['yes','Працює'],['no','Закрита']])+fld('closedAt','Дата закриття',p.closedAt||'',{type:'date'})+sel('kind','Тип',p.kind||'',[['','— не вказано —'],['автомат','Автомат'],['автоматизований пункт','Автоматизований пункт']])+fld('payee','Кому платимо (ОСББ, керуюча компанія)',p.payee||'',{type:'text',full:true})+fld('contract','Договір (№, дата)',p.contract||'',{type:'text',full:true})+fld('crm','Назва в Gwaters',p.crm||'',{type:'text',full:true})+fld('payee2','Окремо за воду платимо (якщо інший отримувач)',p.payee2||'',{type:'text',full:true})+(+p.rentCash>0?fld('rentCash','ф2, грн',p.rentCash)+fld('payeeF2','ф2 — контрагент у звірці',p.payeeF2||'',{type:'text'}):'')+fld('contact','Контакт (ім’я, телефон, месенджер)',p.contact||'',{type:'text',full:true})+fld('dep','Страховий платіж орендодавцю, грн',p.dep??'')+sel('depSt','Страховий платіж — статус',p.depSt||'paid',Object.entries(DEPST))+fld('note','Коментар',p.note||'',{type:'text',full:true})}
+const DEPST={paid:'Сплачено, у орендодавця',contract:'За договором, оплату не підтверджено',returned:'Повернено'};
+const depList=()=>pointsList().filter(p=>+p.dep>0);
 function savePoint(id,base){return async fd=>{const r=parseNum(fd.rent);if(r===null)return 'Не зрозумів суму оренди';if(!fd.name.trim())return 'Вкажіть адресу';
   const order=base.order??(Math.max(0,...Object.values(S.points).map(p=>p.order||0))+1);
-  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',openedAt:fd.openedAt||'',closedAt:fd.active==='no'?(fd.closedAt||''):'',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',kind:fd.kind||'',payee2:fd.payee2||'',payeeF2:fd.payeeF2===undefined?(base.payeeF2||''):(fd.payeeF2||'').trim(),rentCash:fd.rentCash===undefined?(+base.rentCash||0):parseNum(String(fd.rentCash||''))||0,contact:fd.contact||'',order})))return 'Не збереглося';
+  if(!await w(()=>db.doc('points/'+id).set({...base,name:fd.name.trim(),rent:r,active:fd.active!=='no',openedAt:fd.openedAt||'',closedAt:fd.active==='no'?(fd.closedAt||''):'',note:fd.note||'',payee:fd.payee||'',contract:fd.contract||'',crm:fd.crm||'',kind:fd.kind||'',payee2:fd.payee2||'',payeeF2:fd.payeeF2===undefined?(base.payeeF2||''):(fd.payeeF2||'').trim(),rentCash:fd.rentCash===undefined?(+base.rentCash||0):parseNum(String(fd.rentCash||''))||0,contact:fd.contact||'',dep:fd.dep===undefined?(+base.dep||0):(parseNum(String(fd.dep||''))||0),depSt:fd.depSt||base.depSt||'paid',order})))return 'Не збереглося';
   if(fd.active!=='no'){for(const m of monthsList().filter(x=>!isClosed(x))){const k=m+'_'+id;if(!S.pm[k])await w(()=>db.doc('pm/'+k).set({month:m,point:id,liters:0,revenue:0,rent:r,water:0,elec:0}))}}
   toast('Збережено')}}
 function addPoint(){openSheet('Нова точка','',pointForm({}),savePoint(db.collection('points').doc().id,{}))}
@@ -1192,7 +1194,7 @@ function yearTable(m){
   <tfoot><tr class="final"><td>Разом ${y}</td><td class="num hide-sm">${f0(Z.L)}</td><td class="num">${f0(Z.R)}</td><td class="num hide-sm">${f0(Z.opex)}</td><td class="num ${sgn(Z.op)}">${f0(Z.op)}</td><td class="num">${Z.R?(Z.op/Z.R*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="num hide-sm">${f0(Z.capex)}</td><td class="num">${f0(Z.net)}</td></tr></tfoot></table></div>
   </section>`;
 }
-function setInv(v){invSub=v==='pct'?'pct':'dep';render()}
+function setInv(v){invSub=['pct','loc'].includes(v)?v:'dep';render()}
 function setRep(v){if(v==='settle'){tab='exp';expSub='settle';render();return}repSub=['fin','trend','price','bal'].includes(v)?v:'fin';render()}
 function setExpSub(v){expSub=v==='settle'?'settle':'list';render()}
 function goTab(v){if(v==='rep:settle'){tab='exp';expSub='settle'}else if(v==='svc:job'){tab='svc';svcSub='job'}else if(v.startsWith('rep:')){tab='reports';repSub=v.slice(4)}else tab=v;render();window.scrollTo(0,0)}
@@ -1769,6 +1771,30 @@ function viewInv(){
   <tfoot><tr class="final"><td>Разом</td><td class="num">${fUsd(usd)}<div class="note">${f0(hrn)}&nbsp;грн</div></td></tr></tfoot></table></div>
   </section>`;
 }
+const ICAT=[['A','Автомати'],['R','Ремонт і облаштування'],['E','Підключення й електрика'],['O','Інше']];
+const invLoc=()=>(S.meta||{}).invloc||{pts:{},gen:{}};
+function viewInvLoc(){const L=invLoc(), P=L.pts||{}, sum=o=>ICAT.reduce((s,[k])=>s+(+((o||{})[k])||0),0);
+  const known=Object.fromEntries(Object.entries(S.points).map(([id,p])=>[id,p]));
+  const ids=Object.keys(P).sort((a,b)=>sum(P[b])-sum(P[a]));
+  const tot={};for(const [k] of ICAT)tot[k]=ids.reduce((s,id)=>s+(+P[id][k]||0),0)+(+(L.gen||{})[k]||0);
+  const all=sum(tot), invH=invList().reduce((s,i)=>s+(+i.hrn||0),0);
+  const cell=(o,k)=>`<td class="num hide-sm">${+o[k]?f0(o[k]):'<span class="mut">—</span>'}</td>`;
+  const row=(id,o,nm,sub)=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editInvLoc':''}" data-id="${id}"><td>${nm}${o.est!==false?' <span class="pill open">оцінка</span>':''}${sub?`<div class="note">${sub}</div>`:''}${o.note?`<div class="note">${esc(o.note)}</div>`:''}</td>${ICAT.map(([k])=>cell(o,k)).join('')}<td class="num"><b>${f0(sum(o))}</b>${all?`<div class="note">${Math.round(sum(o)/all*1000)/10}%</div>`:''}</td></tr>`;
+  const body=ids.map(id=>{const p=known[id];return row(id,P[id],esc(p?p.name:(P[id].name||id)),p?(+p.dep>0?'страховий платіж '+f0(p.dep)+((p.depSt||'paid')==='paid'?'':' · '+DEPST[p.depSt].toLowerCase()):''):'немає в списку точок')}).join('')+row('_gen',L.gen||{},'<i>Загальне, не розподілено по точках</i>','склад, інструмент, транспорт, перші закупівлі, рахунки без адреси');
+  const dep=depList().filter(p=>(p.depSt||'paid')==='paid').reduce((s,p)=>s+(+p.dep||0),0);
+  return `<section class="card"><div class="shead"><h2>Куди вкладено</h2><span class="note">грн</span></div>
+  <div class="tiles t3"><div class="tile main"><div class="l">Вкладено в точки й обладнання</div><div class="v">${f0(all)}</div><div class="s">з них по точках ${f0(all-sum(L.gen||{}))}</div></div>
+   <div class="tile"><div class="l">Внески інвесторів</div><div class="v">${f0(invH)}</div><div class="s">різниця ${f0(all-invH)} — докладено з прибутку / власних</div></div>
+   <div class="tile"><div class="l">Страхові платежі</div><div class="v">${f0(dep)}</div><div class="s">у орендодавців, повернуться</div></div></div>
+  <div class="tiles t3" style="margin-top:8px">${ICAT.map(([k,l])=>`<div class="tile"><div class="l">${l}</div><div class="v">${f0(tot[k])}</div><div class="s">${all?Math.round(tot[k]/all*100):0}%</div></div>`).join('')}</div>
+  <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Точка</th>${ICAT.map(([,l])=>`<th class="num hide-sm">${l}</th>`).join('')}<th class="num">Разом</th></tr></thead><tbody>${body}</tbody>
+  <tfoot><tr class="final"><td>Разом</td>${ICAT.map(([k])=>`<td class="num hide-sm">${f0(tot[k])}</td>`).join('')}<td class="num">${f0(all)}</td></tr></tfoot></table></div>
+  <p class="note">${esc(L.about||'Оцінка зі старих таблиць (ДДС Даниїла й записи внесків): великі закупівлі автоматів поділено порівну між точками, які відкрились у той період; ремонт і підключення — за адресою в призначенні платежу.')} ${canWrite?'Натисніть рядок, щоб виправити суми — позначка «оцінка» зникне.':''}</p></section>`}
+function editInvLoc(id){const L=invLoc(), o=(id==='_gen'?L.gen:(L.pts||{})[id])||{}, p=S.points[id];
+  openSheet(id==='_gen'?'Загальні вкладення':(p?p.name:(o.name||id)),'Куди вкладено, грн',ICAT.map(([k,l])=>fld(k,l,o[k]??'')).join('')+fld('note','Коментар',o.note||'',{type:'text',full:true}),
+    async fd=>{const n={...o};for(const [k] of ICAT){const t=String(fd[k]||'').trim();const v=t===''?0:parseNum(t);if(v===null)return 'Перевірте числа';n[k]=v}n.note=fd.note||'';n.est=false;
+      const d=JSON.parse(JSON.stringify({...L}));if(id==='_gen')d.gen=n;else{d.pts=d.pts||{};d.pts[id]=n}
+      if(!await w(()=>db.doc('meta/invloc').set(d)))return 'Не збереглося';toast('Збережено')})}
 function pctPays(){return Object.entries(S.inv||{}).filter(([,v])=>v.kind==='pay').map(([id,v])=>({id,...v})).sort((a,b)=>(b.date||'').localeCompare(a.date||''))}
 function pctState(w){const L=invList().filter(i=>(i.investor||'Влад')===w), P=pctPays().filter(p=>p.investor===w);
   const yr=L.reduce((a,i)=>a+(+i.usd||0)*(+i.pct||0)/100,0), acc=L.reduce((a,i)=>a+invAccrued(i),0), paid=P.filter(p=>!p.reinv).reduce((a,p)=>a+(+p.usd||0),0), rein=P.filter(p=>p.reinv).reduce((a,p)=>a+(+p.usd||0),0);
@@ -2053,7 +2079,7 @@ function moneyCard(){
   const JA=jobsAll(), ana=Math.max(0,JA.reduce((a,j)=>a+(j.type==='pay'?-(+j.amount||0):j.st==='new'?0:(+j.amount||0)),0));
   let unpaid=0;const ps=balStart();for(const mm of monthsList())if(mm>=ps)for(const p of pointsList()){if(!S.pm[mm+'_'+p.id])continue;const x=payRow(mm,p.id);unpaid+=Math.max(0,x.rentDue-(x.rentPaid||0))+Math.max(0,x.utilDue-(x.utilPaid||0))}
   const money=bank+cash, obl=ana+unpaid+Math.max(0,vOwe), start=(+op.bank||0)+(+op.cash||0), gap=Math.round((money-(start+profit-wd+inj-reimb+vcard))*100)/100;
-  const kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`;
+  const kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`;window._money=money;
   return `<section class="card info mcard"><div class="shead"><h2>Де гроші й де прибуток</h2><span class="note">з ${balStartTxt()}</span></div>
   <div class="tiles t3"><div class="tile"><div class="l">${ACC.bank}</div><div class="v">${f0(bank)}</div><div class="s">${bFact!=null?'за випискою на '+dmy(ls.to):'розрахунок бази'}</div></div>
     <div class="tile"><div class="l">${ACC.cash}</div><div class="v">${f0(cash)}</div><div class="s">${lc&&lc.fact!=null?'факт '+mLabel(lc.m).toLowerCase():'розрахунок бази'}</div></div>
@@ -2065,8 +2091,14 @@ function moneyCard(){
     <p class="note" style="margin:4px 0 0">«Різниця в часі оплат» — рахунки, нараховані в одному місяці, а сплачені в іншому, і операції, які ще не внесено в базу.</p></div>
    <div><div class="glabel">Кому ми винні</div>
     ${kv('За оплати з особистих карток (повернути)',f0(Math.max(0,vOwe)))}${kv('Анатолію за роботи',f0(ana))}${kv('Оренда й комуналка з '+balStartTxt()+' — не сплачено',f0(unpaid))}${kv('= Разом боргів',f0(obl),'final')}
-    ${kv('Вільні гроші',f0(money-obl),'final')}</div></div></section>`;
+    ${kv('Вільні гроші',f0(money-obl),'final')}</div></div>${depBlock()}</section>`;
 }
+function depBlock(){const D=depList();if(!D.length)return '';const kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`;
+  const held=D.filter(p=>(p.depSt||'paid')==='paid'), unc=D.filter(p=>p.depSt==='contract'), ret=D.filter(p=>p.depSt==='returned'), sm=a=>a.reduce((s,p)=>s+(+p.dep||0),0);
+  return `<div style="margin-top:14px"><div class="glabel">Страхові платежі у орендодавців — це не гроші на рахунку, вони повернуться при виході з точки</div>
+  ${held.map(p=>kv(esc(p.name),f0(p.dep))).join('')}${unc.map(p=>kv(esc(p.name)+' <span class="pill open">оплату не підтверджено</span>',f0(p.dep),'mut')).join('')}
+  ${kv('= У орендодавців',f0(sm(held))+(unc.length?' <span class="note">(+'+f0(sm(unc))+' під питанням)</span>':''),'final')}${kv('Гроші разом + страхові платежі',f0(window._money+sm(held)),'final')}
+  ${ret.length?`<p class="note" style="margin:4px 0 0">Повернено: ${ret.map(p=>esc(p.name)+' '+f0(p.dep)).join(', ')}.</p>`:''}${canWrite?'<p class="note" style="margin:4px 0 0">Змінити — у картці точки (Ще → Точки).</p>':''}</div>`}
 
 function viewBal(){
   const st=balState(), op=balOpen(), Y=(cur||'').slice(0,4)||String(new Date().getFullYear());
@@ -2512,7 +2544,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({setFlowAcc,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({setFlowAcc,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,editInvLoc,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
