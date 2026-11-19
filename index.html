@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261119c">
+<meta name="wl-build" content="20261119d">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,6 +79,9 @@ label.chk{display:inline-flex;align-items:center;gap:6px;margin:4px 12px 4px 0;f
 .seg2.umode{display:flex}.seg2.umode button{flex:1;padding:6px 6px;font-size:12px}
 tr.pln td{background:var(--accent-soft)}tr.plq td{background:#fff8e8}.pill.plan{background:var(--accent);color:#fff}
 .mcard .kv.final{border-bottom:0;font-weight:700}.mcard .kv.final span{color:var(--fg)}.mcard .kv.mut b{color:var(--muted);font-weight:500}
+.cmp{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.cmph{font-size:13px;color:var(--muted);margin-bottom:6px}
+.cmpg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.cmpi .l{font-size:12px;color:var(--muted)}.cmpi .v{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}.cmpi .s{font-size:12px;color:var(--muted)}
+.cmpi .d{font-size:13px;font-weight:600;margin-top:2px}.cmpi .d.pos{color:#1f7a4d}.cmpi .d.neg{color:#c2412d}
 .card.bkdue{border-color:#f0c96b;background:#fffaf0}.bkdue .shead{gap:10px;align-items:center}
 .pbar{height:5px;border-radius:3px;background:var(--line);margin-top:4px;overflow:hidden}.pbar i{display:block;height:100%;background:#2e9e5b}.pbar i.soon{background:#e6a700}.pbar i.over{background:#d23c3c}
 td.hi-warn,td.hi-bad{position:relative}td.hi-warn>*:first-child,td.hi-warn{color:#b86e00}td.hi-bad>*:first-child,td.hi-bad{color:#c4413b;font-weight:600}
@@ -286,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261119c"></script>
+<script src="config.js?v=20261119d"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261119c"></script>
+<script src="shim.js?v=20261119d"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop'];
@@ -498,7 +501,7 @@ function viewMonth(m){
     <div class="tile"><div class="l">Операційні витрати</div><div class="v">${f0(t.opex)}</div><div class="s">${nf2.format(t.T.L?t.opex/t.T.L:0)} грн/л</div></div>
     <div class="tile main"><div class="l">Операційний прибуток</div><div class="v ${sgn(t.op)}">${f0(t.op)}</div><div class="s">маржа ${margin.toFixed(1).replace('.',',')}%</div></div>
     <div class="tile"><div class="l">До розподілу</div><div class="v ${sgn(t.net)}">${f0(t.net)}</div><div class="s">по ${f0(t.net/2)} кожному · після капвкладень ${f0(t.capex)}</div></div>
-  </div></section>`;
+  </div>${cmpHtml(m)}</section>`;
 
   // points
   const dash='<span class="mut">—</span>', n=v=>v?f0(v):dash;
@@ -1217,6 +1220,7 @@ function viewHome(m){
     <div class="tile"><div class="l">Прибуток, %</div><div class="v ${sgn(mt.op)}">${pct(mt.op,mt.T.rv)}</div><div class="s">до розподілу ${pct(mt.net,mt.T.rv)}</div></div>
     <div class="tile main"><div class="l">До розподілу</div><div class="v">${f0(mt.net)}</div><div class="s">по ${f0(mt.net/2)} кожному</div></div>
   </div>
+  ${cmpHtml(m)}
   ${ed?`<div class="bigacts one"><button class="btn pri main" data-act="addExp" type="button">+ Витрата</button></div>`:''}
   </section>`;
   if(!ed) return h+`<section class="card"><p class="note">Місяць закритий. Щоб щось змінити, відкрийте його у «Звіти → Фінрез по точках».</p></section>`+yearTable(m);
@@ -1850,7 +1854,24 @@ function bankBalBefore(d){const st=bankSts().filter(s=>s.anchor&&s.anchorBal!=nu
   else{for(const o of ops)if(o.date>=d&&o.date<st.anchor)b-=+o.amt}
   return Math.round(b*100)/100}
 const bankCovered=d=>bankSts().some(s=>s.from<=d&&d<=(s.last||s.to));
-function salesByDay(m){const D={};for(const s of Object.values(S.sales||{}))if(s.month===m)for(const [dd,v] of Object.entries(s.d||{})){const k=m+'-'+dd,o=D[k]||(D[k]={card:0,cash:0});o.card+=+(v&&v[1])||0;o.cash+=+(v&&v[2])||0}return D}
+function salesByDay(m){const D={};for(const s of Object.values(S.sales||{}))if(s.month===m)for(const [dd,v] of Object.entries(s.d||{})){const k=m+'-'+dd,o=D[k]||(D[k]={card:0,cash:0,l:0});o.card+=+(v&&v[1])||0;o.cash+=+(v&&v[2])||0;o.l+=+(v&&v[0])||0}return D}
+/* порівняння з минулим місяцем: неповний місяць — з тими самими днями минулого (1–N) */
+function cmpPrev(m){const pm=addDays(m+'-01',-1).slice(0,7);if(!S.months[pm])return null;
+  const thru=(S.months[m]||{}).gwThru, full=!thru||thru>=monthEnd(m);
+  let a,b,lbl;
+  if(full){const c1=calc(m),c0=calc(pm);a={rv:c1.R,l:c1.L};b={rv:c0.R,l:c0.L};lbl='весь місяць'}
+  else{const N=+thru.slice(8),sum=(D,mm)=>{let rv=0,l=0;for(const [d,v] of Object.entries(D))if(d.slice(0,7)===mm&&+d.slice(8)<=N){rv+=v.card+v.cash;l+=v.l}return {rv,l}};
+    a=sum(salesByDay(m),m);b=sum(salesByDay(pm),pm);lbl='1–'+N+' числа'}
+  if(!b.rv&&!b.l)return null;
+  return {pm,lbl,a,b,drv:a.rv-b.rv,dl:a.l-b.l,prv:b.rv?(a.rv/b.rv-1)*100:null,pl:b.l?(a.l/b.l-1)*100:null,pa:a.l?a.rv/a.l:0,pb:b.l?b.rv/b.l:0}}
+function cmpHtml(m){const c=cmpPrev(m);if(!c)return '';
+  const pc=v=>v==null?'—':(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(1).replace('.',',')+'%', cls=v=>v>0.05?'pos':v<-0.05?'neg':'';
+  const sg=v=>(v>0?'+':v<0?'−':'')+f0(Math.abs(v));
+  const t=(l,v,o,d,p)=>`<div class="cmpi"><div class="l">${l}</div><div class="v">${v}</div><div class="d ${cls(p)}">${p!=null?(p>0?'▲ ':p<0?'▼ ':'')+pc(p):''}</div><div class="s">було ${o}${d?'<br>'+d:''}</div></div>`;
+  return `<div class="cmp"><div class="cmph">Порівняння з минулим місяцем · ${mLabel(c.pm)}, ${c.lbl}</div><div class="cmpg">
+    ${t('Виручка',f0(c.a.rv)+' ₴',f0(c.b.rv)+' ₴',sg(c.drv)+' ₴',c.prv)}
+    ${t('Літри',f0(c.a.l)+' л',f0(c.b.l)+' л',sg(c.dl)+' л',c.pl)}
+    ${t('Ціна за літр',nf2.format(c.pa),nf2.format(c.pb),'',c.pb?(c.pa/c.pb-1)*100:null)}</div></div>`}
 /* операції, які мають бути за даними бази */
 function flowBase(m,k){const it=[],add=(date,amt,label,kind,ref)=>{if(Math.abs(amt)>0.004)it.push({date,amt:Math.round(amt*100)/100,label,kind,ref})};
   const pn=id=>(S.points[id]||{}).name||'';
