@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261121f">
+<meta name="wl-build" content="20261121g">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261121f"></script>
+<script src="config.js?v=20261121g"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261121f"></script>
+<script src="shim.js?v=20261121g"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1021,7 +1021,7 @@ function openSheet(title,sub,fields,onSave,onDelete){
     try{const fd=Object.fromEntries(new FormData(e.target));$('#sf').querySelectorAll('input[type=checkbox]').forEach(c=>fd[c.name]=c.checked);
     const err=await onSave(fd);if(err){const fe=$('#ferr');fe.textContent=err;fe.hidden=false;return}close()}
     finally{busy=false;if(sb&&sb.isConnected){sb.disabled=false;sb.textContent='Зберегти'}}});
-  const first=m.querySelector('input:not([type=radio]),select');if(first&&!m.querySelector('.chips'))first.focus();
+  const first=m.querySelector('input:not([type=radio]):not([type=checkbox]):not([type=date]):not([type=month]):not([type=hidden])');if(first&&!m.querySelector('.chips')&&!(window.matchMedia&&matchMedia('(pointer:coarse)').matches)&&first===m.querySelector('input:not([type=radio]):not([type=hidden]),select'))first.focus();
 }
 const fld=(name,label,val,opt={})=>`<label class="${opt.full?'full':''}">${label}<input id="f_${name}" name="${name}" value="${esc(val)}" ${opt.type?`type="${opt.type}"`:'inputmode="decimal"'} ${opt.list?`list="${opt.list}"`:''} autocomplete="off"></label>`;
 const sel=(name,label,val,opts,full)=>`<label class="${full?'full':''}">${label}<select id="f_${name}" name="${name}">${opts.map(([v,t])=>`<option value="${esc(v)}" ${v===val?'selected':''}>${esc(t)}</option>`).join('')}</select></label>`;
