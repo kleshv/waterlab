@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261121h">
+<meta name="wl-build" content="20261121i">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261121h"></script>
+<script src="config.js?v=20261121i"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261121h"></script>
+<script src="shim.js?v=20261121i"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1735,7 +1735,10 @@ function editBill(pid,mm){
     const tx=(c,u_,t)=>c?(c.use<0?'«Стало» менше, ніж «Було»':`${nf1.format(c.use)} ${u_} × ${String(g(t)).replace('.',',')} = ${nf2.format(c.sum)} грн`):'';
     $('#bcw').textContent=tx(cw,'м³','bwT');$('#bce').textContent=tx(ce,'кВт·год','beT');
     {const parts=[cw&&cw.use>=0?'вода '+nf1.format(cw.use)+' м³':'',ce&&ce.use>=0?'світло '+nf1.format(ce.use)+' кВт·год':''].filter(Boolean);const sm=(cw&&cw.use>=0?cw.sum:0)+(ce&&ce.use>=0?ce.sum:0);
-     $('#actSum').innerHTML=parts.length?parts.join(' · ')+' = <b>'+f0(sm)+' грн</b>':'показники не внесено'}
+     const eq=(k,v)=>v!=null&&g(k)!==''&&Math.abs(parseNum(g(k))-+v)<1e-6, okW=u.w1!=null&&eq('bw0',u.w0)&&eq('bw1',u.w1), okE=u.e1!=null&&eq('be0',u.e0)&&eq('be1',u.e1);
+     const okAll=hasOur&&(u.w1==null||okW)&&(u.e1==null||okE), G=' <b style="color:#1f9d55">✓</b>';
+     $('#bcw').innerHTML+=okW?G+' <span style="color:#1f9d55">як у нас</span>':'';$('#bce').innerHTML+=okE?G+' <span style="color:#1f9d55">як у нас</span>':'';
+     $('#actSum').innerHTML=parts.length?parts.join(' · ')+' = <b>'+f0(sm)+' грн</b>'+(okAll?' <b style="color:#1f9d55;font-size:1.15em">✓</b> <span style="color:#1f9d55">збігається з нашими</span>':''):'показники не внесено'}
     return {cw,ce,sum:(cw&&cw.use>=0||ce&&ce.use>=0)?Math.round(((cw&&cw.use>=0?cw.sum:0)+(ce&&ce.use>=0?ce.sum:0))*100)/100:null}};
   openSheet(p.name||pid,mLabel(m),fields,async fd=>{
     const c=calc();
