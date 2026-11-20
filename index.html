@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120l">
+<meta name="wl-build" content="20261120m">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120l"></script>
+<script src="config.js?v=20261120m"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120l"></script>
+<script src="shim.js?v=20261120m"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2032,6 +2032,12 @@ function flowRows(m){
      for(let i=0;i<U.length&&!hit;i++)for(let j=i+1;j<U.length&&!hit;j++){if(Math.abs(U[i].base+U[j].base-o.amt)<0.011&&dd(U[i].date,o.date)<=7&&dd(U[j].date,o.date)<=7)hit=[U[i],U[j]];
        for(let k=j+1;k<U.length&&!hit;k++)if(Math.abs(U[i].base+U[j].base+U[k].base-o.amt)<0.011&&dd(U[i].date,o.date)<=7)hit=[U[i],U[j],U[k]]}
      if(hit){o.used=true;hit.forEach((x,n)=>{x.st='ok';x.bank=n?null:+o.amt;x.note='одним платежем '+nf2.format(o.amt)+' · '+(o.name||'')})}}}
+  // 3в) кілька платежів банку одному отримувачу = одна оплата в базі (вода + моніторинг + …)
+  for(const x of rows.filter(x=>(x.st==='base'||x.st==='wait')&&/^pay\//.test(x.ref||''))){const py=S.pay[x.ref.split('/')[1].split('#')[0]];if(!py)continue;
+    const C=bo.filter(o=>!o.used&&o.amt<0&&!/КЛЕЩИНСЬК/i.test(o.name)&&dd(o.date,x.date)<=10&&(()=>{const ids=opPids(o);return ids.length===1&&ids[0]===py.point})()).slice(0,14);
+    if(!C.length)continue;let hit=null;const n=C.length;
+    for(let mask=1;mask<(1<<n)&&!hit;mask++){let sm=0;for(let k=0;k<n;k++)if(mask>>k&1)sm+=+C[k].amt;if(Math.abs(sm-x.base)<0.011)hit=C.filter((_,k)=>mask>>k&1)}
+    if(hit){hit.forEach(o=>o.used=true);x.st='ok';x.bank=Math.round(hit.reduce((a,o)=>a+(+o.amt),0)*100)/100;x.note=hit.length>1?hit.length+' платежі: '+hit.map(o=>nf2.format(-o.amt)).join(' + ')+' · '+(hit[0].name||''):(hit[0].date!==x.date?'у банку '+dmy(hit[0].date):'')}}
   // 4) групи: перекази собі (у базі часто однією сумою за місяць) і дрібні комісії банку
   {const own=bo.filter(o=>!o.used&&/КЛЕЩИНСЬК/i.test(o.name)),ownSum=Math.round(own.reduce((s,o)=>s+(+o.amt),0)*100)/100;
    const bm=rows.filter(x=>x.st==='base'&&String(x.ref||'').startsWith('mov/')&&x.base<0),bmSum=Math.round(bm.reduce((s,x)=>s+x.base,0)*100)/100;
@@ -2280,12 +2286,13 @@ function cpPids(bankName){
     if(sc>best){best=sc;ids=[p.id]}else if(sc===best)ids.push(p.id)}
   return ids;
 }
+function opPids(o){let pids=cpPids(o.name);if(pids.length>1){const by=pids.filter(id=>((S.points[id]||{}).contract||'').match(/\d{3,}/g)?.some(n=>new RegExp('№\\s*'+n+'(?!\\d)').test(o.purp||'')));if(by.length===1)pids=by;else{const nrm=t=>(' '+(t||'').toLowerCase().replace(/["«»'“”]/g,' ')+' ').replace(/\s(тов|осбб|пп|фоп)(?=\s)/g,' ').replace(/\s+/g,' '),pu=nrm(o.purp),core=id=>nrm((S.points[id]||{}).payee).trim();
+      const by2=pids.filter(id=>{const c=core(id);return c.length>=3&&new RegExp('(^|[^а-яіїєa-z0-9])'+c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?!\\s*\\d)','i').test(pu)});if(by2.length===1)pids=by2}}return pids}
 function payCheck(){
   const ops=CHK.bank.ops, d0=ops.reduce((a,o)=>o.date<a?o.date:a,'9999'), d1=ops.reduce((a,o)=>o.date>a?o.date:a,'');
   const skip=o=>o.amt>=0||/КЛЕЩИНСЬК/i.test(o.name)||/Mastercard|ПОПОВНЕННЯ|ДЕБЕТУВАННЯ|ОБСЛ|ДОХIД|ДОХІД|Розрахунок ПО|валютна/i.test(o.name);
   const groups={}, other=[];
-  for(const o of ops){if(skip(o))continue;let pids=cpPids(o.name);if(pids.length>1){const by=pids.filter(id=>((S.points[id]||{}).contract||'').match(/\d{3,}/g)?.some(n=>new RegExp('№\\s*'+n+'(?!\\d)').test(o.purp||'')));if(by.length===1)pids=by;else{const nrm=t=>(' '+(t||'').toLowerCase().replace(/["«»'“”]/g,' ')+' ').replace(/\s(тов|осбб|пп|фоп)(?=\s)/g,' ').replace(/\s+/g,' '),pu=nrm(o.purp),core=id=>nrm((S.points[id]||{}).payee).trim();
-      const by2=pids.filter(id=>{const c=core(id);return c.length>=3&&new RegExp('(^|[^а-яіїєa-z0-9])'+c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?!\\s*\\d)','i').test(pu)});if(by2.length===1)pids=by2}}if(!pids.length){other.push(o);continue}
+  for(const o of ops){if(skip(o))continue;const pids=opPids(o);if(!pids.length){other.push(o);continue}
     const k=pids.join(',');(groups[k]||(groups[k]={pids,names:new Set(),bank:[],db:[]})).bank.push({date:o.date,amt:-o.amt,purp:o.purp});groups[k].names.add(o.name)}
   {const G=Object.values(groups);let merged=true;
    while(merged){merged=false;for(let i=0;i<G.length&&!merged;i++)for(let j=i+1;j<G.length;j++)if(G[i].pids.some(x=>G[j].pids.includes(x))){
