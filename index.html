@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120c">
+<meta name="wl-build" content="20261120d">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120c"></script>
+<script src="config.js?v=20261120d"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120c"></script>
+<script src="shim.js?v=20261120d"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1793,47 +1793,28 @@ function devRows(){const L=invLoc(), R=[], used=new Set();
   for(const c of credits())R.push({id:'cr:'+c.id,src:'Кредит',d:(c.start||'')+'-01',a:+c.total||0,p:c.name+' — сплачено '+f0(crPaid(c.id))+', залишок '+f0(crLeft(c.id)),typ:c.typ||'Автомати',loc:{[c.point||'gen']:1},how:'адреса',fund:'inc'});
   return R}
 const ilName=id=>id==='gen'?'Загальне, не по точках':(S.points[id]?S.points[id].name:((invLoc().pts||{})[id]||{}).name||id);
-function viewInvLoc(){const R=devRows(), A={}, F={}, G={};
-  for(const r of R)for(const [l,sh] of Object.entries(r.loc||{})){const v=r.a*sh;(A[l]=A[l]||{})[r.typ]=(A[l][r.typ]||0)+v;const f=(F[l]=F[l]||{inv:0,inc:0,est:0});f[r.fund]+=v;if(EST.includes(r.how))f.est+=v}
+const ILG={'Автомати':'Обладнання','Купюрники, терминали, зв\'язок':'Обладнання','Акумулятори / БЖ':'Обладнання','Оздоблення й будроботи':'Ремонт','Двері й вікна':'Ремонт','Вода, труби, підключення':'Підключення','Електрика й освітлення':'Підключення','Реклама й вивіски':'Реклама'}, ILGS=['Обладнання','Ремонт','Підключення','Реклама','Інше'];
+function viewInvLoc(){const R=devRows().map(r=>({...r,g:ILG[r.typ]||'Інше'})), A={}, F={};
+  const fk=r=>r.fund==='inc'?'Діяльність':(r.who||'Влад'), FS=['Влад','Даниїл','Діяльність'];
+  for(const r of R)for(const [l,sh] of Object.entries(r.loc||{})){const v=r.a*sh;(A[l]=A[l]||{})[r.g]=(A[l][r.g]||0)+v;(F[l]=F[l]||{})[fk(r)]=(F[l][fk(r)]||0)+v}
   const sm=o=>Object.values(o||{}).reduce((a,v)=>a+v,0), all=R.reduce((a,r)=>a+r.a,0);
-  const tt={};for(const t of DEVT)tt[t]=0;for(const r of R)tt[r.typ]=(tt[r.typ]||0)+r.a;
-  const types=Object.keys(tt).filter(t=>tt[t]>0.5).sort((a,b)=>(a==='Без розшифровки')-(b==='Без розшифровки')||tt[b]-tt[a]);
+  const tt={},ft={};for(const r of R){tt[r.g]=(tt[r.g]||0)+r.a;ft[fk(r)]=(ft[fk(r)]||0)+r.a}
+  const types=ILGS.filter(t=>tt[t]>0.5);
   const locs=Object.keys(A).sort((a,b)=>(a==='gen')-(b==='gen')||sm(A[b])-sm(A[a]));
-  const fInv=R.filter(r=>r.fund==='inv'), fInc=R.filter(r=>r.fund==='inc'), s=a=>a.reduce((x,r)=>x+r.a,0);
-  const lump=R.filter(r=>r.how==='без розшифровки'), est=R.filter(r=>EST.includes(r.how)&&r.how!=='без розшифровки'), split=R.filter(r=>!['адреса','без розшифровки'].includes(r.how));
-  // звірка по інвесторах
-  const invs=[...new Set(invList().map(i=>i.investor||'Влад'))];
-  const rec=invs.map(w=>{const put=invList().filter(i=>(i.investor||'Влад')===w).reduce((a,i)=>a+(+i.hrn||0),0);const used=fInv.filter(r=>r.who===w);
-    return {w,put,doc:s(used.filter(r=>r.how!=='без розшифровки')),lump:s(used.filter(r=>r.how==='без розшифровки'))}});
-  const recH=`<div class="tbl"><table class="ut"><thead><tr><th>Інвестор</th><th class="num">Внесено</th><th class="num">Розписані витрати</th><th class="num">Без розшифровки</th><th class="num">Різниця</th></tr></thead><tbody>${rec.map(r=>{const d=r.put-r.doc-r.lump;return `<tr><td>${esc(r.w)}</td><td class="num">${f0(r.put)}</td><td class="num">${f0(r.doc)}</td><td class="num">${r.lump?f0(r.lump):'—'}</td><td class="num ${Math.abs(d)>1000?'neg':''}">${Math.abs(d)<1?'0':f0(d)}</td></tr>`}).join('')}</tbody></table></div>`;
-  const lumpH=lump.sort((a,b)=>b.a-a.a).map(r=>`<div class="kv"><span>${esc(r.p)}<div class="note">${Object.keys(r.loc).map(ilName).map(esc).join(', ')}</div></span><b>${f0(r.a)}</b></div>`).join('');
-  const estBy={};for(const r of split)estBy[r.how]=(estBy[r.how]||0)+r.a;
-  const estH=Object.entries(estBy).sort((a,b)=>b[1]-a[1]).map(([h,v])=>`<div class="kv"><span>${esc(HOWL[h]||h)}</span><b>${f0(v)}</b></div>`).join('');
-  const cols=ilT?[ilT]:types;
-  const rowH=l=>{const o=A[l],f=F[l],t=ilT?(o[ilT]||0):sm(o);if(ilT&&t<0.5)return '';const mx=Math.max(...cols.map(c=>o[c]||0));
-    return `<tr class="click ${ilSel===l?'sel':''}" data-act="ilPick" data-id="${l}"><td>${esc(ilName(l))}${f.est/sm(o)>0.25?` <span class="pill open">${Math.round(f.est/sm(o)*100)}% припущення</span>`:''}</td>${cols.map(c=>{const v=o[c]||0;return `<td class="num ${cols.length>1?'hide-sm':''}">${v>0.5?(v===mx&&cols.length>1?'<b>'+f0(v)+'</b>':f0(v)):'<span class="mut">—</span>'}</td>`}).join('')}${ilT?'':`<td class="num">${f.inv>0.5?f0(f.inv):'—'}</td><td class="num">${f.inc>0.5?f0(f.inc):'—'}</td><td class="num"><b>${f0(t)}</b><div class="note">${Math.round(t/all*1000)/10}%</div></td>`}</tr>`};
-  const mxT=Math.max(...types.map(t=>tt[t]));
-  const bars=types.map(t=>`<div class="ilbar click ${ilT===t?'on':''}" data-act="ilType" data-id="${esc(t)}"><span>${esc(t)}</span><i><b style="width:${tt[t]/mxT*100}%"></b></i><span class="num">${f0(tt[t])} <span class="note">${Math.round(tt[t]/all*100)}%</span></span></div>`).join('');
+  const c=v=>v>0.5?f0(v):'<span class="mut">—</span>';
+  const rowH=l=>`<tr class="click ${ilSel===l?'sel':''}" data-act="ilPick" data-id="${l}"><td>${esc(ilName(l))}</td>${types.map(t=>`<td class="num hide-sm">${c((A[l]||{})[t]||0)}</td>`).join('')}${FS.map(f=>`<td class="num">${c((F[l]||{})[f]||0)}</td>`).join('')}<td class="num"><b>${f0(sm(A[l]))}</b></td></tr>`;
   let det='';
-  if(ilSel){const D=R.filter(r=>r.loc&&r.loc[ilSel]&&(!ilT||r.typ===ilT)).map(r=>({...r,v:r.a*r.loc[ilSel]})).sort((a,b)=>(b.d||'').localeCompare(a.d||''));
-    det=`<section class="card"><div class="shead"><h2>${esc(ilName(ilSel))}${ilT?' · '+esc(ilT):''}</h2><button class="btn sm" data-act="ilPick" data-id="${ilSel}" type="button">Закрити</button></div>
-    <p class="note">${D.length} платежів на ${f0(D.reduce((a,r)=>a+r.v,0))} ₴. Якщо платіж поділено між точками, показано частку цієї точки.${canWrite?' Натисніть платіж, щоб змінити тип або точки.':''}</p>
-    <div class="tbl"><table class="ut"><thead><tr><th>Дата</th><th>Призначення</th><th class="hide-sm">Тип</th><th class="num">Сума</th></tr></thead><tbody>${D.map(r=>{const n=Object.keys(r.loc).length,ed=canWrite&&!String(r.id).includes(':');
-      return `<tr class="${ed?'click':''}" data-act="${ed?'editDevx':''}" data-id="${r.id}"><td>${r.d?dmy(r.d):'—'}${r.dApprox?'<div class="note">≈</div>':''}</td><td>${esc(r.p)}<div class="note">${esc(r.src)}${r.who&&r.who!=='Влад'?' · '+esc(r.who):''}${r.fund==='inc'?' · з доходу':''}${r.how!=='адреса'?' · '+esc(HOWL[r.how]||r.how):''}${n>1?' · поділено на '+n:''}</div></td><td class="hide-sm">${esc(r.typ)}</td><td class="num">${f0(r.v)}${n>1?`<div class="note">з ${f0(r.a)}</div>`:''}</td></tr>`}).join('')}</tbody></table></div></section>`}
-  return `<style>.ilbar{display:grid;grid-template-columns:minmax(120px,230px) 1fr 130px;gap:10px;align-items:center;padding:3px 6px;border-radius:6px}.ilbar.on,.ilbar:hover{background:var(--accent-soft)}.ilbar i{height:9px;background:var(--line);border-radius:5px;overflow:hidden;display:block}.ilbar i b{display:block;height:100%;background:var(--link)}.ilbar .num{text-align:right}@media(max-width:560px){.ilbar{grid-template-columns:1fr 110px}.ilbar i{grid-column:1/-1}}tr.sel td{background:var(--accent-soft)}.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 12px}</style>
-  <section class="card"><div class="shead"><h2>Куди вкладено</h2><span class="note">грн · ${R.length} записів</span></div>
-  <div class="tiles t3"><div class="tile main"><div class="l">Вкладено в точки й обладнання</div><div class="v">${f0(all)}</div><div class="s">по точках ${f0(all-sm(A.gen))} · загальне ${f0(sm(A.gen))}</div></div>
-   <div class="tile"><div class="l">З коштів інвесторів</div><div class="v">${f0(s(fInv))}</div><div class="s">${rec.map(r=>esc(r.w)+' '+f0(r.put)).join(' · ')}</div></div>
-   <div class="tile"><div class="l">З доходу</div><div class="v">${f0(s(fInc))}</div><div class="s">витрати «Розвиток» і кредити${credits().length?' · ще сплатити '+f0(credits().reduce((a,c)=>a+crLeft(c.id),0)):''}</div></div></div></section>
-  <section class="card"><div class="shead"><h2>Звірка: внесено ↔ витрачено</h2></div>${recH}
-   <div class="tiles" style="margin-top:10px"><div class="tile"><div class="l">Без розшифровки</div><div class="v">${f0(s(lump))}</div><div class="s">${Math.round(s(lump)/all*100)}% усіх вкладень — гроші внесені, витрат не видно</div></div>
-   <div class="tile"><div class="l">Точку визначено припущенням</div><div class="v">${f0(est.reduce((a,r)=>a+r.a,0))}</div><div class="s">${Math.round(est.reduce((a,r)=>a+r.a,0)/all*100)}% · сума платежу точна, невідомо лише на яку точку</div></div></div>
-   <div class="glabel" style="margin-top:12px">Що непрозоро</div><div class="info mcard">${lumpH}</div>
-   <div class="glabel" style="margin-top:12px">Як розподілено платежі, де немає однієї адреси</div><div class="info mcard">${estH}</div></section>
-  <section class="card"><div class="shead"><h2>За типом</h2>${ilT?`<button class="btn sm" data-act="ilType" data-id="${esc(ilT)}" type="button">Усі типи</button>`:''}</div><p class="note">Натисніть тип, щоб показати тільки його.</p>${bars}</section>
-  <section class="card"><div class="shead"><h2>${ilT?esc(ilT)+' по точках':'Точки × типи'}</h2><span class="note">натисніть точку — її платежі</span></div>
-   <div class="tbl"><table class="ut"><thead><tr><th>Точка</th>${cols.map(c=>`<th class="num ${cols.length>1?'hide-sm':''}">${esc(c)}</th>`).join('')}${ilT?'':'<th class="num">Інвестори</th><th class="num">З доходу</th><th class="num">Разом</th>'}</tr></thead>
-   <tbody>${locs.map(rowH).join('')}</tbody><tfoot><tr class="final"><td>Разом</td>${cols.map(c=>`<td class="num ${cols.length>1?'hide-sm':''}">${f0(tt[c])}</td>`).join('')}${ilT?'':`<td class="num">${f0(s(fInv))}</td><td class="num">${f0(s(fInc))}</td><td class="num">${f0(all)}</td>`}</tr></tfoot></table></div></section>${det}`}
+  if(ilSel){const D=R.filter(r=>r.loc&&r.loc[ilSel]).map(r=>({...r,v:r.a*r.loc[ilSel]})).sort((a,b)=>(b.d||'').localeCompare(a.d||''));
+    det=`<section class="card"><div class="shead"><h2>${esc(ilName(ilSel))}</h2><button class="btn sm" data-act="ilPick" data-id="${ilSel}" type="button">Закрити</button></div>
+    <div class="tbl"><table class="ut"><thead><tr><th>Дата</th><th>На що</th><th class="hide-sm">Тип</th><th>Фонд</th><th class="num">Сума</th></tr></thead><tbody>${D.map(r=>{const ed=canWrite&&!String(r.id).includes(':');
+      return `<tr class="${ed?'click':''}" data-act="${ed?'editDevx':''}" data-id="${r.id}"><td>${r.d?dmy(r.d):'—'}</td><td>${esc(r.p)}</td><td class="hide-sm">${esc(r.typ)}</td><td>${fk(r)}</td><td class="num">${f0(r.v)}</td></tr>`}).join('')}</tbody>
+      <tfoot><tr class="final"><td colspan="2">Разом</td><td class="hide-sm"></td><td></td><td class="num">${f0(D.reduce((a,r)=>a+r.v,0))}</td></tr></tfoot></table></div></section>`}
+  return `<style>tr.sel td{background:var(--accent-soft)}.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 12px}</style>
+  <section class="card"><div class="shead"><h2>Куди вкладено</h2><span class="note">грн</span></div>
+  <div class="tiles"><div class="tile main"><div class="l">Вкладено всього</div><div class="v">${f0(all)}</div></div>${FS.map(f=>`<div class="tile"><div class="l">${f}</div><div class="v">${f0(ft[f]||0)}</div></div>`).join('')}</div></section>
+  <section class="card"><div class="shead"><h2>По локаціях</h2><span class="note">Обладнання — автомати, купюрники, термінали, акумулятори · Ремонт — оздоблення, двері, вікна · Підключення — вода, електрика · Інше — доставка, інструмент, без розшифровки</span></div>
+   <div class="tbl"><table class="ut"><thead><tr><th>Локація</th>${types.map(t=>`<th class="num hide-sm">${esc(t)}</th>`).join('')}${FS.map(f=>`<th class="num">${f}</th>`).join('')}<th class="num">Разом</th></tr></thead>
+   <tbody>${locs.map(rowH).join('')}</tbody><tfoot><tr class="final"><td>Разом</td>${types.map(t=>`<td class="num hide-sm">${f0(tt[t])}</td>`).join('')}${FS.map(f=>`<td class="num">${f0(ft[f]||0)}</td>`).join('')}<td class="num">${f0(all)}</td></tr></tfoot></table></div></section>${det}`}
 function ilPick(id){ilSel=ilSel===id?null:id;render();if(ilSel)setTimeout(()=>{const c=[...document.querySelectorAll('section.card')].pop();c&&c.scrollIntoView({behavior:'smooth',block:'start'})},50)}
 function ilType(t){ilT=ilT===t?null:t;render()}
 function editDevx(id){const x=S.devx[id];if(!x)return;const pts=[...pointsList().map(p=>[p.id,p.name]),...Object.entries(invLoc().pts||{}).filter(([k])=>!S.points[k]).map(([k,o])=>[k,o.name||k]),['gen','Загальне, не по точках']];
