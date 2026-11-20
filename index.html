@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261121e">
+<meta name="wl-build" content="20261121f">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -154,7 +154,7 @@ p.note{margin:6px 0 0}
 .form:has(#f_billNo){grid-template-columns:1fr 1fr!important;gap:6px 8px}.form .billbox{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px}input.ro{background:var(--chip)!important;color:var(--muted)}.form .billbox[hidden],.form .cpbox[hidden]{display:none}.form .cpbox{display:grid}.form:has(#f_billNo) .sub{margin:4px 0 -2px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
 .sheet.wide{max-width:760px}
 .billf .form{grid-template-columns:1fr 1fr!important;gap:6px 8px}.billf .form .sub{margin-top:6px}.billf .bdet{border:1px solid var(--line);border-radius:8px;padding:6px 10px}.billf .bdet[open]{padding-bottom:10px}.billf .bdet summary{font-size:12px}
-.uxh{display:none}.uxr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 8px;align-items:end;border:1px solid var(--line)!important;border-radius:10px;padding:6px 10px 10px!important;margin-bottom:8px}.uxr .uxt{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}.uxr label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);min-width:0}.uxr label input{width:100%}.uxh{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.uxh{display:none}.uxr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 8px;align-items:end;border:1px solid var(--line)!important;border-radius:10px;padding:6px 10px 10px!important;margin-bottom:8px}.uxr .uxt{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}.uxr label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);min-width:0}.uxr label input{width:100%;min-width:0;max-width:100%;box-sizing:border-box}.uxr input[type=date]{-webkit-appearance:none;appearance:none}.rblk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 8px;margin-top:10px}.rblk .rh{grid-column:1/-1;font-size:13px;font-weight:600}.rblk label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);min-width:0}.rblk input{width:100%;min-width:0;box-sizing:border-box}.rblk .rr{grid-column:1/-1;font-size:12px;color:var(--muted)}.uxh{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .uxr{padding:6px 0;border-bottom:1px solid var(--line);position:relative}.uxr .del{background:none;border:0;padding:2px 0;font:inherit;font-size:12px;text-transform:none;letter-spacing:0;font-weight:500;color:var(--neg,#c2412d);text-decoration:underline;text-underline-offset:2px;cursor:pointer}.sugb{grid-column:1/-1;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--card,#fff);box-shadow:0 6px 18px rgba(0,0,0,.12)}.sugb button{display:block;width:100%;text-align:left;padding:9px 12px;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;font-size:13.5px;color:inherit}.sugb button:last-child{border-bottom:0}.sugb .sg{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:6px 12px 2px}.uxr .sm2{font-size:12.5px;padding-top:5px;padding-bottom:5px;color:var(--muted)}.uxr .btn{padding:6px 0}
 .form .chk{flex-direction:row;align-items:center;gap:8px;font-size:13px;color:var(--fg)}
 .actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261121e"></script>
+<script src="config.js?v=20261121f"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261121e"></script>
+<script src="shim.js?v=20261121f"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1712,17 +1712,18 @@ function editBill(pid,mm){
   const num=v=>v==null||v===''?'':String(+v).replace('.',',');
   const hasOur=u.w1!=null||u.e1!=null, nq=(a,b)=>a!=null&&b!=null&&Math.abs(+a-+b)>1e-9;
   let other=!hasOur||nq(py.bw0,u.w0)||nq(py.bw1,u.w1)||nq(py.be0,u.e0)||nq(py.be1,u.e1)||(py.bw1!=null&&u.w1==null)||(py.be1!=null&&u.e1==null);
-  const w0=other?(py.bw0??pb.bw1??u.w0):u.w0, e0=other?(py.be0??pb.be1??u.e0):u.e0, w1=other?py.bw1:u.w1, e1=other?py.be1:u.e1;
+  const w0=other?(py.bw0??u.w0??pb.bw1):u.w0, e0=other?(py.be0??u.e0??pb.be1):u.e0, w1=other?(py.bw1??u.w1):u.w1, e1=other?(py.be1??u.e1):u.e1;
   const wT=py.bwT??u.wT??t.wT, eT=py.beT??u.eT??t.eT;
-  const nn=v=>v==null||v===''?'—':nf1.format(+v), rdSum=`вода ${nn(w0)} → ${nn(w1)} · світло ${nn(e0)} → ${nn(e1)}`;
+  const nn=v=>v==null||v===''?'—':nf1.format(+v);
+  const oW=u.w1!=null&&u.w0!=null?u.w1-u.w0:null, oE=u.e1!=null&&u.e0!=null?u.e1-u.e0:null;
+  const ourTxt=(oW!=null||oE!=null)?[oW!=null?'вода '+nn(Math.round(oW*1000)/1000)+' м³':'',oE!=null?'світло '+nn(oE)+' кВт·год':''].filter(Boolean).join(' · ')+' = <b>'+f0(x.utilCalc)+' грн</b>':'<b>'+f0(x.utilCalc)+' грн</b>';
   const fields=`<div class="sub">Період і показники</div>`+
     fld('bFrom','Період з',py.bFrom||(other?'':m+'-01'),{type:'date'})+fld('bTo','по',py.bTo||(other?'':(([y,mo])=>mo===12?(y+1)+'-01-01':y+'-'+String(mo+1).padStart(2,'0')+'-01')(m.split('-').map(Number))),{type:'date'})+
-    `<div class="calc full">За нашими показниками: <b id="ourSum">${f0(x.utilCalc)} грн</b></div>`+
-    `<details class="full bdet" ${other&&(py.bw1!=null||py.be1!=null)?'open':''}><summary class="note" style="cursor:pointer">Показники за актом · ${rdSum}</summary>`+
-    (hasOur?`<label class="full chk"><input type="checkbox" id="f_other" ${other?'checked':''}> Інші показники за рахунком / актом</label>`:'')+
-    `<div class="full blist b4 bill"><div class="bhead"><span></span><span></span><span>Було</span><span>Стало</span><span>Тариф</span></div>
-      <div class="brow"><div class="bname">Вода, м³</div><div class="bc" id="bcw"></div><input name="bw0" id="f_bw0" inputmode="decimal" value="${num(w0)}"><input name="bw1" id="f_bw1" inputmode="decimal" value="${num(w1)}"><input name="bwT" id="f_bwT" inputmode="decimal" value="${num(wT)}"></div>
-      <div class="brow"><div class="bname">Світло, кВт·год</div><div class="bc" id="bce"></div><input name="be0" id="f_be0" inputmode="decimal" value="${num(e0)}"><input name="be1" id="f_be1" inputmode="decimal" value="${num(e1)}"><input name="beT" id="f_beT" inputmode="decimal" value="${num(eT)}"></div></div></details>`+
+    `<div class="calc full">За нашими показниками: ${ourTxt}</div>`+
+    `<details class="full bdet" ${other&&(py.bw1!=null||py.be1!=null)?'open':''}><summary class="note" style="cursor:pointer">За актом: <span id="actSum"></span></summary>`+
+    (hasOur?`<label class="full chk" style="margin-top:6px"><input type="checkbox" id="f_other" ${other?'checked':''}> Показники в акті інші, ніж наші</label>`:'')+
+    `<div class="rblk"><div class="rh">Вода, м³</div><label>Було<input name="bw0" id="f_bw0" inputmode="decimal" value="${num(w0)}"></label><label>Стало<input name="bw1" id="f_bw1" inputmode="decimal" value="${num(w1)}"></label><label>Тариф, грн<input name="bwT" id="f_bwT" inputmode="decimal" value="${num(wT)}"></label><div class="rr" id="bcw"></div></div>
+     <div class="rblk"><div class="rh">Світло, кВт·год</div><label>Було<input name="be0" id="f_be0" inputmode="decimal" value="${num(e0)}"></label><label>Стало<input name="be1" id="f_be1" inputmode="decimal" value="${num(e1)}"></label><label>Тариф, грн<input name="beT" id="f_beT" inputmode="decimal" value="${num(eT)}"></label><div class="rr" id="bce"></div></div></details>`+
     `<div class="sub" style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-top:8px"><span>Рахунки й оплати</span><span class="note" id="uxSum" style="text-transform:none;letter-spacing:0;font-weight:400"></span></div>
     <div class="full uxh"><span>Сума</span><span>Дата</span><span></span></div><div class="full" id="uxList"></div>
     <div class="full" style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sm" id="uxAdd">+ Рахунок / платіж</button></div>`+
@@ -1731,10 +1732,12 @@ function editBill(pid,mm){
   let manual=py.utilBill!=null&&py.bw1==null&&py.be1==null;
   const calc=()=>{const g=id=>$('#f_'+id).value.trim();
     const cw=g('bw1')?calcFrom(g('bw0'),g('bw1'),g('bwT')):null, ce=g('be1')?calcFrom(g('be0'),g('be1'),g('beT')):null;
-    $('#bcw').textContent=cw?(cw.use<0?'перевірте':`${nf1.format(cw.use)} м³ = ${f0(cw.sum)} грн`):'';
-    $('#bce').textContent=ce?(ce.use<0?'перевірте':`${nf1.format(ce.use)} кВт·год = ${f0(ce.sum)} грн`):'';
+    const tx=(c,u_,t)=>c?(c.use<0?'«Стало» менше, ніж «Було»':`${nf1.format(c.use)} ${u_} × ${String(g(t)).replace('.',',')} = ${nf2.format(c.sum)} грн`):'';
+    $('#bcw').textContent=tx(cw,'м³','bwT');$('#bce').textContent=tx(ce,'кВт·год','beT');
+    {const parts=[cw&&cw.use>=0?'вода '+nf1.format(cw.use)+' м³':'',ce&&ce.use>=0?'світло '+nf1.format(ce.use)+' кВт·год':''].filter(Boolean);const sm=(cw&&cw.use>=0?cw.sum:0)+(ce&&ce.use>=0?ce.sum:0);
+     $('#actSum').innerHTML=parts.length?parts.join(' · ')+' = <b>'+f0(sm)+' грн</b>':'показники не внесено'}
     return {cw,ce,sum:(cw&&cw.use>=0||ce&&ce.use>=0)?Math.round(((cw&&cw.use>=0?cw.sum:0)+(ce&&ce.use>=0?ce.sum:0))*100)/100:null}};
-  openSheet('Комуналка · '+(p.name||pid),mLabel(m)+(p.payee?' · '+p.payee:'')+(p.contact?' · '+p.contact:''),fields,async fd=>{
+  openSheet(p.name||pid,mLabel(m),fields,async fd=>{
     const c=calc();
     if(c.cw&&c.cw.use<0||c.ce&&c.ce.use<0)return '«Стало» менше, ніж «Було».';
     const nums=['bw0','bw1','bwT','be0','be1','beT',...(p.payee2?['waterDue','utilPaidW']:[])].map(k=>[k,String(fd[k]??'').trim()]);
