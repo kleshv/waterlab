@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120b">
+<meta name="wl-build" content="20261120c">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,12 +289,12 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120b"></script>
+<script src="config.js?v=20261120c"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120b"></script>
+<script src="shim.js?v=20261120c"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
-const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop'];
+const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
 const ARTS=[
  {g:'Обслуговування мережі',cat:'ТОіР',items:['Сервіс і заміна фільтрів','Фільтри та мембрани','Ремонт і запчастини','Електрика та монтаж','Інкасація','Пальне','Зв’язок, SIM, CRM','Клінінг','Доставка','Інше']},
  {g:'Податки і банк',cat:'ФА',items:['Єдиний податок','Військовий збір','Банк і РКО','Банк 1,3% еквайринг','Checkbox','Бухгалтер / юрист']},
@@ -1779,37 +1779,69 @@ const crPaid=id=>Object.values(S.exp).filter(e=>e.credit===id).reduce((s,e)=>s+(
 const crLeft=id=>{const c=credits().find(x=>x.id===id);return c?Math.max(0,Math.round((+c.total-crPaid(id))*100)/100):0};
 const ICAT=[['A','Автомати'],['R','Ремонт і облаштування'],['E','Підключення й електрика'],['O','Інше']];
 const invLoc=()=>(S.meta||{}).invloc||{pts:{},gen:{}};
-/* вкладено з доходу: витрати «Розвиток» з бази (+ розподіл по точках у invloc.incAlloc) і кредити (повна сума — на точку кредиту) */
-const ART2CAT={'Обладнання':'A','Нова точка / будівництво':'R','Підключення водоканалу':'E'};
-function incMap(){const L=invLoc(),M={},add=(id,k,v)=>{const o=M[id]||(M[id]={});o[k]=(o[k]||0)+(+v||0)};
-  for(const [eid,e] of Object.entries(S.exp)){if(e.credit)continue;if(e.cat!=='Розвиток'&&!ART2CAT[e.article])continue;
-    const al=(L.incAlloc||{})[eid];if(al){for(const [pid,o] of Object.entries(al))for(const [k,v] of Object.entries(o))add(pid,k,v);continue}
-    add(e.point||'_gen',ART2CAT[e.article]||'O',e.amount)}
-  for(const c of credits())add(c.point||'_gen',c.cat||'A',c.total);
-  return M}
-function viewInvLoc(){const L=invLoc(), P=L.pts||{}, I=incMap(), sum=o=>ICAT.reduce((s,[k])=>s+(+((o||{})[k])||0),0);
-  const inv=id=>id==='_gen'?(L.gen||{}):(P[id]||{}), both=id=>{const o={};for(const [k] of ICAT)o[k]=(+inv(id)[k]||0)+(+(I[id]||{})[k]||0);return o};
-  const ids=[...new Set([...Object.keys(P),...Object.keys(I)])].filter(x=>x!=='_gen').sort((a,b)=>sum(both(b))-sum(both(a)));
-  const tot={};for(const [k] of ICAT)tot[k]=[...ids,'_gen'].reduce((s,id)=>s+both(id)[k],0);
-  const all=sum(tot), tInv=[...ids,'_gen'].reduce((s,id)=>s+sum(inv(id)),0), tInc=all-tInv, invH=invList().reduce((s,i)=>s+(+i.hrn||0),0);
-  const crL=credits().reduce((s,c)=>s+crLeft(c.id),0);
-  const crNote=id=>credits().filter(c=>(c.point||'_gen')===id).map(c=>`${esc(c.name)}: ${f0(c.total)}, сплачено ${f0(crPaid(c.id))}, залишок ${f0(crLeft(c.id))}`).join('; ');
-  const nm=id=>{if(id==='_gen')return '<i>Загальне, не розподілено по точках</i>';const p=S.points[id];return esc(p?p.name:((P[id]||{}).name||id))};
-  const sub=id=>id==='_gen'?'склад, інструмент, транспорт, перші закупівлі, рахунки без адреси':(!S.points[id]&&!(P[id]||{}).note?'ще не в списку точок':'');
-  const row=id=>{const o=both(id),iv=inv(id),t=sum(o),ic=t-sum(iv);return `<tr class="${canWrite?'click':''}" data-act="${canWrite?'editInvLoc':''}" data-id="${id}"><td>${nm(id)}${sum(iv)&&iv.est!==false?' <span class="pill open">оцінка</span>':''}${sub(id)?`<div class="note">${sub(id)}</div>`:''}${iv.note?`<div class="note">${esc(iv.note)}</div>`:''}${crNote(id)?`<div class="note">${crNote(id)}</div>`:''}</td>${ICAT.map(([k])=>`<td class="num hide-sm">${o[k]?f0(o[k]):'<span class="mut">—</span>'}</td>`).join('')}<td class="num">${sum(iv)?f0(sum(iv)):'<span class="mut">—</span>'}</td><td class="num">${ic>0.5?f0(ic):'<span class="mut">—</span>'}</td><td class="num"><b>${f0(t)}</b>${all?`<div class="note">${Math.round(t/all*1000)/10}%</div>`:''}</td></tr>`};
-  return `<section class="card"><div class="shead"><h2>Куди вкладено</h2><span class="note">грн</span></div>
-  <div class="tiles t3"><div class="tile main"><div class="l">Вкладено в точки й обладнання</div><div class="v">${f0(all)}</div><div class="s">з них по точках ${f0(all-sum(both('_gen')))}</div></div>
-   <div class="tile"><div class="l">З коштів інвесторів</div><div class="v">${f0(tInv)}</div><div class="s">внески інвесторів ${f0(invH)}${Math.abs(tInv-invH)>1000?' · різниця '+f0(tInv-invH):''}</div></div>
-   <div class="tile"><div class="l">З доходу</div><div class="v">${f0(tInc)}</div><div class="s">витрати «Розвиток» у базі${crL?' · з них ще сплатити по кредиту '+f0(crL):''}</div></div></div>
-  <div class="tiles t3" style="margin-top:8px">${ICAT.map(([k,l])=>`<div class="tile"><div class="l">${l}</div><div class="v">${f0(tot[k])}</div><div class="s">${all?Math.round(tot[k]/all*100):0}%</div></div>`).join('')}</div>
-  <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Точка</th>${ICAT.map(([,l])=>`<th class="num hide-sm">${l}</th>`).join('')}<th class="num">Інвестори</th><th class="num">З доходу</th><th class="num">Разом</th></tr></thead><tbody>${ids.map(row).join('')+row('_gen')}</tbody>
-  <tfoot><tr class="final"><td>Разом</td>${ICAT.map(([k])=>`<td class="num hide-sm">${f0(tot[k])}</td>`).join('')}<td class="num">${f0(tInv)}</td><td class="num">${f0(tInc)}</td><td class="num">${f0(all)}</td></tr></tfoot></table></div>
-  <p class="note">«Інвестори» — оцінка зі старих таблиць (ДДС Даниїла, «Общая», «Системы БП», записи внесків): великі закупівлі автоматів поділено між точками, які відкрились у той період; ремонт і підключення — за адресою в призначенні платежу. «З доходу» — витрати статей «Обладнання», «Нова точка / будівництво», «Підключення водоканалу» з бази, а кредит — повною сумою (сплачується з доходу). ${canWrite?'Натисніть рядок, щоб виправити частину інвесторів — позначка «оцінка» зникне.':''}</p></section>`}
-function editInvLoc(id){const L=invLoc(), o=(id==='_gen'?L.gen:(L.pts||{})[id])||{}, p=S.points[id];
-  openSheet(id==='_gen'?'Загальні вкладення':(p?p.name:(o.name||id)),'З коштів інвесторів, грн',`<p class="note full">Частина «з доходу» рахується сама з витрат «Розвиток» і кредитів — тут її не змінюємо.</p>`+ICAT.map(([k,l])=>fld(k,l,o[k]??'')).join('')+fld('note','Коментар',o.note||'',{type:'text',full:true}),
-    async fd=>{const n={...o};for(const [k] of ICAT){const t=String(fd[k]||'').trim();const v=t===''?0:parseNum(t);if(v===null)return 'Перевірте числа';n[k]=v}n.note=fd.note||'';n.est=false;
-      const d=JSON.parse(JSON.stringify({...L}));if(id==='_gen')d.gen=n;else{d.pts=d.pts||{};d.pts[id]=n}
-      if(!await w(()=>db.doc('meta/invloc').set(d)))return 'Не збереглося';toast('Збережено')})}
+/* «Куди вкладено»: розписані платежі розвитку (devx) + витрати «Розвиток» з бази + кредити */
+const DEVT=['Автомати','Купюрники, терминали, зв\'язок','Акумулятори / БЖ','Оздоблення й будроботи','Двері й вікна','Вода, труби, підключення','Електрика й освітлення','Реклама й вивіски','Доставка й транспорт','Інструмент і витратні','Інше','Без розшифровки'];
+const ART2T={'Обладнання':'Автомати','Нова точка / будівництво':'Оздоблення й будроботи','Підключення водоканалу':'Вода, труби, підключення'};
+const HOWL={'адреса':'за адресою','період':'за періодом будівництва','партія':'партія автоматів, порівну','порівну':'порівну між точками','загальне':'загальне','без розшифровки':'без розшифровки','акумулятори на 5 точок':'порівну на 5 точок','6 автоматів партії 29.07.25':'порівну на 6 автоматів'};
+let ilSel=null, ilT=null; const EST=['період','порівну','загальне','без розшифровки'];
+function devRows(){const L=invLoc(), R=[], used=new Set();
+  for(const [id,x] of Object.entries(S.devx||{})){R.push({id,...x,fund:x.fund||'inv',who:x.who||'Влад'});if(x.exp)used.add(x.exp)}
+  for(const [eid,e] of Object.entries(S.exp)){if(e.credit||used.has(eid))continue;if(e.cat!=='Розвиток'&&!ART2T[e.article])continue;
+    const al=(L.incAlloc||{})[eid];let loc;if(al){const t={};for(const [pid,o] of Object.entries(al))t[pid]=Object.values(o).reduce((a,v)=>a+(+v||0),0);const sm=Object.values(t).reduce((a,v)=>a+v,0)||1;loc=Object.fromEntries(Object.entries(t).map(([k,v])=>[k,v/sm]))}
+    else loc={[e.point||'gen']:1};
+    R.push({id:'exp:'+eid,src:'Витрати в базі',d:e.date||(e.month?e.month+'-01':''),a:+e.amount||0,p:[e.article,e.purpose||e.note].filter(Boolean).join(' — '),typ:ART2T[e.article]||'Інше',loc,how:al?'порівну':(e.point?'адреса':'загальне'),fund:'inc',exp:eid})}
+  for(const c of credits())R.push({id:'cr:'+c.id,src:'Кредит',d:(c.start||'')+'-01',a:+c.total||0,p:c.name+' — сплачено '+f0(crPaid(c.id))+', залишок '+f0(crLeft(c.id)),typ:c.typ||'Автомати',loc:{[c.point||'gen']:1},how:'адреса',fund:'inc'});
+  return R}
+const ilName=id=>id==='gen'?'Загальне, не по точках':(S.points[id]?S.points[id].name:((invLoc().pts||{})[id]||{}).name||id);
+function viewInvLoc(){const R=devRows(), A={}, F={}, G={};
+  for(const r of R)for(const [l,sh] of Object.entries(r.loc||{})){const v=r.a*sh;(A[l]=A[l]||{})[r.typ]=(A[l][r.typ]||0)+v;const f=(F[l]=F[l]||{inv:0,inc:0,est:0});f[r.fund]+=v;if(EST.includes(r.how))f.est+=v}
+  const sm=o=>Object.values(o||{}).reduce((a,v)=>a+v,0), all=R.reduce((a,r)=>a+r.a,0);
+  const tt={};for(const t of DEVT)tt[t]=0;for(const r of R)tt[r.typ]=(tt[r.typ]||0)+r.a;
+  const types=Object.keys(tt).filter(t=>tt[t]>0.5).sort((a,b)=>(a==='Без розшифровки')-(b==='Без розшифровки')||tt[b]-tt[a]);
+  const locs=Object.keys(A).sort((a,b)=>(a==='gen')-(b==='gen')||sm(A[b])-sm(A[a]));
+  const fInv=R.filter(r=>r.fund==='inv'), fInc=R.filter(r=>r.fund==='inc'), s=a=>a.reduce((x,r)=>x+r.a,0);
+  const lump=R.filter(r=>r.how==='без розшифровки'), est=R.filter(r=>EST.includes(r.how)&&r.how!=='без розшифровки'), split=R.filter(r=>!['адреса','без розшифровки'].includes(r.how));
+  // звірка по інвесторах
+  const invs=[...new Set(invList().map(i=>i.investor||'Влад'))];
+  const rec=invs.map(w=>{const put=invList().filter(i=>(i.investor||'Влад')===w).reduce((a,i)=>a+(+i.hrn||0),0);const used=fInv.filter(r=>r.who===w);
+    return {w,put,doc:s(used.filter(r=>r.how!=='без розшифровки')),lump:s(used.filter(r=>r.how==='без розшифровки'))}});
+  const recH=`<div class="tbl"><table class="ut"><thead><tr><th>Інвестор</th><th class="num">Внесено</th><th class="num">Розписані витрати</th><th class="num">Без розшифровки</th><th class="num">Різниця</th></tr></thead><tbody>${rec.map(r=>{const d=r.put-r.doc-r.lump;return `<tr><td>${esc(r.w)}</td><td class="num">${f0(r.put)}</td><td class="num">${f0(r.doc)}</td><td class="num">${r.lump?f0(r.lump):'—'}</td><td class="num ${Math.abs(d)>1000?'neg':''}">${Math.abs(d)<1?'0':f0(d)}</td></tr>`}).join('')}</tbody></table></div>`;
+  const lumpH=lump.sort((a,b)=>b.a-a.a).map(r=>`<div class="kv"><span>${esc(r.p)}<div class="note">${Object.keys(r.loc).map(ilName).map(esc).join(', ')}</div></span><b>${f0(r.a)}</b></div>`).join('');
+  const estBy={};for(const r of split)estBy[r.how]=(estBy[r.how]||0)+r.a;
+  const estH=Object.entries(estBy).sort((a,b)=>b[1]-a[1]).map(([h,v])=>`<div class="kv"><span>${esc(HOWL[h]||h)}</span><b>${f0(v)}</b></div>`).join('');
+  const cols=ilT?[ilT]:types;
+  const rowH=l=>{const o=A[l],f=F[l],t=ilT?(o[ilT]||0):sm(o);if(ilT&&t<0.5)return '';const mx=Math.max(...cols.map(c=>o[c]||0));
+    return `<tr class="click ${ilSel===l?'sel':''}" data-act="ilPick" data-id="${l}"><td>${esc(ilName(l))}${f.est/sm(o)>0.25?` <span class="pill open">${Math.round(f.est/sm(o)*100)}% припущення</span>`:''}</td>${cols.map(c=>{const v=o[c]||0;return `<td class="num ${cols.length>1?'hide-sm':''}">${v>0.5?(v===mx&&cols.length>1?'<b>'+f0(v)+'</b>':f0(v)):'<span class="mut">—</span>'}</td>`}).join('')}${ilT?'':`<td class="num">${f.inv>0.5?f0(f.inv):'—'}</td><td class="num">${f.inc>0.5?f0(f.inc):'—'}</td><td class="num"><b>${f0(t)}</b><div class="note">${Math.round(t/all*1000)/10}%</div></td>`}</tr>`};
+  const mxT=Math.max(...types.map(t=>tt[t]));
+  const bars=types.map(t=>`<div class="ilbar click ${ilT===t?'on':''}" data-act="ilType" data-id="${esc(t)}"><span>${esc(t)}</span><i><b style="width:${tt[t]/mxT*100}%"></b></i><span class="num">${f0(tt[t])} <span class="note">${Math.round(tt[t]/all*100)}%</span></span></div>`).join('');
+  let det='';
+  if(ilSel){const D=R.filter(r=>r.loc&&r.loc[ilSel]&&(!ilT||r.typ===ilT)).map(r=>({...r,v:r.a*r.loc[ilSel]})).sort((a,b)=>(b.d||'').localeCompare(a.d||''));
+    det=`<section class="card"><div class="shead"><h2>${esc(ilName(ilSel))}${ilT?' · '+esc(ilT):''}</h2><button class="btn sm" data-act="ilPick" data-id="${ilSel}" type="button">Закрити</button></div>
+    <p class="note">${D.length} платежів на ${f0(D.reduce((a,r)=>a+r.v,0))} ₴. Якщо платіж поділено між точками, показано частку цієї точки.${canWrite?' Натисніть платіж, щоб змінити тип або точки.':''}</p>
+    <div class="tbl"><table class="ut"><thead><tr><th>Дата</th><th>Призначення</th><th class="hide-sm">Тип</th><th class="num">Сума</th></tr></thead><tbody>${D.map(r=>{const n=Object.keys(r.loc).length,ed=canWrite&&!String(r.id).includes(':');
+      return `<tr class="${ed?'click':''}" data-act="${ed?'editDevx':''}" data-id="${r.id}"><td>${r.d?dmy(r.d):'—'}${r.dApprox?'<div class="note">≈</div>':''}</td><td>${esc(r.p)}<div class="note">${esc(r.src)}${r.who&&r.who!=='Влад'?' · '+esc(r.who):''}${r.fund==='inc'?' · з доходу':''}${r.how!=='адреса'?' · '+esc(HOWL[r.how]||r.how):''}${n>1?' · поділено на '+n:''}</div></td><td class="hide-sm">${esc(r.typ)}</td><td class="num">${f0(r.v)}${n>1?`<div class="note">з ${f0(r.a)}</div>`:''}</td></tr>`}).join('')}</tbody></table></div></section>`}
+  return `<style>.ilbar{display:grid;grid-template-columns:minmax(120px,230px) 1fr 130px;gap:10px;align-items:center;padding:3px 6px;border-radius:6px}.ilbar.on,.ilbar:hover{background:var(--accent-soft)}.ilbar i{height:9px;background:var(--line);border-radius:5px;overflow:hidden;display:block}.ilbar i b{display:block;height:100%;background:var(--link)}.ilbar .num{text-align:right}@media(max-width:560px){.ilbar{grid-template-columns:1fr 110px}.ilbar i{grid-column:1/-1}}tr.sel td{background:var(--accent-soft)}.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 12px}</style>
+  <section class="card"><div class="shead"><h2>Куди вкладено</h2><span class="note">грн · ${R.length} записів</span></div>
+  <div class="tiles t3"><div class="tile main"><div class="l">Вкладено в точки й обладнання</div><div class="v">${f0(all)}</div><div class="s">по точках ${f0(all-sm(A.gen))} · загальне ${f0(sm(A.gen))}</div></div>
+   <div class="tile"><div class="l">З коштів інвесторів</div><div class="v">${f0(s(fInv))}</div><div class="s">${rec.map(r=>esc(r.w)+' '+f0(r.put)).join(' · ')}</div></div>
+   <div class="tile"><div class="l">З доходу</div><div class="v">${f0(s(fInc))}</div><div class="s">витрати «Розвиток» і кредити${credits().length?' · ще сплатити '+f0(credits().reduce((a,c)=>a+crLeft(c.id),0)):''}</div></div></div></section>
+  <section class="card"><div class="shead"><h2>Звірка: внесено ↔ витрачено</h2></div>${recH}
+   <div class="tiles" style="margin-top:10px"><div class="tile"><div class="l">Без розшифровки</div><div class="v">${f0(s(lump))}</div><div class="s">${Math.round(s(lump)/all*100)}% усіх вкладень — гроші внесені, витрат не видно</div></div>
+   <div class="tile"><div class="l">Точку визначено припущенням</div><div class="v">${f0(est.reduce((a,r)=>a+r.a,0))}</div><div class="s">${Math.round(est.reduce((a,r)=>a+r.a,0)/all*100)}% · сума платежу точна, невідомо лише на яку точку</div></div></div>
+   <div class="glabel" style="margin-top:12px">Що непрозоро</div><div class="info mcard">${lumpH}</div>
+   <div class="glabel" style="margin-top:12px">Як розподілено платежі, де немає однієї адреси</div><div class="info mcard">${estH}</div></section>
+  <section class="card"><div class="shead"><h2>За типом</h2>${ilT?`<button class="btn sm" data-act="ilType" data-id="${esc(ilT)}" type="button">Усі типи</button>`:''}</div><p class="note">Натисніть тип, щоб показати тільки його.</p>${bars}</section>
+  <section class="card"><div class="shead"><h2>${ilT?esc(ilT)+' по точках':'Точки × типи'}</h2><span class="note">натисніть точку — її платежі</span></div>
+   <div class="tbl"><table class="ut"><thead><tr><th>Точка</th>${cols.map(c=>`<th class="num ${cols.length>1?'hide-sm':''}">${esc(c)}</th>`).join('')}${ilT?'':'<th class="num">Інвестори</th><th class="num">З доходу</th><th class="num">Разом</th>'}</tr></thead>
+   <tbody>${locs.map(rowH).join('')}</tbody><tfoot><tr class="final"><td>Разом</td>${cols.map(c=>`<td class="num ${cols.length>1?'hide-sm':''}">${f0(tt[c])}</td>`).join('')}${ilT?'':`<td class="num">${f0(s(fInv))}</td><td class="num">${f0(s(fInc))}</td><td class="num">${f0(all)}</td>`}</tr></tfoot></table></div></section>${det}`}
+function ilPick(id){ilSel=ilSel===id?null:id;render();if(ilSel)setTimeout(()=>{const c=[...document.querySelectorAll('section.card')].pop();c&&c.scrollIntoView({behavior:'smooth',block:'start'})},50)}
+function ilType(t){ilT=ilT===t?null:t;render()}
+function editDevx(id){const x=S.devx[id];if(!x)return;const pts=[...pointsList().map(p=>[p.id,p.name]),...Object.entries(invLoc().pts||{}).filter(([k])=>!S.points[k]).map(([k,o])=>[k,o.name||k]),['gen','Загальне, не по точках']];
+  openSheet('Платіж розвитку',(x.d?dmy(x.d)+' · ':'')+f0(x.a)+' ₴ · '+x.p,
+    sel('typ','Тип',x.typ,DEVT.map(t=>[t,t]),true)+`<div class="full"><div class="glabel">Точки (сума ділиться порівну між відміченими)</div><div class="chkgrid">${pts.map(([k,n])=>`<label class="chk"><input type="checkbox" name="pt_${k}" ${x.loc&&x.loc[k]?'checked':''}> ${esc(n)}</label>`).join('')}</div></div>`,
+    async fd=>{const ks=Object.keys(fd).filter(k=>k.startsWith('pt_')&&fd[k]===true).map(k=>k.slice(3));if(!ks.length)return 'Відмітьте хоча б одну точку';
+      const loc=Object.fromEntries(ks.map(k=>[k,Math.round(1/ks.length*10000)/10000]));const same=JSON.stringify(Object.keys(x.loc||{}).sort())===JSON.stringify(ks.slice().sort());
+      const d={...x,typ:fd.typ,loc,how:same?x.how:'адреса'};delete d.id;if(!await w(()=>db.doc('devx/'+id).set(d)))return 'Не збереглося';toast('Збережено')})}
 function pctPays(){return Object.entries(S.inv||{}).filter(([,v])=>v.kind==='pay').map(([id,v])=>({id,...v})).sort((a,b)=>(b.date||'').localeCompare(a.date||''))}
 function pctState(w){const L=invList().filter(i=>(i.investor||'Влад')===w), P=pctPays().filter(p=>p.investor===w);
   const yr=L.reduce((a,i)=>a+(+i.usd||0)*(+i.pct||0)/100,0), acc=L.reduce((a,i)=>a+invAccrued(i),0), paid=P.filter(p=>!p.reinv).reduce((a,p)=>a+(+p.usd||0),0), rein=P.filter(p=>p.reinv).reduce((a,p)=>a+(+p.usd||0),0);
@@ -2560,7 +2592,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({setFlowAcc,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,editInvLoc,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({setFlowAcc,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,ilPick,ilType,editDevx,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
