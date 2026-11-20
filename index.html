@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120n">
+<meta name="wl-build" content="20261120o">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120n"></script>
+<script src="config.js?v=20261120o"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120n"></script>
+<script src="shim.js?v=20261120o"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2007,9 +2007,9 @@ function flowRows(m){
   // 1) картки: еквайринг групуємо за днем продажу (дата зарахування − 1)
   const acq={};for(const o of ops)if(isAcq(o)){const mm=String(o.purp).match(/Вiдшк ([\d.]+)грн\. Ком бан ([\d.]+)грн/);const sd=addDays(o.date,-1),g=acq[sd]||(acq[sd]={gross:0,net:0,fee:0,ref:0,n:0,date:o.date});g.net+=+o.amt;g.n++;if(mm){g.gross+=+mm[1]+ +mm[2];g.fee+=+mm[2];g.ref+=Math.max(0,+mm[1]-(+o.amt))}else g.gross+=+o.amt}
   const used=new Set();
-  for(const b of base.filter(x=>x.kind==='card')){const g=acq[b.ref];if(g){used.add(b.ref);const df=Math.round((g.gross-b.amt)*100)/100;const okd=Math.abs(df)<=Math.max(2,b.amt*0.03);rows.push({date:b.date,label:b.label,base:b.amt,bank:Math.round(g.gross*100)/100,st:okd?'ok':'diff',card:1,gross:g.gross,net:Math.round(g.net*100)/100,note:`на рахунок ${nf2.format(g.net)} (комісія ${nf2.format(g.fee)}${g.ref>0.004?', повернення '+nf2.format(g.ref):''})`+(Math.abs(df)>=0.5?` · різниця з базою ${nf2.format(df)}${okd?' (межа дня)':''}`:'')})}
-    else rows.push({date:b.date,label:b.label,base:b.amt,bank:null,st:bankCovered(b.date)?'base':'wait'})}
-  for(const [sd,g] of Object.entries(acq))if(!used.has(sd))rows.push({date:g.date,label:'Еквайринг за '+dmy(sd),base:null,bank:Math.round(g.gross*100)/100,net:Math.round(g.net*100)/100,card:1,gross:g.gross,st:'bank',note:'у базі немає продажів карткою за цей день'});
+  for(const b of base.filter(x=>x.kind==='card')){const g=acq[b.ref];if(g){used.add(b.ref);const df=Math.round((g.gross-b.amt)*100)/100;const okd=Math.abs(df)<=Math.max(2,b.amt*0.03);rows.push({date:b.date,label:b.label,base:b.amt,bank:Math.round(g.gross*100)/100,st:okd?'ok':'diff',card:1,sd:b.ref,cfee:g.fee,ref:g.ref,gross:g.gross,net:Math.round(g.net*100)/100,note:`на рахунок ${nf2.format(g.net)} (комісія ${nf2.format(g.fee)}${g.ref>0.004?', повернення '+nf2.format(g.ref):''})`+(Math.abs(df)>=0.5?` · різниця з базою ${nf2.format(df)}${okd?' (межа дня)':''}`:'')})}
+    else rows.push({date:b.date,label:b.label,base:b.amt,bank:null,card:1,sd:b.ref,st:bankCovered(b.date)?'base':'wait'})}
+  for(const [sd,g] of Object.entries(acq))if(!used.has(sd))rows.push({date:g.date,label:'Еквайринг за '+dmy(sd),base:null,bank:Math.round(g.gross*100)/100,net:Math.round(g.net*100)/100,card:1,sd,cfee:g.fee,ref:g.ref,gross:g.gross,st:'bank',note:'у базі немає продажів карткою за цей день'});
   // 2) комісія еквайрингу (утримана банком) ↔ авто-витрата «Банк 1,3%»
   const feeAcq=Object.values(acq).reduce((s,g)=>s+g.fee,0);
   const refAcq=Object.values(acq).reduce((s,g)=>s+g.ref,0), fA=-Math.round(feeAcq*100)/100;
@@ -2052,6 +2052,25 @@ function flowRows(m){
   return rows.sort((a,b)=>a.date.localeCompare(b.date)||(b.base??b.bank)-(a.base??a.bank));
 }
 const FST={ok:['ok','✓ збігається'],diff:['open','≠ сума'],base:['bad','немає у виписці'],bank:['bad','немає в базі'],wait:['','виписки ще немає'],info:['','утримано банком']};
+function cardBridge(m,rows){
+  const C=rows.filter(x=>x.card);if(!C.length)return '';
+  const n2=v=>nf2.format(Math.round(v*100)/100), kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`;
+  const inM=C.filter(x=>x.sd>=m+'-01'), prev=C.filter(x=>x.sd<m+'-01'), done=inM.filter(x=>x.bank!=null), wait=inM.filter(x=>x.bank==null&&x.base);
+  const rev=inM.reduce((a,x)=>a+(x.base||0),0), sdMax=inM.map(x=>x.sd).sort().pop()||'';
+  const pB=prev.reduce((a,x)=>a+(x.base||0),0), wB=wait.reduce((a,x)=>a+(x.base||0),0), baseIn=rev+pB-wB;
+  const gross=C.reduce((a,x)=>a+(x.gross||0),0), fee=C.reduce((a,x)=>a+(x.cfee||0),0), ref=C.reduce((a,x)=>a+(x.ref||0),0), net=C.reduce((a,x)=>a+(x.net||0),0);
+  const d=gross-baseIn, big=C.filter(x=>x.bank!=null&&x.base!=null).map(x=>({sd:x.sd,d:x.gross-x.base})).filter(x=>Math.abs(x.d)>=40).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,4);
+  const chk=Math.abs(gross-fee-ref-net)<0.05;
+  return `<div class="info mcard" style="margin-top:12px"><div class="glabel">Оплати карткою: від виручки до рахунку</div>
+   ${kv('Виручка карткою за '+mLabel(m).toLowerCase()+(sdMax?' по '+dmy(sdMax):''),n2(rev))}
+   ${prev.length?kv('+ продажі '+prev.map(x=>dmy(x.sd)).join(', ')+' (зараховано цього місяця)',n2(pB)):''}
+   ${wait.length?kv('− ще не зараховано банком ('+wait.map(x=>dmy(x.sd)).join(', ')+')',n2(-wB)):''}
+   ${kv('= Має надійти за базою',n2(baseIn),'final')}
+   ${kv('Банк нарахував до комісії',n2(gross))}
+   ${kv('Різниця з базою',(d>0?'+':'')+n2(d)+(big.length?`<div class="note">найбільше: ${big.map(x=>dmy(x.sd)+' '+(x.d>0?'+':'')+n2(x.d)).join(', ')}</div>`:''),Math.abs(d)>Math.max(5,baseIn*0.005)?'neg':'')}
+   ${kv('− комісія банку '+(gross?String(Math.round(fee/gross*10000)/100).replace('.',','):'0')+'%',n2(-fee))}
+   ${ref?kv('− повернення покупцям',n2(-ref)):''}
+   ${kv('= Прийшло на рахунок'+(chk?' ✓':''),n2(net),'final')}</div>`}
 function viewFlow(m){
   if(!m)return '';
   const st=balState(), r=(st[flowAcc]||[]).find(x=>x.m===m);
@@ -2070,7 +2089,7 @@ function viewFlow(m){
       <div class="tile"><div class="l">За випискою${bEnd!=null?' на '+dmy(upTo):''}</div><div class="v">${bEnd!=null?f0(bEnd):'—'}</div><div class="s">${lastSt?'виписка '+dmy(lastSt.from)+'–'+dmy(lastSt.to):'виписку не завантажено'}</div></div>
       <div class="tile ${dif!=null&&Math.abs(dif)>1?'warn':''}"><div class="l">Різниця</div><div class="v">${dif!=null?nf2.format(dif):'—'}</div><div class="s">${cnt.ok} збігається · ${cnt.bad} потребує уваги</div></div></div>`;
     if(!hasSt)h+=`<p class="note">Завантажте виписку ПриватБанку (.xls).</p>`;
-    {const C=rows.filter(x=>x.card),cb=C.reduce((s,x)=>s+x.base,0),cg=C.reduce((s,x)=>s+x.gross,0);if(C.length)h+=`<p class="note" style="margin:8px 0 0">Оплати карткою за ${C.length} дн.: у базі ${f0(cb)}, банк зарахував ${f0(cg)} разом із комісією — різниця ${nf2.format(cg-cb)}${Math.abs(cg-cb)<=Math.max(5,cb*0.005)?' ✓':''}.</p>`}
+    h+=cardBridge(m,rows);
     const rowHtml=x=>{const [c,l]=FST[x.st]||['',''];
       const find=x.st==='bank'&&canWrite&&x.op?` <button class="btn sm" type="button" data-act="flowFind" data-id="${esc(x.op)}">Знайти серед внесених</button>`:'';
       const act0=x.feeGroup&&canWrite?`<button class="btn sm" type="button" data-act="flowAddFees" data-id="${x.feeGroup}">+ Внести як «Банк і РКО»</button>`:x.st==='bank'&&canWrite&&!x.fee&&!x.own&&x.bank<0?`<button class="btn sm" type="button" data-act="flowAddExp" data-id="${esc(x.op)}">+ Внести витрату</button>`:x.st==='bank'&&canWrite&&x.own?ownBtns(x.op):'';const act=act0+find;
