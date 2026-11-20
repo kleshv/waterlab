@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120k">
+<meta name="wl-build" content="20261120l">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120k"></script>
+<script src="config.js?v=20261120l"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120k"></script>
+<script src="shim.js?v=20261120l"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2284,7 +2284,8 @@ function payCheck(){
   const ops=CHK.bank.ops, d0=ops.reduce((a,o)=>o.date<a?o.date:a,'9999'), d1=ops.reduce((a,o)=>o.date>a?o.date:a,'');
   const skip=o=>o.amt>=0||/КЛЕЩИНСЬК/i.test(o.name)||/Mastercard|ПОПОВНЕННЯ|ДЕБЕТУВАННЯ|ОБСЛ|ДОХIД|ДОХІД|Розрахунок ПО|валютна/i.test(o.name);
   const groups={}, other=[];
-  for(const o of ops){if(skip(o))continue;const pids=cpPids(o.name);if(!pids.length){other.push(o);continue}
+  for(const o of ops){if(skip(o))continue;let pids=cpPids(o.name);if(pids.length>1){const by=pids.filter(id=>((S.points[id]||{}).contract||'').match(/\d{3,}/g)?.some(n=>new RegExp('№\\s*'+n+'(?!\\d)').test(o.purp||'')));if(by.length===1)pids=by;else{const nrm=t=>(' '+(t||'').toLowerCase().replace(/["«»'“”]/g,' ')+' ').replace(/\s(тов|осбб|пп|фоп)(?=\s)/g,' ').replace(/\s+/g,' '),pu=nrm(o.purp),core=id=>nrm((S.points[id]||{}).payee).trim();
+      const by2=pids.filter(id=>{const c=core(id);return c.length>=3&&new RegExp('(^|[^а-яіїєa-z0-9])'+c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?!\\s*\\d)','i').test(pu)});if(by2.length===1)pids=by2}}if(!pids.length){other.push(o);continue}
     const k=pids.join(',');(groups[k]||(groups[k]={pids,names:new Set(),bank:[],db:[]})).bank.push({date:o.date,amt:-o.amt,purp:o.purp});groups[k].names.add(o.name)}
   {const G=Object.values(groups);let merged=true;
    while(merged){merged=false;for(let i=0;i<G.length&&!merged;i++)for(let j=i+1;j<G.length;j++)if(G[i].pids.some(x=>G[j].pids.includes(x))){
