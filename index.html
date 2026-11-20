@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261121g">
+<meta name="wl-build" content="20261121h">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261121g"></script>
+<script src="config.js?v=20261121h"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261121g"></script>
+<script src="shim.js?v=20261121h"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1782,7 +1782,7 @@ function editBill(pid,mm){
     sugAttach(r,ti,()=>toOpts(ci.value.trim()))};
     const pn=v=>parseNum(String(v||'').trim())||0;
     const sumUp=()=>{let t=0,b=0,hb=0;const R=[...L.querySelectorAll('.uxr')];for(const r of R){t+=pn(r.querySelector('[data-k=a]').value);const bv=r.querySelector('[data-k=b]').value.trim();if(bv){b+=pn(bv);hb=1}}
-      if(!R.length)return;$('#uxSum').textContent=(hb?'До сплати '+nf2.format(b)+' · ':'')+'сплачено '+nf2.format(t)+(hb?(Math.abs(t-b)<0.01?' ✓':' · різниця '+nf2.format(t-b)):'')};
+      if(!R.length)return;$('#uxSum').innerHTML=(hb?'До сплати '+nf2.format(b)+' · ':'')+'сплачено '+nf2.format(t)+(hb?(Math.abs(t-b)<0.01?' <b style="color:#1f9d55;font-size:1.15em">✓</b>':' · різниця '+nf2.format(t-b)):'')};
     L.addEventListener('input',sumUp);
     const row0=row;row=(x={})=>{row0(x);L.lastChild.querySelector('.del').addEventListener('click',()=>setTimeout(sumUp,0))};
     {const raw=(py.utilX||[]);const xb=raw.reduce((a,i)=>a+(+i.b||0),0);
