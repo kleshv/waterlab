@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120t">
+<meta name="wl-build" content="20261120u">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120t"></script>
+<script src="config.js?v=20261120u"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120t"></script>
+<script src="shim.js?v=20261120u"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2108,9 +2108,7 @@ function viewFlow(m){
     for(const x of rows){if(x.base!=null)run+=x.base;x.run=Math.round(run*100)/100;if(x.st==='ok')cnt.ok++;if(['base','bank','diff'].includes(x.st))cnt.bad++}
     const baseAt=d=>{let b=r.open;for(const x of rows)if(x.base!=null&&x.date<=d)b+=x.base;return Math.round(b*100)/100};
     const bAt=hasSt&&upTo>=m+'-01'?baseAt(upTo):null, dif=bEnd!=null&&bAt!=null?Math.round((bEnd-bAt)*100)/100:null;
-    h+=`<div class="tiles t3"><div class="tile"><div class="l">За базою${upTo<end?' на '+dmy(upTo):' на кінець місяця'}</div><div class="v">${f0(bAt??r.close)}</div><div class="s">на початок ${f0(r.open)}</div></div>
-      <div class="tile"><div class="l">За випискою${bEnd!=null?' на '+dmy(upTo):''}</div><div class="v">${bEnd!=null?f0(bEnd):'—'}</div><div class="s">${lastSt?'виписка '+dmy(lastSt.from)+'–'+dmy(lastSt.to):'виписку не завантажено'}</div></div>
-      <div class="tile ${dif!=null&&Math.abs(dif)>1?'warn':''}"><div class="l">Різниця</div><div class="v">${dif!=null?nf2.format(dif):'—'}</div><div class="s">${cnt.ok} збігається · ${cnt.bad} потребує уваги</div></div></div>`;
+    h+=`<p class="note" style="margin:0 0 6px">${lastSt?`Виписка ${dmy(lastSt.from)}–${dmy(lastSt.to)}${bEnd!=null?` · залишок на рахунку ${dmy(upTo)}: <b>${nf2.format(bEnd)}</b>`:''}`:''}</p>`;
     if(!hasSt)h+=`<p class="note">Завантажте виписку ПриватБанку (.xls).</p>`;
     h+=cardBridge(m,rows);
     const rowHtml=x=>{const [c,l]=FST[x.st]||['',''];
