@@ -72,7 +72,7 @@
       <button type="button" class="f" data-b="f"><span class="ic">${filt}</span>Фільтри</button></div>
       <button type="button" class="lnk" id="lg_out">Вийти з облікового запису</button></div>`;
     w.hidden=false;
-    w.querySelector('[data-b=w]').onclick=()=>{ss.set('wlBase','w');if(location.search)history.replaceState(null,'',location.pathname);w.hidden=true;res()};
+    w.querySelector('[data-b=w]').onclick=()=>{ss.set('wlBase','w');if(location.search)history.replaceState(null,'',location.pathname);showWait();res()};
     w.querySelector('[data-b=f]').onclick=()=>{ss.set('wlBase','f');location.href='filters.html'};
     document.getElementById('lg_out').onclick=async()=>{ss.del('wlBase');await sb.auth.signOut();location.href='./'};
   })}
@@ -143,7 +143,8 @@
     d.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:#f4f8fc;font-family:Arimo,Arial,sans-serif';
     d.innerHTML='<div style="max-width:380px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 20px rgba(17,35,63,.12);color:#11233f"><b style="font-size:18px">Немає доступу</b><p style="margin:12px 0 18px;line-height:1.45">Обліковий запис <b></b> ще не додано до списку доступу WaterLab. Попросіть Влада додати його й потім оновіть сторінку.</p><button type="button" style="background:#11233f;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer">Вийти</button></div>';
     d.querySelector('p b').textContent=email||'';d.querySelector('button').onclick=async()=>{await sb.auth.signOut();location.reload()};document.body.appendChild(d)}
-  async function start(){if(started)return;started=true;hideLogin();addLogout();
+  function showWait(){let w=document.getElementById('lgw');if(!w){w=document.createElement('div');w.id='lgw';w.className='lg-wrap';document.body.appendChild(w)}w.hidden=false;w.innerHTML=`<div class="lg ch">${logoSvg()}<p style="text-align:center;margin:18px 0 6px;opacity:.75">Завантаження…</p></div>`}
+  async function start(){if(started)return;started=true;showWait();addLogout();
     try{const {data:ok,error}=await sb.rpc('is_allowed');if(!error&&ok===false){denied(session&&session.user.email);return}}catch(_){}
     try{const {data:r}=await sb.rpc('my_role');role=r||'owner'}catch(_){}
     window.WL_ROLE=role;
@@ -152,6 +153,7 @@
       if(!ch&&ss.get('wlBase')==='f'){location.replace('filters.html');return}
       if(ch||!ss.get('wlBase'))await chooseBase()}
     try{await loadAll()}catch(e){Object.values(errs).flat().forEach(f=>f&&f({code:'unavailable',message:e.message}))}
+    hideLogin();
     window.WL_NAME=names[((session&&session.user.email)||'').toLowerCase()]||'';window.WL_NAMES=names;
     readyResolve()}
   sb.auth.onAuthStateChange((ev,s)=>{session=s;if(ev==='PASSWORD_RECOVERY'){show('newpass');return}if(s&&ev!=='SIGNED_OUT')start()});
