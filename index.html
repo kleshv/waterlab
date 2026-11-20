@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261121c">
+<meta name="wl-build" content="20261121d">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261121c"></script>
+<script src="config.js?v=20261121d"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261121c"></script>
+<script src="shim.js?v=20261121d"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1725,7 +1725,7 @@ function editBill(pid,mm){
       <div class="brow"><div class="bname">Світло, кВт·год</div><div class="bc" id="bce"></div><input name="be0" id="f_be0" inputmode="decimal" value="${num(e0)}"><input name="be1" id="f_be1" inputmode="decimal" value="${num(e1)}"><input name="beT" id="f_beT" inputmode="decimal" value="${num(eT)}"></div></div></details>`+
     `<div class="sub" style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-top:8px"><span>Рахунки й оплати</span><span class="note" id="uxSum" style="text-transform:none;letter-spacing:0;font-weight:400"></span></div>
     <div class="full uxh"><span>Сума</span><span>Дата</span><span></span></div><div class="full" id="uxList"></div>
-    <div class="full" style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sm" id="uxAdd">+ Рахунок / платіж</button><button type="button" class="btn sm" id="fillUtil">Сплачено повністю сьогодні</button></div>`+
+    <div class="full" style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn sm" id="uxAdd">+ Рахунок / платіж</button></div>`+
     (p.payee2?`<div class="sub">З них за воду окремо · ${esc(p.payee2)}</div>`+fld('waterDue','Нараховано за воду, грн',py.waterDue??'')+fld('utilPaidW','Сплачено за воду, грн',py.utilPaidW??'')+fld('utilDateW','Дата оплати за воду',py.utilDateW||'',{type:'date'})+'':'')+
     fld('utilNote','Коментар',py.utilNote||py.note||'',{type:'text',full:true});
   let manual=py.utilBill!=null&&py.bw1==null&&py.be1==null;
@@ -1788,7 +1788,6 @@ function editBill(pid,mm){
      raw.forEach(i=>row(i));
      if(!L.children.length){const c=calc();row({cp:p.payee||'',b:c.sum!=null?c.sum:null})}}
     $('#uxAdd').onclick=()=>{row({d:todayISO(),cp:p.payee||''});sumUp()};
-    $('#fillUtil').onclick=()=>{const t=new Date().toISOString().slice(0,10);for(const r of L.querySelectorAll('.uxr')){const a=r.querySelector('[data-k=a]'),b=r.querySelector('[data-k=b]').value.trim();if(!a.value.trim())a.value=b||(L.children.length===1?String(x.utilCalc).replace('.',','):'');const d=r.querySelector('[data-k=d]');if(!d.value)d.value=todayISO()}sumUp()};
     const ub=$('#uxBank');if(ub)ub.onclick=()=>{const R=[...L.querySelectorAll('.uxr')];const ops=billBankOps(m,pid);
       ops.forEach((o,i)=>{const v={a:Math.round(-o.amt*100)/100,d:o.date,to:o.short,cp:o.name};const r=R[i];if(r&&!r.querySelector('[data-k=a]').value.trim()){const set=(k,val)=>{const e=r.querySelector('[data-k='+k+']');if(!e.value.trim()||k==='a'||k==='d')e.value=k==='a'?String(val).replace('.',','):val};set('a',v.a);set('d',v.d);set('c',v.cp);set('t',v.to)}else row(v)});sumUp()};
     sumUp()}
