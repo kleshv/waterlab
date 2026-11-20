@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120s">
+<meta name="wl-build" content="20261120t">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120s"></script>
+<script src="config.js?v=20261120t"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120s"></script>
+<script src="shim.js?v=20261120t"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2081,16 +2081,19 @@ function cardBridge(m,rows){
   const gross=C.reduce((a,x)=>a+(x.gross||0),0), fee=C.reduce((a,x)=>a+(x.cfee||0),0), ref=C.reduce((a,x)=>a+(x.ref||0),0), net=C.reduce((a,x)=>a+(x.net||0),0);
   const d=gross-baseIn, big=C.filter(x=>x.bank!=null&&x.base!=null).map(x=>({sd:x.sd,d:x.gross-x.base})).filter(x=>Math.abs(x.d)>=40).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,4);
   const chk=Math.abs(gross-fee-ref-net)<0.05;
+  const bFee=Math.round(baseIn*0.013*100)/100, d2=d-ref, d3=net-(baseIn-bFee), sg=v=>(v>0?'+':'')+n2(v), bad=v=>Math.abs(v)>Math.max(5,baseIn*0.003)?'neg':'';
   return `<div class="info mcard" style="margin-top:12px"><div class="glabel">Оплати карткою: від виручки до рахунку</div>
-   ${kv('Виручка карткою за '+mLabel(m).toLowerCase()+(sdMax?' по '+dmy(sdMax):''),n2(rev))}
-   ${prev.length?kv('+ продажі '+prev.map(x=>dmy(x.sd)).join(', ')+' (зараховано цього місяця)',n2(pB)):''}
+   ${prev.length?kv('Продажі '+prev.map(x=>dmy(x.sd)).join(', ')+' (зараховано '+dmy(prev[0].date)+')',n2(pB)):''}
+   ${kv((prev.length?'+ ':'')+'Виручка карткою за '+mLabel(m).toLowerCase()+(sdMax?' по '+dmy(sdMax):''),n2(rev))}
    ${wait.length?kv('− ще не зараховано банком ('+wait.map(x=>dmy(x.sd)).join(', ')+')',n2(-wB)):''}
    ${kv('= Має надійти за базою',n2(baseIn),'final')}
    ${kv('Банк нарахував до комісії',n2(gross))}
-   ${kv('Різниця з базою',(d>0?'+':'')+n2(d)+(big.length?`<div class="note">найбільше: ${big.map(x=>dmy(x.sd)+' '+(x.d>0?'+':'')+n2(x.d)).join(', ')}</div>`:''),Math.abs(d)>Math.max(5,baseIn*0.005)?'neg':'')}
-   ${kv('− комісія банку '+(gross?String(Math.round(fee/gross*10000)/100).replace('.',','):'0')+'%',n2(-fee))}
-   ${ref?kv('− повернення покупцям',n2(-ref)):''}
-   ${kv('= Прийшло на рахунок'+(chk?' ✓':''),n2(net),'final')}</div>`}
+   ${kv('Різниця з базою',sg(d)+(big.length?`<div class="note">найбільше: ${big.map(x=>dmy(x.sd)+' '+sg(x.d)).join(', ')}</div>`:''),bad(d))}
+   ${ref?kv('− повернуто покупцям',n2(-ref))+kv('= Різниця після повернень',sg(d2),'final '+bad(d2)):''}
+   <div class="glabel" style="margin-top:12px">На рахунок</div>
+   ${kv('За базою мінус комісія 1,3%',n2(baseIn-bFee)+`<div class="note">${n2(baseIn)} − ${n2(bFee)}</div>`)}
+   ${kv('Реально зараховано (після комісії й повернень)'+(chk?' ✓':''),n2(net)+`<div class="note">комісія банку ${n2(fee)}${ref?' · повернення '+n2(ref):''}</div>`)}
+   ${kv('= Різниця',sg(d3),'final '+bad(d3))}</div>`}
 function viewFlow(m){
   if(!m)return '';
   const st=balState(), r=(st[flowAcc]||[]).find(x=>x.m===m);
