@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120y">
+<meta name="wl-build" content="20261120z">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -155,7 +155,7 @@ p.note{margin:6px 0 0}
 .sheet.wide{max-width:760px}
 .billf .form{grid-template-columns:1fr 1fr!important;gap:6px 8px}.billf .form .sub{margin-top:6px}.billf .bdet{border:1px solid var(--line);border-radius:8px;padding:6px 10px}.billf .bdet[open]{padding-bottom:10px}.billf .bdet summary{font-size:12px}
 .uxh,.uxr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 36px;gap:4px 6px;align-items:center}.uxh{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-.uxr{padding:6px 0;border-bottom:1px solid var(--line)}.uxr .sm2{font-size:12.5px;padding-top:5px;padding-bottom:5px;color:var(--muted)}.uxr .btn{padding:6px 0}
+.uxr{padding:6px 0;border-bottom:1px solid var(--line);position:relative}.uxr .del{color:var(--neg,#c2412d);font-size:15px}.sugb{grid-column:1/-1;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--card,#fff);box-shadow:0 6px 18px rgba(0,0,0,.12)}.sugb button{display:block;width:100%;text-align:left;padding:9px 12px;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;font-size:13.5px;color:inherit}.sugb button:last-child{border-bottom:0}.sugb .sg{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:6px 12px 2px}.uxr .sm2{font-size:12.5px;padding-top:5px;padding-bottom:5px;color:var(--muted)}.uxr .btn{padding:6px 0}
 .form .chk{flex-direction:row;align-items:center;gap:8px;font-size:13px;color:var(--fg)}
 .actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
 .actions .left{margin-right:auto}
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120y"></script>
+<script src="config.js?v=20261120z"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120y"></script>
+<script src="shim.js?v=20261120z"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1743,20 +1743,39 @@ function editBill(pid,mm){
     const c=calc(); if(!manual&&c.sum!=null)$('#f_utilBill').value=String(c.sum).replace('.',',');
   });
   calc();
+  const allPay=Object.entries(S.pay).map(([id,q])=>({...q,point:q.point||id.slice(8)})).sort((a,b)=>String(b.month||'').localeCompare(String(a.month||'')));
+  const payL=q=>[{cp:q.utilCp,to:q.utilTo,pid:q.point},...utilX(q).map(x=>({cp:x.cp,to:x.to,pid:q.point}))].filter(o=>o.cp||o.to);
+  const hist=allPay.flatMap(payL);
+  const uniq=a=>{const seen=new Set(),o=[];for(const v of a){const t=String(v||'').trim();if(!t||seen.has(t.toLowerCase()))continue;seen.add(t.toLowerCase());o.push(t)}return o};
+  const mine=uniq([p.payee,p.payee2,...billBankOps(m,pid).map(o=>o.name),...hist.filter(o=>o.pid===pid).map(o=>o.cp)]);
+  const others=uniq([...pointsList().flatMap(q=>[q.payee,q.payee2]),...hist.map(o=>o.cp),...Object.values(S.bankop||{}).filter(o=>+o.amt<0&&!/КОМIСIЯ|ДЕБЕТУВАННЯ|ОБСЛУГ|КЛЕЩИНСЬКИЙ|Mastercard/i.test(o.name||'')).map(o=>o.name)]).filter(v=>!mine.some(x=>x.toLowerCase()===v.toLowerCase())).sort((a,b)=>a.localeCompare(b,'uk'));
+  const cpOpts=[{g:'Цієї локації',v:mine},{g:'Інші',v:others}];
+  const toLast=cp=>{const lc=cp.toLowerCase();const h=hist.find(o=>o.pid===pid&&(o.cp||'').toLowerCase()===lc&&o.to)||hist.find(o=>(o.cp||'').toLowerCase()===lc&&o.to);return h?h.to:''};
+  const toOpts=cp=>{const lc=cp.toLowerCase();const a=uniq(hist.filter(o=>o.pid===pid).map(o=>o.to)), b=uniq(hist.filter(o=>o.pid!==pid&&lc&&(o.cp||'').toLowerCase()===lc).map(o=>o.to)).filter(v=>!a.includes(v));return [{g:'Минулі оплати цієї локації',v:a},{g:'Цей контрагент на інших локаціях',v:b}]};
   {const L=$('#uxList');let row=(x={})=>{const r=document.createElement('div');r.className='uxr';
-    r.innerHTML=`<input data-k="a" inputmode="decimal" aria-label="Сума" placeholder="Сума" value="${x.a!=null?String(x.a).replace('.',','):''}"><input data-k="d" type="date" aria-label="Дата" value="${x.d||''}"><button type="button" class="btn sm" aria-label="Прибрати">✕</button>
-      <input data-k="c" class="sm2" list="uxCpL" aria-label="Контрагент" placeholder="Контрагент" value="${esc(x.cp||'')}"><input data-k="t" class="sm2" aria-label="Призначення" placeholder="Призначення" value="${esc(x.to||'')}">`;
-    r.querySelector('button').onclick=()=>r.remove();L.appendChild(r)};
+    r.innerHTML=`<input data-k="a" inputmode="decimal" aria-label="Сума" placeholder="Сума" value="${x.a!=null?String(x.a).replace('.',','):''}"><input data-k="d" type="date" aria-label="Дата" value="${x.d||''}"><button type="button" class="btn sm del" aria-label="Видалити платіж" title="Видалити платіж">🗑</button>
+      <input data-k="c" class="sm2" autocomplete="off" aria-label="Контрагент" placeholder="Контрагент" value="${esc(x.cp||'')}"><input data-k="t" class="sm2" autocomplete="off" aria-label="Призначення" placeholder="Призначення" value="${esc(x.to||'')}">`;
+    r.querySelector('button').onclick=()=>{r.remove();const h=$('#uxSum');if(h&&!L.children.length)h.textContent='Платежів немає — після «Зберегти» оплату буде видалено'};L.appendChild(r);
+    const ci=r.querySelector('[data-k=c]'), ti=r.querySelector('[data-k=t]');
+    sugAttach(r,ci,()=>cpOpts,v=>{if(!ti.value.trim()){const t=toLast(v);if(t)ti.value=t}});
+    sugAttach(r,ti,()=>toOpts(ci.value.trim()))};
     const sumUp=()=>{let t=0,n=0;for(const r of L.querySelectorAll('.uxr')){const v=parseNum(r.querySelector('[data-k=a]').value.trim()||'');if(v){t+=v;n++}}const bv=parseNum($('#f_utilBill').value.trim()||'');$('#uxSum').textContent=n>1||bv?'Разом сплачено '+nf2.format(t)+(bv?' з '+nf2.format(bv)+(Math.abs(t-bv)<0.01?' ✓':' · різниця '+nf2.format(t-bv)):''):''};
     L.addEventListener('input',sumUp);$('#f_utilBill').addEventListener('input',sumUp);
     const row0=row;row=(x={})=>{row0(x);const b=L.lastChild.querySelector('button');b.addEventListener('click',()=>setTimeout(sumUp,0))};
-    {const cps=new Set([p.payee,p.payee2,...billBankOps(m,pid).map(o=>o.name),...Object.values(S.pay).filter(q=>q.point===pid).flatMap(q=>[q.utilCp,...utilX(q).map(x=>x.cp)])].filter(Boolean));L.insertAdjacentHTML('beforebegin',`<datalist id="uxCpL">${[...cps].map(c=>`<option value="${esc(c)}">`).join('')}</datalist>`)}
     if(py.utilPaid!=null)row({a:py.utilPaid,d:py.utilDate,to:py.utilTo,cp:py.utilCp||(utilX(py).length?'':'')});utilX(py).forEach(x=>row(x));if(!L.children.length)row({});
     $('#uxAdd').onclick=()=>{row({d:todayISO(),cp:p.payee||''});sumUp()};
     $('#fillUtil').onclick=()=>{const bv=$('#f_utilBill').value.trim();L.innerHTML='';row({a:bv?parseNum(bv):x.utilCalc,d:todayISO(),cp:p.payee||''});sumUp()};
     const ub=$('#uxBank');if(ub)ub.onclick=()=>{L.innerHTML='';billBankOps(m,pid).forEach(o=>row({a:Math.round(-o.amt*100)/100,d:o.date,to:o.short,cp:o.name}));sumUp()};
     sumUp()}
 }
+function sugAttach(host,inp,getOpts,onPick){let box=null;
+  const hide=()=>{if(box){box.remove();box=null}};
+  const show=()=>{hide();const q=inp.value.trim().toLowerCase();const G=getOpts();const all=G.flatMap(g=>g.v);const exact=all.some(v=>v.toLowerCase()===q);
+    let h='';for(const g of G){const f=(!q||exact)?g.v:g.v.filter(v=>v.toLowerCase().includes(q));if(f.length)h+=`<div class="sg">${esc(g.g)}</div>`+f.slice(0,30).map(v=>`<button type="button" data-v="${esc(v)}">${esc(v)}</button>`).join('')}
+    if(!h)return;box=document.createElement('div');box.className='sugb';box.innerHTML=h;host.appendChild(box);
+    box.addEventListener('pointerdown',e=>e.preventDefault());
+    box.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(!b)return;inp.value=b.dataset.v;hide();inp.dispatchEvent(new Event('input',{bubbles:true}));onPick&&onPick(b.dataset.v)})};
+  inp.addEventListener('focus',show);inp.addEventListener('input',()=>{if(document.activeElement===inp)show()});inp.addEventListener('blur',()=>setTimeout(hide,150))}
 /* ---------- rent ---------- */
 function viewRent(m){
   const pts=monthPts(m);
