@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120f">
+<meta name="wl-build" content="20261120g">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -284,14 +284,14 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
   </div>
 </header>
 <main class="wrap" id="main">
-  <section class="card"><h2>Завантаження</h2><p class="note">Підключаюся до бази: точки, місяці, витрати й взаєморозрахунок з’являться тут. Якщо база порожня, почніть із вкладки «Точки» і кнопки «Новий місяць».</p></section>
+  <section class="card"><h2>Завантаження</h2><p class="note">Завантаження…</p></section>
 </main>
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120f"></script>
+<script src="config.js?v=20261120g"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120f"></script>
+<script src="shim.js?v=20261120g"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -421,7 +421,7 @@ function render(){
   document.querySelectorAll('.tab').forEach(t=>{t.hidden=(tech&&t.dataset.tab!=='svc')||(acct&&!ACCT_TABS.includes(t.dataset.tab))||(!acct&&t.dataset.tab==='myexp')||(dan&&t.dataset.tab==='home');t.setAttribute('aria-selected',t.dataset.tab===tab)});
   const main=$('#main');
   if(fatal){main.innerHTML=`<div class="banner warn">${esc(fatal)}</div>`;return}
-  if(loaded.size<COLS.length){main.innerHTML=`<section class="card"><h2>Завантаження</h2><p class="note">${stale?'База поки не відповідає. Дані з’являться, щойно з’єднання відновиться.':'Підключаюся до бази: точки, місяці, витрати й взаєморозрахунок з’являться тут.'}</p></section>`;return}
+  if(loaded.size<COLS.length){main.innerHTML=`<section class="card"><h2>Завантаження</h2><p class="note">${stale?'База поки не відповідає. Дані з’являться, щойно з’єднання відновиться.':'Завантаження…'}</p></section>`;return}
   let h=canWrite?'':'<div class="banner">У вас доступ лише на перегляд.</div>';
   if(tab==='pay') tab='util';
   if(tab==='settle'){tab='exp';expSub='settle'}
@@ -659,13 +659,13 @@ function viewSvc(){
   <div class="tiles t3"><div class="tile"><div class="l">Прострочено</div><div class="v ${n('over')?'neg':''}">${n('over')}</div><div class="s">точок</div></div><div class="tile"><div class="l">Скоро (до 14 днів)</div><div class="v">${n('soon')}</div><div class="s">точок</div></div><div class="tile"><div class="l">У нормі</div><div class="v">${n('ok')}</div><div class="s">точок</div></div></div>
   ${memCard(L)}
   <div class="tbl" style="margin-top:10px"><table class="pl ut svt"><thead><tr><th>Точка</th><th class="num eqc">Фільтри</th><th class="num eqc">Мембрани</th><th class="num hide-sm">ТО</th></tr></thead><tbody>${rows}</tbody></table></div>
-  ${role==='tech'?'<p class="note">Скільки води пройшло через фільтри = лічильник води на вході автомата мінус показник при заміні.</p>':`<p class="note">Скільки води пройшло через фільтри = лічильник води на вході автомата (Gwaters) мінус показник при заміні. Якщо лічильника немає — оцінка: продані літри з Gwaters від дня заміни × коефіцієнт точки (скільки літрів проходить через фільтри на 1 проданий літр — за лічильником автомата на попередніх замінах). Продажі оновлено: ${salesUpd()?dmy(salesUpd().slice(0,10))+(salesUpd().slice(11)?' '+salesUpd().slice(11,16):''):'—'}. Натисніть точку, щоб побачити історію.</p>`}</section>`;
+  ${role==='tech'?'<p class="note">Скільки води пройшло через фільтри = лічильник води на вході автомата мінус показник при заміні.</p>':`<p class="note">Пройдено = лічильник на вході − показник при заміні; без лічильника — оцінка за продажами. Оновлено: ${salesUpd()?dmy(salesUpd().slice(0,10))+(salesUpd().slice(11)?' '+salesUpd().slice(11,16):''):'—'}</p>`}</section>`;
 }
 function memCard(L){const st=memStock(), soon=L.filter(x=>x.memL&&(x.memSt==='over'||x.memSt==='soon')), d30=L.filter(x=>x.memL&&x.memSt==='ok'&&x.memDays!=null&&x.memDays<=30);
   const need=soon.length+d30.length, low=st.q<need;
   return `<div class="memc ${low?'low':''}"><div><div class="l">Мембрани на складі</div><div class="v">${st.q} к-т</div>${canWrite?`<button class="btn sm" data-act="addMemSt" type="button" style="margin-top:6px">+ Надходження</button>`:''}</div>
    <div><div class="l">Заміна мембран скоро</div><div class="v">${soon.length}<span class="s"> ${soon.length?'· '+soon.map(x=>esc(x.p.name)).slice(0,4).join(', '):'точок'}</span></div>${d30.length?`<div class="s">ще ${d30.length} — протягом 30 днів</div>`:''}</div>
-   ${(()=>{const k=kitStock();return k.any?`<div><div class="l">Фільтри на складі</div><div class="v">${k.q} к-т</div></div>`:''})()}</div>${low?`<p class="note neg" style="margin:4px 0 0">Мембран на складі менше, ніж потрібно найближчим часом (${need}) — пора закупити. Внесіть кнопкою «+ Надходження» або через «Витрати» → «Фільтри та мембрани».</p>`:''}`}
+   ${(()=>{const k=kitStock();return k.any?`<div><div class="l">Фільтри на складі</div><div class="v">${k.q} к-т</div></div>`:''})()}</div>${low?`<p class="note neg" style="margin:4px 0 0">Мембран на складі менше потреби (${need}) — пора закупити.</p>`:''}`}
 function addMemSt(){openSheet('Мембрани на склад','Скільки комплектів мембран надійшло (1 комплект = 3 шт). Для виправлення залишку можна ввести мінус.',
   fld('date','Дата',todayISO2(),{type:'date'})+fld('qty','Кількість, к-т','')+fld('note','Коментар','',{type:'text',full:true}),async fd=>{
   const q=parseNum(String(fd.qty||''));if(!q)return 'Вкажіть кількість';
@@ -784,7 +784,7 @@ function viewJobs(){
   for(const j of R){const mm=j.date.slice(0,7);if(mm!==cm){cm=mm;const W=L.filter(x=>x.type==='work'&&x.date.slice(0,7)===mm),Pp=L.filter(x=>x.type==='pay'&&x.date.slice(0,7)===mm);rows+=`<tr class="grp"><td colspan="2">${mLabel(mm)}</td><td class="num">${sum(W)?'роботи '+f0(sum(W)):''}${sum(W)&&sum(Pp)?' · ':''}${sum(Pp)?'виплати '+f0(sum(Pp)):''}</td></tr>`}
     const pay=j.type==='pay';
     rows+=`<tr class="${canWrite&&(owner||j.st==='new'||pay)?'click':''}" data-act="${canWrite?'editJob':''}" data-id="${j.id}"><td>${dmy(j.date)}</td><td>${pay?'<b>Виплата</b>':esc(JOBK[j.kind]||j.kind)}${j.point?' · '+esc((S.points[j.point]||{}).name||''):''}${j.st==='new'?' <span class="mvt">чекає</span>':''}${j.note?`<div class="note">${esc(j.note)}</div>`:''}</td><td class="num ${pay?'pos':''}">${pay?'−':''}${f0(j.amount)}${j.filt?`<div class="note">фільтри ${nf2.format(j.filt)}</div>`:''}</td></tr>`}
-  h+=`<section class="card"><h2>Журнал</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Робота</th><th class="num">Сума</th></tr></thead><tbody>${rows}</tbody></table></div><p class="note">Робота — оплата Анатолію. «Фільтри» — вартість комплекту для WaterLab (йде у витрати разом з роботою). Виплата зменшує борг.</p></section>`;
+  h+=`<section class="card"><h2>Журнал</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Робота</th><th class="num">Сума</th></tr></thead><tbody>${rows}</tbody></table></div><p class="note">Робота — Анатолію, фільтри — у витрати WaterLab.</p></section>`;
   return h;
 }
 function jobForm(j){j=j||{};const pts=pointsList().filter(p=>p.id!=='p00'&&p.active!==false);const pay=j.type==='pay';
@@ -884,7 +884,7 @@ function viewSettle(){
     tiles.push(`<div class="tile ${debt>0.5?'':'main'}"><div class="l">Баланс Даниїла · ${mLabel(om).toLowerCase()}</div><div class="v">${f0(Math.abs(left))}${left<-0.5?' <span style="font-size:13px;font-weight:400">витрачено зі своїх</span>':''}</div><div class="s">отримав ${f0(got)} · витрати ${f0(danExp)}</div></div>`)}
   const svcTile=(anaSum>0.5||Math.abs(anaDebt)>0.5)?`<button class="tile tapt" type="button" data-act="goTab" data-id="svc:job"><div class="l">Сервіс · Анатолій →</div><div class="v">${f0(Math.abs(anaDebt))}</div><div class="s">${anaDebt>=0?'борг Анатолію (роботи − виплати)':'Анатолію виплачено наперед'}${anaNew?` · ще ${f0(anaNew)} чекає підтвердження`:''}${anaSum>0.5?`<br>нараховано у витрати ${f0(anaSum)} (з фільтрами)`:''}</div></button>`:'';
   if(tiles.length)h+=`<div class="tiles">${tiles.join('')}</div>`;
-  if(svcTile)h+=`<div class="sub" style="margin-top:14px">Сервіс</div><div class="tiles">${svcTile}</div><p class="note" style="margin:6px 0 0">Роботи Анатолія записуються на «Сервіс», а не на Даниїла. 1-го Влад переказує гроші Даниїлу, Даниїл платить Анатолію й вносить «+ Виплата» в Регламенті. У розподілі 50/50 «Сервіс» рахується як витрата, яку закриває Даниїл.</p>`;
+  if(svcTile)h+=`<div class="sub" style="margin-top:14px">Сервіс</div><div class="tiles">${svcTile}</div><p class="note" style="margin:6px 0 0">Роботи Анатолія — на «Сервіс»; 1-го Влад переказує Даниїлу, Даниїл платить і вносить «+ Виплата».</p>`;
   if(om)h+=`<p class="note" style="margin:6px 0 0">Після закриття ${mGen(om)} перекази й витрати зведуться в розподіл прибутку 50/50.</p>`;
   if(P.length||M.length){
     h+=`<div class="tbl" style="margin-top:12px"><table><thead><tr><th>Дата</th><th>Операція</th><th class="num">Сума</th></tr></thead><tbody>`;
@@ -929,11 +929,11 @@ function viewPrices(){
   const verdict=t=>t.days<7||t.before<5?['pill','замало даних']:t.eff==null?['pill','—']:t.eff<-0.12?['pill bad','відтік — розглянути відкат']:t.eff<-0.05?['pill open','спостерігаємо']:['pill ok','тримається'];
   const pct=v=>{if(v==null)return '—';const r=Math.round(v*100);return (r>0?'+':r<0?'−':'')+Math.abs(r)+'%'};
   let h=`<section class="card"><div class="shead"><h2>Тест ціни</h2>${last?`<span class="note">дані по ${dmy(last)}</span>`:''}</div>
-  <p class="note">Літри за день після зміни ціни (до 28 днів) проти 28 днів до неї — з поправкою на точки без змін (сезон, погода). Відкат варто розглядати, якщо падіння більше 12%.</p>`;
+  <p class="note">Літри/день після зміни ціни проти 28 днів до неї, з поправкою на сезон. Падіння понад 12% — привід відкотити.</p>`;
   const trow=t=>{const [c,l]=verdict(t);return `<tr class="${canWrite?'click':''}" data-act="${canWrite?'editPrice':''}" data-id="${t.p.id}"><td>${esc(t.p.name)}<div class="note">${dmy(t.h.d)} · ${pf(t.h.w0)}/${pf(t.h.m0)} → ${pf(t.h.w)}/${pf(t.h.m)} · ${t.days} дн після</div></td><td class="num">${f0(t.pb.lpd)} → ${f0(t.pa.lpd)}<div class="note">без поправки ${pct(t.raw)}</div></td><td class="num"><b>${pct(t.eff)}</b><div class="note">виручка ${pct(t.rvEff)}${t.nEff!=null?` · покупки ${pct(t.nEff)}`:''}</div><div><span class="${c}">${l}</span></div></td></tr>`};
   const thead=`<thead><tr><th>Точка · зміна</th><th class="num">Л/день до → після</th><th class="num">Ефект</th></tr></thead>`;
   const recent=T.filter(t=>t.h.d>=addDay(last,-120)), old=T.filter(t=>t.h.d<addDay(last,-120));
-  h+=recent.length?`<div class="tbl"><table class="pl ut">${thead}<tbody>${recent.map(trow).join('')}</tbody></table></div>`:`<p class="note">За останні 4 місяці змін ціни не було. Щоб почати тест — відкрийте точку нижче й вкажіть нову ціну та дату зміни.</p>`;
+  h+=recent.length?`<div class="tbl"><table class="pl ut">${thead}<tbody>${recent.map(trow).join('')}</tbody></table></div>`:`<p class="note">Змін ціни за 4 місяці не було.</p>`;
   if(old.length)h+=`<details style="margin-top:10px"><summary class="note" style="cursor:pointer">Історія всіх змін цін · ${old.length}</summary><div class="tbl"><table class="pl ut">${thead}<tbody>${old.map(trow).join('')}</tbody></table></div></details>`;
   h+=`</section>`;
   const L14=last?addDay(last,-13):'', P14a=last?addDay(last,-27):'', P14b=last?addDay(last,-14):'';
@@ -941,7 +941,7 @@ function viewPrices(){
   const rows=act.slice().sort((x,y)=>prk(x)-prk(y)||(+y.planW||0)-(+x.planW||0)).map(p=>{const a=last?winLR([p.id],L14,last):{lpd:0,pr:0,n:0}, b=last?winLR([p.id],P14a,P14b):{lpd:0,n:0};const ch=b.lpd&&a.lpd?a.lpd/b.lpd-1:null;
     const pl=p.planW!=null&&p.planM!=null;
     return `<tr class="${canWrite?'click':''}${pl?(p.planQ?' plq':' pln'):''}" data-act="${canWrite?'editPrice':''}" data-id="${p.id}"><td>${esc(p.name)}${pHist(p).length?`<div class="note">змінено ${dmy(pHist(p).pop().d)}</div>`:''}${pl?`<div><span class="pill ${p.planQ?'open':'plan'}">${p.planQ?'під питанням':'план'} → ${pf(p.planW)} / ${pf(p.planM)}</span></div>`:''}</td><td class="num">${pf(p.priceW)} / ${pf(p.priceM)}</td><td class="num">${a.pr?nf2.format(a.pr):'—'}</td><td class="num">${a.lpd?f0(a.lpd):'—'}<div class="note">${pct(ch)}</div></td><td class="num">${a.npd!=null?f0(a.npd):'—'}<div class="note">${a.lpn?nf1.format(Math.round(a.lpn*10)/10)+' л':''}</div></td></tr>`}).join('');
-  h+=`<section class="card"><h2>Ціни по точках</h2><p class="note">Ціна: звичайна / мінералізована, грн/л. Середня ціна, літри й покупки — за день, останні 14 днів; % — проти попередніх 14; під покупками — середній об’єм покупки.</p>
+  h+=`<section class="card"><h2>Ціни по точках</h2><p class="note">Ціна звичайна / мінералізована. Показники — за день, останні 14 днів; % — проти попередніх 14.</p>
   ${act.some(p=>p.planW!=null)?`<p class="note" style="margin:4px 0 0"><span class="pill plan">план</span> — плануємо підняти ціну, <span class="pill open">під питанням</span> — ще не вирішили. Разом у плані: ${act.filter(p=>p.planW!=null).length} точок.</p>`:''}
   <div class="tbl"><table class="pl ut"><thead><tr><th>Точка</th><th class="num">Ціна</th><th class="num">Сер.</th><th class="num">Л/день</th><th class="num">Покупок</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
   return h;
@@ -950,7 +950,7 @@ function editPrice(pid){const p=S.points[pid];if(!p)return;const H=pHist(p);
   const hist=H.length?`<div class="full note">${H.slice().reverse().map(x=>`${dmy(x.d)}: ${pf(x.w0)}/${pf(x.m0)} → ${pf(x.w)}/${pf(x.m)}`).join('<br>')}</div>`:'';
   openSheet('Ціна · '+p.name,'Звичайна / мінералізована, грн за літр',
     fld('priceW','Звичайна',p.priceW??'')+fld('priceM','Мінералізована',p.priceM??'')+fld('pdate','Дата зміни (якщо ціну змінено)','',{type:'date'})+
-    `<p class="note full" style="margin:-4px 0 0">Вкажіть дату, з якої діє нова ціна на автоматі — від неї рахується тест. Якщо тільки виправляєте запис — дату не заповнюйте.</p>`+
+    `<p class="note full" style="margin:-4px 0 0">Дата — з якої діє нова ціна.</p>`+
     `<div class="glabel full" style="margin-top:6px">Плануємо підняти до</div>`+fld('planW','Звичайна (план)',p.planW??'')+fld('planM','Мінералізована (план)',p.planM??'')+
     `<label class="chk full"><input type="checkbox" name="planQ" ${p.planQ?'checked':''}> Ще під питанням</label><p class="note full" style="margin:-4px 0 0">Щоб прибрати точку з плану — очистіть обидва поля.</p>`+hist,
     async fd=>{const pw=parseNum(String(fd.priceW||'')), pmn=parseNum(String(fd.priceM||''));if(pw===null||pmn===null)return 'Вкажіть обидві ціни';
@@ -974,7 +974,7 @@ function viewTrend(){
     svg+=`<rect x="${x-bw/2+5}" y="${y(Math.max(c.op,0))}" width="${bw-10}" height="${y(0)-y(Math.max(c.op,0))}" rx="2" fill="var(--link)"/>`;
     svg+=`<text x="${x}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)">${mShort(c.m)}</text>`;});
   svg+=`</svg>`;
-  let h=`<section class="card"><div class="shead"><h2>Резервна копія</h2><div style="display:flex;gap:6px;flex-wrap:wrap">${bkMe()?`<button class="btn sm pri" data-act="backupJson" type="button" id="bkBtn">${GD_CID()?'Повна копія → Google Диск':'Повна копія бази'}</button>`:''}<button class="btn sm" data-act="exportXlsx" type="button" id="xlsxBtn">Таблиці в Excel</button></div></div>${bkMe()?`<p class="note" style="margin:6px 0 0">Повна копія — файл з усіма даними обох баз (вода й фільтри), з нього базу можна відновити повністю. Зберігайте його окремо (iCloud / Google Drive / пошта). Остання копія: ${bkLast()?dmy(bkLast().date)+(bkLast().by?' · '+esc(bkLast().by):''):'ще не робилась'}.</p>`:''}</section>`;
+  let h=`<section class="card"><div class="shead"><h2>Резервна копія</h2><div style="display:flex;gap:6px;flex-wrap:wrap">${bkMe()?`<button class="btn sm pri" data-act="backupJson" type="button" id="bkBtn">${GD_CID()?'Повна копія → Google Диск':'Повна копія бази'}</button>`:''}<button class="btn sm" data-act="exportXlsx" type="button" id="xlsxBtn">Таблиці в Excel</button></div></div>${bkMe()?`<p class="note" style="margin:6px 0 0">Остання копія: ${bkLast()?dmy(bkLast().date)+(bkLast().by?' · '+esc(bkLast().by):''):'ще не робилась'}.</p>`:''}</section>`;
   h+=`<section class="card chart"><h2>Виручка й операційний прибуток · ${Y}</h2>${svg}<div class="legend"><span><i style="background:var(--cyan);border:1px solid var(--line)"></i>виручка</span><span><i style="background:var(--link)"></i>операційний прибуток</span></div></section>`;
   const tr=(lab,x,cls='')=>`<tr class="${cls}"><td>${lab}</td><td class="num hide-sm">${f0(x.L)}</td><td class="num hide-sm">${x.L?nf2.format(x.R/x.L):'—'}</td><td class="num">${f0(x.R)}</td><td class="num hide-sm">${f0(x.opex)}</td><td class="num ${sgn(x.op)}">${f0(x.op)}</td><td class="num">${x.R?(x.op/x.R*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="num hide-sm">${x.capex?f0(x.capex):'—'}</td><td class="num ${sgn(x.net)}">${f0(x.net)}</td></tr>`;
   const Z=()=>({L:0,R:0,opex:0,op:0,capex:0,net:0});
@@ -1068,7 +1068,7 @@ function expForm(e){
   if(e.article&&!artCat(e.article)) arts=`<div class="full"><div class="glabel">Поточна стаття</div><div class="chips">${chip(e.article,true)}</div></div>`+arts;
   const popts=[['','Уся мережа']].concat(pointsList().map(p=>[p.id,p.name]));
   return `<div class="full"><div class="glabel">Хто платив</div><div class="seg"${payer==='Сервіс'?' style="grid-template-columns:1fr 1fr 1fr"':''}>${['Даниїл','Влад'].concat(payer==='Сервіс'?['Сервіс']:[]).map(p=>`<label class="segb"><input type="radio" name="payer" value="${p}" ${p===payerOf({payer})?'checked':''}><span>${p}</span></label>`).join('')}</div></div>`+
-    (payer==='Сервіс'?'':`<div class="full srcBox"><div class="glabel">Звідки оплачено</div><div class="seg" style="grid-template-columns:repeat(3,minmax(0,1fr))">${Object.entries(SRC).map(([k,l])=>`<label class="segb"><input type="radio" name="src" value="${k}" ${k===expSrc({...e,payer})?'checked':''}><span>${l}</span></label>`).join('')}</div><p class="note" style="margin:4px 0 0">Сума піде в рух коштів цієї каси. «Особиста картка» — бізнес потім поверне переказом «під оплати».</p></div>`)+
+    (payer==='Сервіс'?'':`<div class="full srcBox"><div class="glabel">Звідки оплачено</div><div class="seg" style="grid-template-columns:repeat(3,minmax(0,1fr))">${Object.entries(SRC).map(([k,l])=>`<label class="segb"><input type="radio" name="src" value="${k}" ${k===expSrc({...e,payer})?'checked':''}><span>${l}</span></label>`).join('')}</div><p class="note" style="margin:4px 0 0">«Особиста картка» — повернеться переказом «під оплати».</p></div>`)+
     arts+
     `<label class="full amount">Сума, грн<input id="f_amount" name="amount" value="${esc(e.amount??'')}" inputmode="decimal" autocomplete="off" placeholder="0"></label>`+
     `<label class="full">Призначення платежу<input id="f_purpose" name="purpose" value="${esc(e.purpose||'')}" autocomplete="off" placeholder="напр.: мембрани Vatron 6 шт · ремонт купюроприймача · пальне 40 л"></label>`+
@@ -1219,7 +1219,7 @@ function homeTodo(m){
 const pct=(a,b)=>b?(a/b*100).toFixed(1).replace('.',',')+'%':'—';
 function viewHome(m){
   const c=calc(m), mt=monthTable(c), md=S.months[m]||{}, ed=canWrite&&!md.closed;
-  let h=bkDue()?`<section class="card bkdue"><div class="shead"><div><b>Пора зробити резервну копію</b><div class="note">${bkLast()?'Остання — '+dmy(bkLast().date)+'. ':''}${GD_CID()?'Раз на тиждень: один файл з усіма даними — у папку «WaterLab — резервні копії» на Google Диску.':'Раз на тиждень: один файл з усіма даними — збережіть його в iCloud / Google Drive.'}</div></div><button class="btn sm pri" data-act="backupJson" type="button" id="bkBtn2">${GD_CID()?'Зберегти в Google Диск':'Зберегти копію'}</button></div></section>`:'';
+  let h=bkDue()?`<section class="card bkdue"><div class="shead"><div><b>Пора зробити резервну копію</b><div class="note">${bkLast()?'Остання — '+dmy(bkLast().date)+'. ':''}${GD_CID()?'Раз на тиждень — на Google Диск.':'Раз на тиждень.'}</div></div><button class="btn sm pri" data-act="backupJson" type="button" id="bkBtn2">${GD_CID()?'Зберегти в Google Диск':'Зберегти копію'}</button></div></section>`:'';
   h+=`<section class="card"><div class="shead"><h2>${mLabel(m)}</h2><span class="pill ${md.closed?'closed':'open'}">${md.closed?'закритий':'відкритий'}</span></div>
   <div class="tiles t4">
     ${(()=>{const inn=`<div class="l">Виручка${md.gwThru&&md.gwThru<monthEnd(m)?` <span class="gwd">по ${dmy(md.gwThru).slice(0,5)}</span>`:''}</div><div class="v">${f0(mt.T.rv)}</div><div class="s">${nf1.format(Math.round(mt.T.L))} л продано</div><div class="s">банк ${c.bank?f0(c.bank):'—'} · готівка ${c.cash?f0(c.cash):'не внесено'}</div>`;return ed&&m===cur?`<button type="button" class="tile tapt" data-act="editMoney" title="Внести банк і готівку">${inn}</button>`:`<div class="tile">${inn}</div>`})()}
@@ -1538,7 +1538,7 @@ function editTariffEntry(id){
   const t=S.tariffs[id]; if(!t)return; const p=S.points[t.point]||{};
   openSheet(p.name||t.point,`Тариф з ${mGen(t.from)}`,
     `<div class="calc">Вода: ${t.prevWT!=null?nf1.format(t.prevWT)+' → ':''}${t.wT!=null?nf1.format(t.wT):'—'} грн/м³ · Електро: ${t.prevET!=null?nf1.format(t.prevET)+' → ':''}${t.eT!=null?nf1.format(t.eT):'—'} грн/кВт·год</div>`+
-    `<p class="note full" style="margin:0">Видаліть запис, якщо тариф внесено помилково. Відкриті місяці з ${mGen(t.from)} перерахуються за попереднім тарифом, закриті не зміняться.</p>`,
+    `<p class="note full" style="margin:0">Відкриті місяці з ${mGen(t.from)} перерахуються, закриті — ні.</p>`,
     async()=>{}, async()=>{await delTariff(id);return true});
   $('#saveBtn').hidden=true;
 }
@@ -1625,7 +1625,7 @@ function billIssues(m){
 function billIssuesHtml(m){
   const L=billIssues(m); if(!L.length)return '';
   return `<section class="card"><h2>Рахунки розходяться з нарахуванням · ${mLabel(m).toLowerCase()}</h2>
-  <p class="note">У фінрезі комуналка нарахована за показниками й тарифом. Тут точки, де рахунок або акт відрізняється від нарахування більше ніж на 5 грн.${isClosed(m)?' Місяць закритий: різницю можна додати в наступний відкритий місяць як «Коригування комуналки» по точці.':' Місяць відкритий: перевірте показники й тариф або прийміть рахунок.'}</p>
+  <p class="note">Точки, де рахунок відрізняється від нарахування більш ніж на 5 грн.</p>
   ${L.map(x=>`<div class="kv bi"><span>${esc((S.points[x.pid]||{}).name||x.pid)}<div class="note">нараховано ${f0(x.est)} · за рахунком ${f0(x.bill)}${x.basis?' · '+esc(x.basis):''}</div></span><b class="${x.d>0?'neg':''}">${x.d>0?'+':''}${f0(x.d)}</b>${role==='owner'?billBtns(x):''}</div>`).join('')}</section>`;
 }
 function billGo(m){if(S.months[m])cur=m;tab='util';render();window.scrollTo(0,0)}
@@ -1676,7 +1676,7 @@ function editBill(pid,mm){
       <div class="brow"><div class="bname">Вода, м³</div><div class="bc" id="bcw"></div><input name="bw0" id="f_bw0" inputmode="decimal" value="${num(w0)}"><input name="bw1" id="f_bw1" inputmode="decimal" value="${num(w1)}"><input name="bwT" id="f_bwT" inputmode="decimal" value="${num(wT)}"></div>
       <div class="brow"><div class="bname">Світло, кВт·год</div><div class="bc" id="bce"></div><input name="be0" id="f_be0" inputmode="decimal" value="${num(e0)}"><input name="be1" id="f_be1" inputmode="decimal" value="${num(e1)}"><input name="beT" id="f_beT" inputmode="decimal" value="${num(eT)}"></div></div>`+
     fld('utilBill','Сума до сплати за рахунком, грн',py.utilBill??'')+fld('basis','Рахунок / акт №',py.basis||'',{type:'text'})+
-    `<p class="note full" style="margin:-4px 0 0">Сума рахується з показників автоматично; якщо в рахунку інша — впишіть її вручну.</p>`+
+    `<p class="note full" style="margin:-4px 0 0">Рахується з показників; можна змінити вручну.</p>`+
     `<div class="sub">Оплата</div>`+fld('utilPaid','Сплачено, грн',py.utilPaid??'')+fld('utilDate','Дата оплати',py.utilDate||'',{type:'date'})+
     `<div class="full"><button type="button" class="btn sm" id="fillUtil">Сплачено повністю сьогодні</button></div>`+
     (p.payee2?`<div class="sub">З них за воду окремо · ${esc(p.payee2)}</div>`+fld('waterDue','Нараховано за воду, грн',py.waterDue??'')+fld('utilPaidW','Сплачено за воду, грн',py.utilPaidW??'')+fld('utilDateW','Дата оплати за воду',py.utilDateW||'',{type:'date'})+`<p class="note full" style="margin:-4px 0 0">Сума до сплати вище — загальна. Частина за воду йде у звірку з ${esc(p.payee2)}, решта — з ${esc(p.payee||'основним контрагентом')}.</p>`:'')+
@@ -1744,7 +1744,7 @@ function editRent(pid,mm){
     fld('rentPaid','Сплачено, грн',py.rentPaid??'')+fld('rentDate','Дата оплати',py.rentDate||'',{type:'date'})+((+p.rentCash>0||+py.rentCash>0)?fld('rentCash','З них ф2, грн',py.rentCash??(py.rentPaid==null&&p.rentCash?p.rentCash:'')):'')+
     `<div class="full"><button type="button" class="btn sm" id="fillRent">Сплачено повністю сьогодні</button></div>`+
     fld('rentNote','Коментар',py.rentNote||'',{type:'text',full:true})+
-    `<p class="note full" style="margin:0">Оренда у фінрезі нараховується за договором. Оплата потрапляє у звірки й баланс.</p>`;
+    `<p class="note full" style="margin:0"></p>`;
   openSheet('Оренда · '+(p.name||pid),mLabel(m)+(p.contact?' · '+p.contact:''),fields,async fd=>{
     const raw=String(fd.rentPaid??'').trim(), rp=parseNum(raw); if(raw!==''&&rp===null)return 'Не зрозумів суму. Можна писати 2000 або 1500,50.';
     const rcRaw=String(fd.rentCash??'').trim(), rc=rcRaw===''?null:parseNum(rcRaw); if(rcRaw!==''&&rc===null)return 'Не зрозумів суму готівкою';
@@ -1775,8 +1775,8 @@ function viewInv(){
 }
 function viewInvOps(){const O=devRows().filter(r=>r.fund==='inc').sort((a,b)=>(b.d||'').localeCompare(a.d||''));if(!O.length)return '';
   const t=O.reduce((a,r)=>a+r.a,0), cl=credits().map(c=>({...c,left:crLeft(c.id)})).filter(c=>c.left>0);
-  return `<section class="card"><div class="shead"><h2>З операційної діяльності</h2><span class="note">вкладено з доходу точок</span></div>
-  <div class="tiles"><div class="tile main"><div class="l">Вкладено з доходу</div><div class="v">${f0(t)} грн</div></div>${cl.map(c=>`<div class="tile"><div class="l">${esc(c.name)}</div><div class="v">${f0(crPaid(c.id))} з ${f0(c.total)}</div><div class="s">залишок ${f0(c.left)} — додається по мірі платежів</div></div>`).join('')}</div>
+  return `<section class="card"><div class="shead"><h2>З операційної діяльності</h2></div>
+  <div class="tiles"><div class="tile main"><div class="l">Вкладено з доходу</div><div class="v">${f0(t)} грн</div></div>${cl.map(c=>`<div class="tile"><div class="l">${esc(c.name)}</div><div class="v">${f0(crPaid(c.id))} з ${f0(c.total)}</div><div class="s">залишок ${f0(c.left)}</div></div>`).join('')}</div>
   <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Дата</th><th>На що</th><th>Локація</th><th class="num">Сума</th></tr></thead><tbody>${O.map(r=>`<tr><td>${r.d?dmy(r.d):'—'}</td><td>${esc(r.p)}</td><td>${Object.keys(r.loc||{}).map(ilName).map(esc).join(', ')}</td><td class="num">${f0(r.a)}</td></tr>`).join('')}</tbody>
   <tfoot><tr class="final"><td colspan="3">Разом</td><td class="num">${f0(t)}</td></tr></tfoot></table></div></section>`}
 const CR_ARTS=['Обладнання','Нова точка / будівництво'];
@@ -1819,14 +1819,14 @@ function viewInvLoc(){const R=devRows().map(r=>({...r,g:ILG[r.typ]||'Інше'})
   return `<style>tr.sel td{background:var(--accent-soft)}.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 12px}</style>
   <section class="card"><div class="shead"><h2>Куди вкладено</h2><span class="note">грн</span></div>
   <div class="tiles"><div class="tile main"><div class="l">Вкладено всього</div><div class="v">${f0(all)}</div></div>${types.map(t=>`<div class="tile"><div class="l">${t}</div><div class="v">${f0(tt[t])}</div><div class="s">${Math.round(tt[t]/all*100)}%</div></div>`).join('')}</div></section>
-  <section class="card"><div class="shead"><h2>По локаціях</h2><span class="note">натисніть локацію — розшифровка</span></div>
+  <section class="card"><div class="shead"><h2>По локаціях</h2></div>
    <div class="tbl"><table class="ut"><thead><tr><th>Локація</th>${types.map(t=>`<th class="num">${esc(t)}</th>`).join('')}<th class="num">Разом</th></tr></thead>
    <tbody>${locs.map(rowH).join('')}</tbody><tfoot><tr class="final"><td>Разом</td>${types.map(t=>`<td class="num">${f0(tt[t])}</td>`).join('')}<td class="num">${f0(all)}</td></tr></tfoot></table></div></section>${det}`}
 function ilPick(id){ilSel=ilSel===id?null:id;render();if(ilSel)setTimeout(()=>{const c=[...document.querySelectorAll('section.card')].pop();c&&c.scrollIntoView({behavior:'smooth',block:'start'})},50)}
 function ilType(t){ilT=ilT===t?null:t;render()}
 function editDevx(id){const x=S.devx[id];if(!x)return;const pts=[...pointsList().map(p=>[p.id,p.name]),...Object.entries(invLoc().pts||{}).filter(([k])=>!S.points[k]).map(([k,o])=>[k,o.name||k]),['gen','Загальне, не по точках']];
   openSheet('Платіж розвитку',(x.d?dmy(x.d)+' · ':'')+f0(x.a)+' ₴ · '+x.p,
-    sel('typ','Тип',x.typ,DEVT.map(t=>[t,t]),true)+`<div class="full"><div class="glabel">Точки (сума ділиться порівну між відміченими)</div><div class="chkgrid">${pts.map(([k,n])=>`<label class="chk"><input type="checkbox" name="pt_${k}" ${x.loc&&x.loc[k]?'checked':''}> ${esc(n)}</label>`).join('')}</div></div>`,
+    sel('typ','Тип',x.typ,DEVT.map(t=>[t,t]),true)+`<div class="full"><div class="glabel">Точки</div><div class="chkgrid">${pts.map(([k,n])=>`<label class="chk"><input type="checkbox" name="pt_${k}" ${x.loc&&x.loc[k]?'checked':''}> ${esc(n)}</label>`).join('')}</div></div>`,
     async fd=>{const ks=Object.keys(fd).filter(k=>k.startsWith('pt_')&&fd[k]===true).map(k=>k.slice(3));if(!ks.length)return 'Відмітьте хоча б одну точку';
       const loc=Object.fromEntries(ks.map(k=>[k,Math.round(1/ks.length*10000)/10000]));const same=JSON.stringify(Object.keys(x.loc||{}).sort())===JSON.stringify(ks.slice().sort());
       const d={...x,typ:fd.typ,loc,how:same?x.how:'адреса'};delete d.id;if(!await w(()=>db.doc('devx/'+id).set(d)))return 'Не збереглося';toast('Збережено')})}
@@ -1842,7 +1842,7 @@ function viewInvPct(){
     <div class="tile"><div class="l">Виплачено</div><div class="v">${fUsd(x.paid)}</div></div><div class="tile"><div class="l">Реінвестовано</div><div class="v">${fUsd(x.rein)}</div><div class="s">додано до внесків</div></div></div></section>`;
   let h=st.map(card).join('')||`<section class="card"><p class="note">Внесків поки немає.</p></section>`;
   h+=`<section class="card"><h2>Виплати відсотків</h2><div class="tbl"><table class="ut"><thead><tr><th>Дата</th><th>Кому</th><th class="num">Сума</th></tr></thead><tbody>${P.map(p=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editPctPay':''}" data-id="${p.id}"><td>${p.date?dmy(p.date):'—'}</td><td>${esc(p.investor)}<div class="note">${p.reinv?'реінвестовано':'виплачено'}${p.note?' · '+esc(p.note):''}</div></td><td class="num">${fUsd(p.usd)}${p.hrn?`<div class="note">${f0(p.hrn)}&nbsp;грн</div>`:''}</td></tr>`).join('')||'<tr><td colspan="3" class="note">Виплат ще не було.</td></tr>'}</tbody></table></div>
-  <p class="note">Відсотки нараховуються щомісяця від суми внесків інвестора. «Реінвестувати» — відсотки не виплачуються, а додаються новим внеском і далі теж приносять %.</p></section>`;
+  <p class="note">Щомісячно від суми внесків. «Реінвестувати» — % додаються новим внеском.</p></section>`;
   return h;
 }
 function payPct(who){const x=pctState(who);
@@ -2025,7 +2025,7 @@ function viewFlow(m){
     h+=`<div class="tiles t3"><div class="tile"><div class="l">За базою${upTo<end?' на '+dmy(upTo):' на кінець місяця'}</div><div class="v">${f0(bAt??r.close)}</div><div class="s">на початок ${f0(r.open)}</div></div>
       <div class="tile"><div class="l">За випискою${bEnd!=null?' на '+dmy(upTo):''}</div><div class="v">${bEnd!=null?f0(bEnd):'—'}</div><div class="s">${lastSt?'виписка '+dmy(lastSt.from)+'–'+dmy(lastSt.to):'виписку не завантажено'}</div></div>
       <div class="tile ${dif!=null&&Math.abs(dif)>1?'warn':''}"><div class="l">Різниця</div><div class="v">${dif!=null?nf2.format(dif):'—'}</div><div class="s">${cnt.ok} збігається · ${cnt.bad} потребує уваги</div></div></div>`;
-    if(!hasSt)h+=`<p class="note">Завантажте виписку ПриватБанку (.xls) — кожна операція позначиться: збігається з базою, є лише в банку чи лише в базі. Номери рахунків і РНОКПП з виписки не зберігаються.</p>`;
+    if(!hasSt)h+=`<p class="note">Завантажте виписку ПриватБанку (.xls).</p>`;
     {const C=rows.filter(x=>x.card),cb=C.reduce((s,x)=>s+x.base,0),cg=C.reduce((s,x)=>s+x.gross,0);if(C.length)h+=`<p class="note" style="margin:8px 0 0">Оплати карткою за ${C.length} дн.: у базі ${f0(cb)}, банк зарахував ${f0(cg)} разом із комісією — різниця ${nf2.format(cg-cb)}${Math.abs(cg-cb)<=Math.max(5,cb*0.005)?' ✓':''}.</p>`}
     const rowHtml=x=>{const [c,l]=FST[x.st]||['',''];
       const find=x.st==='bank'&&canWrite&&x.op?` <button class="btn sm" type="button" data-act="flowFind" data-id="${esc(x.op)}">Знайти серед внесених</button>`:'';
@@ -2038,13 +2038,13 @@ function viewFlow(m){
       return `<div class="sub" style="margin-top:14px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>${t}</span><span class="note">база ${nf2.format(sm(L,'base'))} · банк ${nf2.format(sm(L,'bank'))}${bad?` · <b style="color:var(--neg,#c2412d)">${bad} потребує уваги</b>`:' · ✓'}</span></div>
       <div class="tbl"><table class="pl ut"><thead><tr><th>Дата · операція</th><th class="num">База</th><th class="num">Банк</th></tr></thead><tbody>${L.map(rowHtml).join('')||'<tr><td colspan="3" class="note">Немає операцій</td></tr>'}</tbody>${L.length?`<tfoot><tr class="final"><td>Разом ${t.toLowerCase()}${L.some(x=>x.card)?`<div class="note">банк зарахував з комісією ${nf2.format(L.reduce((a,x)=>a+(x.card?x.gross:(x.bank||0)),0))}</div>`:''}</td><td class="num">${nf2.format(sm(L,'base'))}</td><td class="num">${nf2.format(sm(L,'bank'))}</td></tr></tfoot>`:''}</table></div>`};
     h+=sec('Надходження',INC)+sec('Витрати і списання',OUT);
-    h+=`<p class="note">Оплати карткою банк зараховує наступного дня мінус комісія еквайрингу — тому «Банк» трохи менший за «База». «Немає в базі» — внесіть витрату або рух коштів кнопкою в рядку. «Немає у виписці» — перевірте дату чи суму в базі.</p></section>`;
+    h+=`<p class="note">Картка зараховується наступного дня мінус комісія.</p></section>`;
   }else{
     const rows=flowBase(m,'cash');let run=r.open;
     h+=`<div class="tiles t3"><div class="tile"><div class="l">На початок</div><div class="v">${f0(r.open)}</div></div><div class="tile"><div class="l">Надійшло / списано</div><div class="v">+${f0(r.inc)} / −${f0(r.out)}</div></div><div class="tile main"><div class="l">На кінець за базою</div><div class="v">${f0(r.close)}</div><div class="s">${r.fact!=null?'факт '+f0(r.fact)+' · різниця '+nf2.format(r.diff):'факт не внесено'}</div></div></div>
     <div class="tbl" style="margin-top:10px"><table class="pl ut"><thead><tr><th>Дата · операція</th><th class="num">Сума</th><th class="num">Залишок</th></tr></thead><tbody>`;
     for(const x of rows){run+=x.amt;h+=`<tr class="${x.ref&&x.ref.includes('/')&&canWrite?'click':''}" ${x.ref&&x.ref.includes('/')&&canWrite?`data-act="flowOpen" data-id="${esc(x.ref)}"`:''}><td><span class="mut">${dmy(x.date)}</span> ${esc(x.label)}</td><td class="num">${nf2.format(x.amt)}</td><td class="num">${f0(run)}</td></tr>`}
-    h+=`</tbody></table></div><p class="note">Готівку банк не бачить — звіряйте з фактом у касі: внесіть фактичний залишок на кінець місяця в таблиці «${ACC.cash}» нижче.</p></section>`;
+    h+=`</tbody></table></div><p class="note">Готівку звіряйте з фактом у касі.</p></section>`;
   }
   return h;
 }
@@ -2075,7 +2075,7 @@ function flowFind(opId){const o=(S.bankop||{})[opId];if(!o)return;const a=Math.a
   const pn=id=>(S.points[id]||{}).name||'';
   infoSheet('Знайти витрату для операції',dmy(o.date)+' · '+nf2.format(o.amt)+' · '+(o.name||''),
     (L.length?L.map(e=>`<button type="button" class="kv linkrow" data-act="flowLink" data-id="${esc(opId)}|${e.id}" style="width:100%;background:none;border:0;border-bottom:1px solid var(--line);text-align:left;font:inherit;cursor:pointer"><span>${dmy(e.date||monthEnd(e.month))} · ${esc(e.article)}${e.cp?' · '+esc(e.cp):''}${e.point?' · '+esc(pn(e.point)):''}<div class="note">${esc(e.payer)} · ${SRC[expSrc(e)]||''}${e.d<0.011?' · <b>сума збігається</b>':''}</div></span><b>${nf2.format(e.amount)}</b></button>`).join(''):'<p class="note">Немає витрат за цей і минулий місяць, які ще не пов\'язані з випискою.</p>')+
-    '<p class="note">Натисніть на витрату — вона пов\'яжеться з цією операцією банку, і «Звідки оплачено» стане «Рахунок ФОП».</p>')}
+    '<p class="note">Натисніть витрату, щоб пов\'язати.</p>')}
 async function flowLink(arg){const [opId,eid]=String(arg).split('|');const e=S.exp[eid];if(!e)return;const ne={...e,bankop:opId,paidFrom:'bank'};delete ne.id;
   if(await w(()=>db.doc('exp/'+eid).set(ne))){toast('Пов\'язано');$('#modal').innerHTML=''}render()}
 function flowAddMov(opId){const o=(S.bankop||{})[opId];if(!o)return;const id=db.collection('mov').doc().id;
@@ -2124,17 +2124,17 @@ function moneyCard(){
    <div><div class="glabel">Звідки ці гроші</div>
     ${kv('Залишок на '+balStartTxt(),f0(start))}${kv('+ Прибуток з '+balStartTxt(),f0(profit))}${kv('− Виведено партнерам (прибуток)',f0(-wd))}${reimb?kv('− Повернено за оплати з карток',f0(-reimb),'mut'):''}${vcard?kv('+ Оплачено з особистих карток',f0(vcard),'mut'):''}${inj?kv('+ Внесено',f0(inj)):''}
     ${kv('± Різниця в часі оплат',f0(gap),'mut')}${kv('= Гроші разом',f0(money),'final')}
-    <p class="note" style="margin:4px 0 0">«Різниця в часі оплат» — рахунки, нараховані в одному місяці, а сплачені в іншому, і операції, які ще не внесено в базу.</p></div>
+    <p class="note" style="margin:4px 0 0"></p></div>
    <div><div class="glabel">Кому ми винні</div>
     ${kv('За оплати з особистих карток (повернути)',f0(Math.max(0,vOwe)))}${kv('Анатолію за роботи',f0(ana))}${kv('Оренда й комуналка з '+balStartTxt()+' — не сплачено',f0(unpaid))}${crs.map(c=>kv('Кредит: '+esc(c.name),f0(c.left))).join('')}${kv('= Разом боргів',f0(obl),'final')}
     ${kv('Вільні гроші',f0(money-obl),'final')}</div></div>${depBlock()}</section>`;
 }
 function depBlock(){const D=depList();if(!D.length)return '';const kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`;
   const held=D.filter(p=>(p.depSt||'paid')==='paid'), unc=D.filter(p=>p.depSt==='contract'), ret=D.filter(p=>p.depSt==='returned'), sm=a=>a.reduce((s,p)=>s+(+p.dep||0),0);
-  return `<div style="margin-top:14px"><div class="glabel">Страхові платежі у орендодавців — це не гроші на рахунку, вони повернуться при виході з точки</div>
+  return `<div style="margin-top:14px"><div class="glabel">Страхові платежі у орендодавців</div>
   ${held.map(p=>kv(esc(p.name),f0(p.dep))).join('')}${unc.map(p=>kv(esc(p.name)+' <span class="pill open">оплату не підтверджено</span>',f0(p.dep),'mut')).join('')}
   ${kv('= У орендодавців',f0(sm(held))+(unc.length?' <span class="note">(+'+f0(sm(unc))+' під питанням)</span>':''),'final')}${kv('Гроші разом + страхові платежі',f0(window._money+sm(held)),'final')}
-  ${ret.length?`<p class="note" style="margin:4px 0 0">Повернено: ${ret.map(p=>esc(p.name)+' '+f0(p.dep)).join(', ')}.</p>`:''}${canWrite?'<p class="note" style="margin:4px 0 0">Змінити — у картці точки (Ще → Точки).</p>':''}</div>`}
+  ${ret.length?`<p class="note" style="margin:4px 0 0">Повернено: ${ret.map(p=>esc(p.name)+' '+f0(p.dep)).join(', ')}.</p>`:''}</div>`}
 
 function viewBal(){
   const st=balState(), op=balOpen(), Y=(cur||'').slice(0,4)||String(new Date().getFullYear());
@@ -2152,11 +2152,11 @@ function viewBal(){
     let body='';
     for(const r of rows) body+=`<tr class="click" data-act="balInfo" data-id="${r.m}|${k}"><td>${cap(MN[+r.m.slice(5)-1])}</td><td class="num hide-sm">${f0(r.open)}</td><td class="num hide-sm">${f0(r.inc)}</td><td class="num hide-sm">${f0(r.out)}</td><td class="num"><b>${f0(r.close)}</b></td><td class="num">${r.fact!=null?f0(r.fact):'<span class="mut">—</span>'}</td><td class="num ${r.diff!=null&&Math.abs(r.diff)>1?'neg':''}">${r.diff==null?'<span class="mut">—</span>':Math.abs(r.diff)<=1?'<span class="pill closed">✓</span>':f0(r.diff)}</td></tr>`;
     h+=`<section class="card"><h2>${ACC[k]} · ${Y}</h2><div class="tbl"><table class="pl ut yt"><thead><tr><th>Місяць</th><th class="num hide-sm">На початок</th><th class="num hide-sm">Надійшло</th><th class="num hide-sm">Списано</th><th class="num">На кінець</th><th class="num">Факт</th><th class="num">Різниця</th></tr></thead><tbody>${body}</tbody></table></div>
-      <p class="note">${k==='bank'?'Надходить: оплати карткою. Списується: витрати, які платив Влад (зокрема комісія банку й податки), оренда й комуналка за датою оплати, вивід прибутку (рух коштів). Виплати Даниїлу 50/50 сюди не входять — вони з особистих коштів.':'Надходить: готівка з автоматів. Списується: витрати, які платив Даниїл.'} Натисніть місяць, щоб побачити розшифровку й внести фактичний залишок.</p></section>`;
+      <p class="note">${k==='bank'?'Надходить: картка. Списується: витрати з рахунку, оренда, комуналка, вивід.':'Надходить: готівка. Списується: витрати Даниїла.'}</p></section>`;
   }
   h+=viewChk();
   const mv=Object.entries(S.mov).filter(([,x])=>(x.date||'').startsWith(Y)&&(x.date||'')>=balStart()).sort((a,b)=>b[1].date.localeCompare(a[1].date));
-  h+=`<section class="card"><h2>Інший рух коштів · ${Y}</h2>${mv.length?`<div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Звідки → куди</th><th class="num">Сума</th></tr></thead><tbody>${mv.map(([id,x])=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editMov':''}" data-id="${id}"><td>${dmy(x.date)}</td><td>${esc(ACC[x.from]||x.from)} → ${esc(ACC[x.to]||x.to)} <span class="pill ${x.kind==='reimb'?'open':''}">${x.kind==='reimb'?'під оплати':'прибуток'}</span>${x.note?`<div class="note">${esc(x.note)}</div>`:''}</td><td class="num">${f0(x.amount)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Тут записуються зняття собі, внесення, перекази між рахунком і готівкою, інші надходження.</p>'}</section>`;
+  h+=`<section class="card"><h2>Інший рух коштів · ${Y}</h2>${mv.length?`<div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Звідки → куди</th><th class="num">Сума</th></tr></thead><tbody>${mv.map(([id,x])=>`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editMov':''}" data-id="${id}"><td>${dmy(x.date)}</td><td>${esc(ACC[x.from]||x.from)} → ${esc(ACC[x.to]||x.to)} <span class="pill ${x.kind==='reimb'?'open':''}">${x.kind==='reimb'?'під оплати':'прибуток'}</span>${x.note?`<div class="note">${esc(x.note)}</div>`:''}</td><td class="num">${f0(x.amount)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Рухів поки немає.</p>'}</section>`;
   return h;
 }
 function balInfo(v){
@@ -2180,7 +2180,7 @@ function balInfo(v){
 }
 function movForm(x){const today=new Date().toISOString().slice(0,10), o=Object.entries(ACC);
   return fld('date','Дата',x.date||today,{type:'date'})+fld('amount','Сума, грн',x.amount??'')+sel('from','Звідки',x.from||'bank',o)+sel('to','Куди',x.to||'vlad',o)+
-    `<div class="full"><div class="glabel">Що це за переказ</div><div class="seg">${Object.entries(MOVK).map(([k,l])=>`<label class="segb"><input type="radio" name="kind" value="${k}" ${(x.kind||'profit')===k?'checked':''}><span>${k==='profit'?'Прибуток':'Під оплати'}</span></label>`).join('')}</div><p class="note" style="margin:4px 0 0">«Під оплати» — повернення собі грошей за витрати, оплачені з особистої картки (не прибуток).</p></div>`+
+    `<div class="full"><div class="glabel">Що це за переказ</div><div class="seg">${Object.entries(MOVK).map(([k,l])=>`<label class="segb"><input type="radio" name="kind" value="${k}" ${(x.kind||'profit')===k?'checked':''}><span>${k==='profit'?'Прибуток':'Під оплати'}</span></label>`).join('')}</div><p class="note" style="margin:4px 0 0">«Під оплати» — компенсація витрат з особистої картки.</p></div>`+
     fld('note','Коментар',x.note||'',{type:'text',full:true})}
 function saveMov(id){return async fd=>{const a=parseNum(fd.amount);if(a===null||a<=0)return 'Вкажіть суму';if(fd.from===fd.to)return '«Звідки» і «Куди» однакові';if(!fd.date)return 'Вкажіть дату';
   const prev=S.mov[id]||{};const d={...prev,date:fd.date,amount:a,from:fd.from,to:fd.to,note:fd.note||'',kind:fd.kind||'profit'};delete d.id;
@@ -2288,7 +2288,7 @@ function viewChk(){
   const ld=k=>`<label class="btn sm ${CHK[k]?'':'pri'}" style="cursor:pointer">${k==='bank'?'Виписка ПриватБанку (.xls)':'Продажі Gwaters (.xlsx)'}<input type="file" accept=".xls,.xlsx,.csv" data-chk="${k}" hidden></label>`;
   let h=`<section class="card"><div class="shead"><h2>Перевірка надходжень і оплат</h2></div>
     <div class="bigacts" style="grid-template-columns:repeat(2,minmax(0,1fr))">${ld('bank')}${ld('crm')}</div>
-    <p class="note">${CHK.bankName?'Виписка: '+esc(CHK.bankName):'Виписку не завантажено'} · ${CHK.crmName?'Gwaters: '+esc(CHK.crmName):'продажі не завантажено'}. Файли обробляються лише у вашому браузері й нікуди не зберігаються.</p>
+    <p class="note">${CHK.bankName?'Виписка: '+esc(CHK.bankName):'Виписку не завантажено'} · ${CHK.crmName?'Gwaters: '+esc(CHK.crmName):'продажі не завантажено'}.</p>
     ${CHK.err?`<div class="calc neg">${esc(CHK.err)}</div>`:''}`;
   if(CHK.crm){
     const P={};let unk=new Set();
@@ -2319,7 +2319,7 @@ function viewChk(){
     <div class="tiles t3"><div class="tile"><div class="l">Продано карткою (Gwaters)</div><div class="v">${f0(T.cs)}</div><div class="s">${T.cn} оплат</div></div>
       <div class="tile"><div class="l">Банк зарахував до комісії</div><div class="v">${f0(T.bg)}</div><div class="s">${T.bn} оплат · різниця ${f0(df)} (${(df/T.cs*100).toFixed(2).replace('.',',')}%)</div></div>
       <div class="tile main"><div class="l">Прийшло на рахунок</div><div class="v">${f0(T.net)}</div><div class="s">комісія ${f0(T.fee)} (${(T.fee/T.bg*100).toFixed(2).replace('.',',')}%) · повернення ${f0(T.ref)}</div></div></div>
-    <p class="note">Банк зараховує оплати наступного дня, тому продажі дня порівнюються з зарахуванням наступного дня. ${bad?`<b>${bad} дн. з розбіжністю понад 2%</b>.`:'Усі дні в межах норми.'}</p>
+    <p class="note">${bad?`<b>${bad} дн. з розбіжністю понад 2%</b>.`:'Усі дні в межах норми.'}</p>
     <details><summary class="note">По днях</summary><div class="tbl"><table class="pl ut"><thead><tr><th>Дата продажу</th><th class="num hide-sm">Оплат</th><th class="num">Gwaters</th><th class="num">Банк</th><th class="num">Різниця</th></tr></thead><tbody>${rows}</tbody></table></div></details>`;
   }
   if(CHK.bank){
