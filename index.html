@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120d">
+<meta name="wl-build" content="20261120e">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120d"></script>
+<script src="config.js?v=20261120e"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120d"></script>
+<script src="shim.js?v=20261120e"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1771,8 +1771,14 @@ function viewInv(){
     ${['Влад','Даниїл'].filter(x=>by(x)>0).length>1?['Влад','Даниїл'].map(x=>`<div class="tile"><div class="l">${x}</div><div class="v">${fUsd(by(x))}</div></div>`).join(''):''}</div>
   <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Внесок</th><th class="num">Сума</th></tr></thead><tbody>${rows||'<tr><td colspan="2" class="note">Внесків поки немає.</td></tr>'}</tbody>
   <tfoot><tr class="final"><td>Разом</td><td class="num">${fUsd(usd)}<div class="note">${f0(hrn)}&nbsp;грн</div></td></tr></tfoot></table></div>
-  </section>`;
+  </section>${viewInvOps()}`;
 }
+function viewInvOps(){const O=devRows().filter(r=>r.fund==='inc').sort((a,b)=>(b.d||'').localeCompare(a.d||''));if(!O.length)return '';
+  const t=O.reduce((a,r)=>a+r.a,0), cl=credits().map(c=>({...c,left:crLeft(c.id)})).filter(c=>c.left>0);
+  return `<section class="card"><div class="shead"><h2>З операційної діяльності</h2><span class="note">вкладено з доходу точок</span></div>
+  <div class="tiles"><div class="tile main"><div class="l">Вкладено з доходу</div><div class="v">${f0(t)} грн</div></div>${cl.map(c=>`<div class="tile"><div class="l">${esc(c.name)}</div><div class="v">${f0(crPaid(c.id))} з ${f0(c.total)}</div><div class="s">залишок ${f0(c.left)} — додається по мірі платежів</div></div>`).join('')}</div>
+  <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Дата</th><th>На що</th><th>Локація</th><th class="num">Сума</th></tr></thead><tbody>${O.map(r=>`<tr><td>${r.d?dmy(r.d):'—'}</td><td>${esc(r.p)}</td><td>${Object.keys(r.loc||{}).map(ilName).map(esc).join(', ')}</td><td class="num">${f0(r.a)}</td></tr>`).join('')}</tbody>
+  <tfoot><tr class="final"><td colspan="3">Разом</td><td class="num">${f0(t)}</td></tr></tfoot></table></div></section>`}
 const CR_ARTS=['Обладнання','Нова точка / будівництво'];
 const credits=()=>((S.meta||{}).invloc||{}).credits||[];
 const crPaid=id=>Object.values(S.exp).filter(e=>e.credit===id).reduce((s,e)=>s+(+e.amount||0),0);
@@ -1790,19 +1796,20 @@ function devRows(){const L=invLoc(), R=[], used=new Set();
     const al=(L.incAlloc||{})[eid];let loc;if(al){const t={};for(const [pid,o] of Object.entries(al))t[pid]=Object.values(o).reduce((a,v)=>a+(+v||0),0);const sm=Object.values(t).reduce((a,v)=>a+v,0)||1;loc=Object.fromEntries(Object.entries(t).map(([k,v])=>[k,v/sm]))}
     else loc={[e.point||'gen']:1};
     R.push({id:'exp:'+eid,src:'Витрати в базі',d:e.date||(e.month?e.month+'-01':''),a:+e.amount||0,p:[e.article,e.purpose||e.note].filter(Boolean).join(' — '),typ:ART2T[e.article]||'Інше',loc,how:al?'порівну':(e.point?'адреса':'загальне'),fund:'inc',exp:eid})}
-  for(const c of credits())R.push({id:'cr:'+c.id,src:'Кредит',d:(c.start||'')+'-01',a:+c.total||0,p:c.name+' — сплачено '+f0(crPaid(c.id))+', залишок '+f0(crLeft(c.id)),typ:c.typ||'Автомати',loc:{[c.point||'gen']:1},how:'адреса',fund:'inc'});
+  for(const [eid,e] of Object.entries(S.exp)){if(!e.credit)continue;const c=credits().find(x=>x.id===e.credit);
+    R.push({id:'exp:'+eid,src:'Платіж по кредиту',d:e.date||(e.month?e.month+'-01':''),a:+e.amount||0,p:'Платіж по кредиту: '+(c?c.name:e.credit),typ:(c&&c.typ)||'Автомати',loc:{[(c&&c.point)||'gen']:1},how:'адреса',fund:'inc',exp:eid})}
   return R}
 const ilName=id=>id==='gen'?'Загальне, не по точках':(S.points[id]?S.points[id].name:((invLoc().pts||{})[id]||{}).name||id);
 const ILG={'Автомати':'Обладнання','Купюрники, терминали, зв\'язок':'Обладнання','Акумулятори / БЖ':'Обладнання','Оздоблення й будроботи':'Ремонт','Двері й вікна':'Ремонт','Вода, труби, підключення':'Підключення','Електрика й освітлення':'Підключення','Реклама й вивіски':'Реклама'}, ILGS=['Обладнання','Ремонт','Підключення','Реклама','Інше'];
 function viewInvLoc(){const R=devRows().map(r=>({...r,g:ILG[r.typ]||'Інше'})), A={}, F={};
-  const fk=r=>r.fund==='inc'?'Діяльність':(r.who||'Влад'), FS=['Влад','Даниїл','Діяльність'];
+  const fk=r=>r.fund==='inc'?'Операційна діяльність':(r.who||'Влад');
   for(const r of R)for(const [l,sh] of Object.entries(r.loc||{})){const v=r.a*sh;(A[l]=A[l]||{})[r.g]=(A[l][r.g]||0)+v;(F[l]=F[l]||{})[fk(r)]=(F[l][fk(r)]||0)+v}
   const sm=o=>Object.values(o||{}).reduce((a,v)=>a+v,0), all=R.reduce((a,r)=>a+r.a,0);
   const tt={},ft={};for(const r of R){tt[r.g]=(tt[r.g]||0)+r.a;ft[fk(r)]=(ft[fk(r)]||0)+r.a}
   const types=ILGS.filter(t=>tt[t]>0.5);
   const locs=Object.keys(A).sort((a,b)=>(a==='gen')-(b==='gen')||sm(A[b])-sm(A[a]));
   const c=v=>v>0.5?f0(v):'<span class="mut">—</span>';
-  const rowH=l=>`<tr class="click ${ilSel===l?'sel':''}" data-act="ilPick" data-id="${l}"><td>${esc(ilName(l))}</td>${types.map(t=>`<td class="num hide-sm">${c((A[l]||{})[t]||0)}</td>`).join('')}${FS.map(f=>`<td class="num">${c((F[l]||{})[f]||0)}</td>`).join('')}<td class="num"><b>${f0(sm(A[l]))}</b></td></tr>`;
+  const rowH=l=>`<tr class="click ${ilSel===l?'sel':''}" data-act="ilPick" data-id="${l}"><td>${esc(ilName(l))}</td>${types.map(t=>`<td class="num">${c((A[l]||{})[t]||0)}</td>`).join('')}<td class="num"><b>${f0(sm(A[l]))}</b></td></tr>`;
   let det='';
   if(ilSel){const D=R.filter(r=>r.loc&&r.loc[ilSel]).map(r=>({...r,v:r.a*r.loc[ilSel]})).sort((a,b)=>(b.d||'').localeCompare(a.d||''));
     det=`<section class="card"><div class="shead"><h2>${esc(ilName(ilSel))}</h2><button class="btn sm" data-act="ilPick" data-id="${ilSel}" type="button">Закрити</button></div>
@@ -1811,10 +1818,10 @@ function viewInvLoc(){const R=devRows().map(r=>({...r,g:ILG[r.typ]||'Інше'})
       <tfoot><tr class="final"><td colspan="2">Разом</td><td class="hide-sm"></td><td></td><td class="num">${f0(D.reduce((a,r)=>a+r.v,0))}</td></tr></tfoot></table></div></section>`}
   return `<style>tr.sel td{background:var(--accent-soft)}.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 12px}</style>
   <section class="card"><div class="shead"><h2>Куди вкладено</h2><span class="note">грн</span></div>
-  <div class="tiles"><div class="tile main"><div class="l">Вкладено всього</div><div class="v">${f0(all)}</div></div>${FS.map(f=>`<div class="tile"><div class="l">${f}</div><div class="v">${f0(ft[f]||0)}</div></div>`).join('')}</div></section>
-  <section class="card"><div class="shead"><h2>По локаціях</h2><span class="note">Обладнання — автомати, купюрники, термінали, акумулятори · Ремонт — оздоблення, двері, вікна · Підключення — вода, електрика · Інше — доставка, інструмент, без розшифровки</span></div>
-   <div class="tbl"><table class="ut"><thead><tr><th>Локація</th>${types.map(t=>`<th class="num hide-sm">${esc(t)}</th>`).join('')}${FS.map(f=>`<th class="num">${f}</th>`).join('')}<th class="num">Разом</th></tr></thead>
-   <tbody>${locs.map(rowH).join('')}</tbody><tfoot><tr class="final"><td>Разом</td>${types.map(t=>`<td class="num hide-sm">${f0(tt[t])}</td>`).join('')}${FS.map(f=>`<td class="num">${f0(ft[f]||0)}</td>`).join('')}<td class="num">${f0(all)}</td></tr></tfoot></table></div></section>${det}`}
+  <div class="tiles"><div class="tile main"><div class="l">Вкладено всього</div><div class="v">${f0(all)}</div></div>${types.map(t=>`<div class="tile"><div class="l">${t}</div><div class="v">${f0(tt[t])}</div><div class="s">${Math.round(tt[t]/all*100)}%</div></div>`).join('')}</div></section>
+  <section class="card"><div class="shead"><h2>По локаціях</h2><span class="note">натисніть локацію — розшифровка</span></div>
+   <div class="tbl"><table class="ut"><thead><tr><th>Локація</th>${types.map(t=>`<th class="num">${esc(t)}</th>`).join('')}<th class="num">Разом</th></tr></thead>
+   <tbody>${locs.map(rowH).join('')}</tbody><tfoot><tr class="final"><td>Разом</td>${types.map(t=>`<td class="num">${f0(tt[t])}</td>`).join('')}<td class="num">${f0(all)}</td></tr></tfoot></table></div></section>${det}`}
 function ilPick(id){ilSel=ilSel===id?null:id;render();if(ilSel)setTimeout(()=>{const c=[...document.querySelectorAll('section.card')].pop();c&&c.scrollIntoView({behavior:'smooth',block:'start'})},50)}
 function ilType(t){ilT=ilT===t?null:t;render()}
 function editDevx(id){const x=S.devx[id];if(!x)return;const pts=[...pointsList().map(p=>[p.id,p.name]),...Object.entries(invLoc().pts||{}).filter(([k])=>!S.points[k]).map(([k,o])=>[k,o.name||k]),['gen','Загальне, не по точках']];
