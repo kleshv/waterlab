@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120v">
+<meta name="wl-build" content="20261120w">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120v"></script>
+<script src="config.js?v=20261120w"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120v"></script>
+<script src="shim.js?v=20261120w"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2203,7 +2203,7 @@ function moneyCard(){
   const JA=jobsAll(), ana=Math.max(0,JA.reduce((a,j)=>a+(j.type==='pay'?-(+j.amount||0):j.st==='new'?0:(+j.amount||0)),0));
   let unpaid=0;const ps=balStart();for(const mm of monthsList())if(mm>=ps)for(const p of pointsList()){if(!S.pm[mm+'_'+p.id])continue;const x=payRow(mm,p.id);unpaid+=Math.max(0,x.rentDue-(x.rentPaid||0))+Math.max(0,x.utilDue-(x.utilPaid||0))}
   const crs=credits().map(c=>({...c,left:crLeft(c.id)})).filter(c=>c.left>0), crSum=crs.reduce((s,c)=>s+c.left,0);
-  const money=bank+cash, obl=ana+unpaid+Math.max(0,vOwe)+crSum, start=(+op.bank||0)+(+op.cash||0), gap=Math.round((money-(start-wdPrev+profit-wd+inj-reimb+vcard))*100)/100;
+  const money=bank+cash, obl=ana+unpaid+Math.max(0,vOwe), start=(+op.bank||0)+(+op.cash||0), gap=Math.round((money-(start-wdPrev+profit-wd+inj-reimb+vcard))*100)/100;
   const kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`;window._money=money;
   return `<section class="card info mcard"><div class="shead"><h2>Де гроші й де прибуток</h2><span class="note">з ${balStartTxt()}</span></div>
   <div class="tiles t3"><div class="tile"><div class="l">${ACC.bank}</div><div class="v">${f0(bank)}</div><div class="s">${bFact!=null?'за випискою на '+dmy(ls.to):'розрахунок бази'}</div></div>
@@ -2215,7 +2215,7 @@ function moneyCard(){
     ${kv('± Різниця в часі оплат',f0(gap),'mut')}${kv('= Гроші разом',f0(money),'final')}
     <p class="note" style="margin:4px 0 0"></p></div>
    <div><div class="glabel">Кому ми винні</div>
-    ${kv('За оплати з особистих карток (повернути)',f0(Math.max(0,vOwe)))}${kv('Анатолію за роботи',f0(ana))}${kv('Оренда й комуналка з '+balStartTxt()+' — не сплачено',f0(unpaid))}${crs.map(c=>kv('Кредит: '+esc(c.name),f0(c.left))).join('')}${kv('= Разом боргів',f0(obl),'final')}
+    ${kv('За оплати з особистих карток (повернути)',f0(Math.max(0,vOwe)))}${kv('Анатолію за роботи',f0(ana))}${kv('Оренда й комуналка з '+balStartTxt()+' — не сплачено',f0(unpaid))}${kv('= Разом боргів',f0(obl),'final')}
     ${kv('Вільні гроші',f0(money-obl),'final')}</div></div>${depBlock()}</section>`;
 }
 function depBlock(){const D=depList();if(!D.length)return '';const kv=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`;
