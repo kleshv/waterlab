@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261120j">
+<meta name="wl-build" content="20261120k">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,9 +289,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261120j"></script>
+<script src="config.js?v=20261120k"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261120j"></script>
+<script src="shim.js?v=20261120k"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2360,14 +2360,20 @@ function viewChk(){
   if(CHK.bank){
     const pc=payCheck(), P=id=>(S.points[id]||{}).name||id;
     const okN=pc.res.filter(r=>!r.ub.length&&!r.ud.length&&!r.dd.length).length;
+    const dif=(a,b)=>Math.abs((new Date(a)-new Date(b))/864e5), UD=pc.res.flatMap(r=>r.ud), UB=[...pc.res.flatMap(r=>r.ub.map(x=>({...x,name:r.names[0]||''}))),...pc.other.map(o=>({date:o.date,amt:-o.amt,purp:o.purp,name:o.name}))];
+    const gB=x=>{const y=UD.find(y=>Math.abs(y.amt-x.amt)<0.05&&dif(y.date,x.date)<=31);if(y)return P(y.pid)+' · '+y.kind+' за '+mLabel(y.m).toLowerCase()+' ('+f0(y.amt)+')';
+      const ids=cpPids(x.purp||'');return ids.length&&ids.length<=2?ids.map(P).join(' або ')+' (за призначенням)':''};
+    const gD=x=>{const y=UB.find(y=>Math.abs(y.amt-x.amt)<0.05&&dif(y.date,x.date)<=31);return y?dmy(y.date)+' · '+(y.name||'платіж')+' · '+f0(y.amt):''};
+    const hint=t=>t?`<div class="note" style="color:var(--link)">→ схоже: ${esc(t)}</div>`:'';
     h+=`<h3 class="sub">Оренда й комуналка: виписка ↔ облік · ${dmy(pc.d0)}–${dmy(pc.d1)}</h3><p class="note">Збігається повністю: ${okN} з ${pc.res.length} контрагентів. Нижче лише те, що не знайшлося.</p>`;
     for(const r of pc.res){if(!r.ub.length&&!r.ud.length&&!r.dd.length)continue;
       h+=`<div class="card" style="margin:8px 0;padding:10px 12px"><b>${esc(r.pids.map(P).join(', '))}</b><div class="note">${esc(r.names.join(' / ')||'у виписці немає платежів')} · банк ${f0(r.tb)} · облік ${f0(r.td)}</div>
         ${r.dd.map(x=>`<div class="kv"><span>${dmy(x.date)} · сума різна: банк ${f0(x.b)}, облік ${f0(x.q)}<div class="note">${esc(x.what)} · ${esc(x.purp)}</div></span><b class="neg">${f0(x.b-x.q)}</b></div>`).join('')}
-        ${r.ub.map(x=>`<div class="kv"><span>${dmy(x.date)} · є в банку, немає в обліку<div class="note">${esc(x.purp.slice(0,90))}</div></span><b>${f0(x.amt)}</b></div>`).join('')}
-        ${r.ud.map(x=>`<div class="kv"><span>${dmy(x.date)} · є в обліку (${esc(P(x.pid))}, ${x.kind} за ${mLabel(x.m).toLowerCase()}), немає в банку</span><b>${f0(x.amt)}</b></div>`).join('')}</div>`}
-    const oth=pc.other.reduce((a,o)=>{(a[o.name]=a[o.name]||[0,0])[0]+=-o.amt;a[o.name][1]++;return a},{});
-    if(Object.keys(oth).length)h+=`<details><summary class="note">Інші платежі з рахунку без точки (${Object.keys(oth).length} отримувачів)</summary>${Object.entries(oth).sort((a,b)=>b[1][0]-a[1][0]).map(([n,[s,c]])=>`<div class="kv"><span>${esc(n)} · ${c} пл.</span><b>${f0(s)}</b></div>`).join('')}</details>`;
+        ${r.ub.map(x=>`<div class="kv"><span>${dmy(x.date)} · є в банку, немає в обліку<div class="note">${esc(x.purp.slice(0,90))}</div>${hint(gB(x))}</span><b>${f0(x.amt)}</b></div>`).join('')}
+        ${r.ud.map(x=>`<div class="kv"><span>${dmy(x.date)} · є в обліку (${esc(P(x.pid))}, ${x.kind} за ${mLabel(x.m).toLowerCase()}), немає в банку${hint(gD(x))}</span><b>${f0(x.amt)}</b></div>`).join('')}</div>`}
+    const oth=pc.other.reduce((a,o)=>{const e=(a[o.name]=a[o.name]||[0,0,new Set()]);e[0]+=-o.amt;e[1]++;const g=gB({date:o.date,amt:-o.amt,purp:o.purp});if(g)e[2].add(dmy(o.date)+' '+f0(-o.amt)+' → '+g);return a},{});
+    const othG=Object.values(oth).filter(e=>e[2].size).length;
+    if(Object.keys(oth).length)h+=`<details ${othG?'open':''}><summary class="note">Інші платежі з рахунку без точки (${Object.keys(oth).length} отримувачів${othG?', для '+othG+' є припущення':''})</summary>${Object.entries(oth).sort((a,b)=>b[1][2].size-a[1][2].size||b[1][0]-a[1][0]).map(([n,[s,c,g]])=>`<div class="kv"><span>${esc(n)} · ${c} пл.${[...g].map(t=>`<div class="note" style="color:var(--link)">→ схоже: ${esc(t)}</div>`).join('')}</span><b>${f0(s)}</b></div>`).join('')}</details>`;
   }
   return h+`</section>`;
 }
