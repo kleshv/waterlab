@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261121j">
+<meta name="wl-build" content="20261122a">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261121j"></script>
+<script src="config.js?v=20261122a"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261121j"></script>
+<script src="shim.js?v=20261122a"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1589,7 +1589,7 @@ function editUtil(pid){
     const hasW=String(fd.w1??'').trim()!=='', hasE=String(fd.e1??'').trim()!=='';
     const wUse=hasW&&w0!==null&&w1!==null?Math.round((w1-w0)*1000)/1000:0, eUse=hasE&&e0!==null&&e1!==null?Math.round((e1-e0)*1000)/1000:0;
     return {w0,w1:hasW?w1:null,wT,e0,e1:hasE?e1:null,eT,wUse,eUse,wSum:Math.round(wUse*(wT||0)*100)/100,eSum:Math.round(eUse*(eT||0)*100)/100,bad:[w0,w1,wT,e0,e1,eT].some(x=>x===null)}};
-  openSheet(p?p.name:pid,mLabel(m)+(p&&p.payee?' · платимо: '+p.payee:''),fields,async fd=>{
+  openSheet(p?p.name:pid,mLabel(m),fields,async fd=>{
     const c=calcU(fd);
     if(c.bad)return 'Не зрозумів число. Можна писати 316, 316,5 або 316.5.';
     if(c.wUse<0)return 'Показник води «Зараз» менший, ніж «Було».';
@@ -1846,7 +1846,7 @@ function editRent(pid,mm){
     `<div class="full"><button type="button" class="btn sm" id="fillRent">Сплачено повністю сьогодні</button></div>`+
     fld('rentNote','Коментар',py.rentNote||'',{type:'text',full:true})+
     `<p class="note full" style="margin:0"></p>`;
-  openSheet('Оренда · '+(p.name||pid),mLabel(m)+(p.contact?' · '+p.contact:''),fields,async fd=>{
+  openSheet(p.name||pid,mLabel(m),fields,async fd=>{
     const raw=String(fd.rentPaid??'').trim(), rp=parseNum(raw); if(raw!==''&&rp===null)return 'Не зрозумів суму. Можна писати 2000 або 1500,50.';
     const rcRaw=String(fd.rentCash??'').trim(), rc=rcRaw===''?null:parseNum(rcRaw); if(rcRaw!==''&&rc===null)return 'Не зрозумів суму готівкою';
     if(!await savePayDoc(m,pid,{rentPaid:raw===''?null:rp,rentCash:rc,rentDate:fd.rentDate||'',rentNote:fd.rentNote||''}))return 'Не збереглося';
