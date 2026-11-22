@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261123a">
+<meta name="wl-build" content="20261123b">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -154,7 +154,7 @@ p.note{margin:6px 0 0}
 .form:has(#f_billNo){grid-template-columns:1fr 1fr!important;gap:6px 8px}.form .billbox{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px}input.ro{background:var(--chip)!important;color:var(--muted)}.form .billbox[hidden],.form .cpbox[hidden]{display:none}.form .cpbox{display:grid}.form:has(#f_billNo) .sub{margin:4px 0 -2px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
 .sheet.wide{max-width:760px}
 .billf .form{grid-template-columns:1fr 1fr!important;gap:6px 8px}.billf .form .sub{margin-top:6px}.billf .bdet{border:1px solid var(--line);border-radius:8px;padding:6px 10px}.billf .bdet[open]{padding-bottom:10px}.billf .bdet summary{font-size:12px}
-.uxh{display:none}.uxr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 8px;align-items:end;border:1px solid var(--line)!important;border-radius:10px;padding:6px 10px 10px!important;margin-bottom:8px}.uxr .uxt{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}.uxr label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);min-width:0}.uxr label input{width:100%;min-width:0;max-width:100%;box-sizing:border-box}.uxr input[type=date]{-webkit-appearance:none;appearance:none}.rblk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 8px;margin-top:10px}.rblk .rh{grid-column:1/-1;font-size:13px;font-weight:600}.rblk label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);min-width:0}.rblk input{width:100%;min-width:0;box-sizing:border-box}.rblk .rr{grid-column:1/-1;font-size:12px;color:var(--muted)}.uxh{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.uxh{display:none}.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:4px 12px}.xmode{margin-bottom:4px}.uxr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 8px;align-items:end;border:1px solid var(--line)!important;border-radius:10px;padding:6px 10px 10px!important;margin-bottom:8px}.uxr .uxt{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}.uxr label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);min-width:0}.uxr label input{width:100%;min-width:0;max-width:100%;box-sizing:border-box}.uxr input[type=date]{-webkit-appearance:none;appearance:none}.rblk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 8px;margin-top:10px}.rblk .rh{grid-column:1/-1;font-size:13px;font-weight:600}.rblk label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);min-width:0}.rblk input{width:100%;min-width:0;box-sizing:border-box}.rblk .rr{grid-column:1/-1;font-size:12px;color:var(--muted)}.uxh{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .uxr{padding:6px 0;border-bottom:1px solid var(--line);position:relative}.uxr .del{background:none;border:0;padding:2px 0;font:inherit;font-size:12px;text-transform:none;letter-spacing:0;font-weight:500;color:var(--neg,#c2412d);text-decoration:underline;text-underline-offset:2px;cursor:pointer}.sugb{grid-column:1/-1;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--card,#fff);box-shadow:0 6px 18px rgba(0,0,0,.12)}.sugb button{display:block;width:100%;text-align:left;padding:9px 12px;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;font-size:13.5px;color:inherit}.sugb button:last-child{border-bottom:0}.sugb .sg{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:6px 12px 2px}.uxr .sm2{font-size:12.5px;padding-top:5px;padding-bottom:5px;color:var(--muted)}.uxr .btn{padding:6px 0}
 .form .chk{flex-direction:row;align-items:center;gap:8px;font-size:13px;color:var(--fg)}
 .actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261123a"></script>
+<script src="config.js?v=20261123b"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261123a"></script>
+<script src="shim.js?v=20261123b"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -875,7 +875,7 @@ function devMonthHtml(m){
   const tot=R.reduce((a,r)=>a+r.a,0), inc=R.filter(r=>r.fund==='inc').reduce((a,r)=>a+r.a,0);
   const rows=R.map(r=>{const isExp=String(r.id).startsWith('exp:'), act=canWrite?(isExp?'editExp':'editDevx'):'', id=isExp?r.id.slice(4):r.id;
     return `<tr class="${act?'click':''}" data-act="${act}" data-id="${esc(id)}"><td class="${r.d?'':'mut'}">${r.d?r.d.slice(8,10)+'.'+r.d.slice(5,7):'—'}</td><td>${esc(r.p||'')}<div class="note">${esc([locN(r),r.typ].filter(Boolean).join(' · '))}</div></td><td>${fk(r)}</td><td class="num">${f0(r.a)}</td></tr>`}).join('');
-  return `<section class="card"><div class="shead"><h2>Розвиток · ${mLabel(m)}</h2><button class="btn sm" type="button" data-act="goTab" data-id="inv:loc">Куди вкладено →</button></div>
+  return `<section class="card"><div class="shead"><h2>Інвестиції · розвиток</h2><button class="btn sm" type="button" data-act="goTab" data-id="inv:loc">Куди вкладено →</button></div>
   <p class="note" style="margin:0 0 8px">Не входить в операційні витрати. «З доходу» зменшує прибуток.</p>
   <div class="tbl"><table><thead><tr><th>Дата</th><th>На що</th><th>Звідки</th><th class="num">Сума</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="note">У цьому місяці витрат розвитку немає.</td></tr>'}</tbody>
   ${R.length?`<tfoot><tr><td colspan="3">Разом${inc&&inc<tot?' <span class="note">· з доходу '+f0(inc)+'</span>':''}</td><td class="num">${f0(tot)}</td></tr></tfoot>`:''}</table></div></section>`}
@@ -1079,7 +1079,7 @@ async function syncBankFee(m,bank){
 function expForm(e){
   const payer=e.payer||ls.get('wl_payer')||'Даниїл';
   const chip=(a,on)=>`<label class="chipb"><input type="radio" name="article" value="${esc(a)}" ${on?'checked':''}><span>${esc(a)}</span></label>`;
-  let arts=ARTS.map(g=>`<div class="full"><div class="glabel">${g.g}</div><div class="chips">${g.items.map(a=>chip(a,e.article===a)).join('')}</div></div>`).join('');
+  let arts=ARTS.filter(g=>g.cat!=='Розвиток'||(e.article&&g.items.includes(e.article))).map(g=>`<div class="full"><div class="glabel">${g.g}</div><div class="chips">${g.items.map(a=>chip(a,e.article===a)).join('')}</div></div>`).join('');
   if(e.article&&!artCat(e.article)) arts=`<div class="full"><div class="glabel">Поточна стаття</div><div class="chips">${chip(e.article,true)}</div></div>`+arts;
   const popts=[['','Уся мережа']].concat(pointsList().map(p=>[p.id,p.name]));
   return `<div class="full"><div class="glabel">Хто платив</div><div class="seg"${payer==='Сервіс'?' style="grid-template-columns:1fr 1fr 1fr"':''}>${['Даниїл','Влад'].concat(payer==='Сервіс'?['Сервіс']:[]).map(p=>`<label class="segb"><input type="radio" name="payer" value="${p}" ${p===payerOf({payer})?'checked':''}><span>${p}</span></label>`).join('')}</div></div>`+
@@ -1126,7 +1126,9 @@ function wireStk(){const f=document.getElementById('sf');if(!f)return;
     if(n==='cp')oth()})}
 function defDate(){const t=new Date();const ts=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');if(ts.slice(0,7)===cur)return ts;const[y,mm]=cur.split('-').map(Number);return cur+'-'+String(new Date(y,mm,0).getDate()).padStart(2,'0')}
 function lastExpOf(art,before){return Object.values(S.exp).filter(e=>e.article===art&&e.month<before&&+e.amount>0).sort((a,b)=>(b.month+(b.date||'')).localeCompare(a.month+(a.date||'')))[0]}
-function addExp(){openSheet('Нова витрата',mLabel(cur),expForm({}),saveExp(db.collection('exp').doc().id,{}));wireStk();
+const expModeSw=on=>role==='owner'?`<div class="full seg2 umode xmode"><button type="button" class="${on==='op'?'on':''}" data-x="op">Операційна</button><button type="button" class="${on==='dev'?'on':''}" data-x="dev">Інвестиції · розвиток</button></div>`:'';
+function wireMode(){document.querySelectorAll('#sf .xmode button').forEach(b=>b.onclick=()=>{if(b.classList.contains('on'))return;b.dataset.x==='dev'?addDevx():addExp()})}
+function addExp(){openSheet('Нова витрата',mLabel(cur),expModeSw('op')+expForm({}),saveExp(db.collection('exp').doc().id,{}));wireStk();wireMode();
   const am=$('#f_amount');if(!am)return;let auto=false;
   am.addEventListener('input',()=>{auto=false});
   document.querySelectorAll('#sf input[name=article]').forEach(r=>r.addEventListener('change',()=>{
@@ -1943,12 +1945,34 @@ function viewInvLoc(){const R=devRows().map(r=>({...r,g:ILG[r.typ]||'Інше'})
    <tbody>${locs.map(rowH).join('')}</tbody><tfoot><tr class="final"><td>Разом</td>${types.map(t=>`<td class="num">${f0(tt[t])}</td>`).join('')}<td class="num">${f0(all)}</td></tr></tfoot></table></div></section>${det}`}
 function ilPick(id){ilSel=ilSel===id?null:id;render();if(ilSel)setTimeout(()=>{const c=[...document.querySelectorAll('section.card')].pop();c&&c.scrollIntoView({behavior:'smooth',block:'start'})},50)}
 function ilType(t){ilT=ilT===t?null:t;render()}
-function editDevx(id){const x=S.devx[id];if(!x)return;const pts=[...pointsList().map(p=>[p.id,p.name]),...Object.entries(invLoc().pts||{}).filter(([k])=>!S.points[k]).map(([k,o])=>[k,o.name||k]),['gen','Загальне, не по точках']];
-  openSheet('Платіж розвитку',(x.d?dmy(x.d)+' · ':'')+f0(x.a)+' ₴ · '+x.p,
-    sel('typ','Тип',x.typ,DEVT.map(t=>[t,t]),true)+`<div class="full"><div class="glabel">Точки</div><div class="chkgrid">${pts.map(([k,n])=>`<label class="chk"><input type="checkbox" name="pt_${k}" ${x.loc&&x.loc[k]?'checked':''}> ${esc(n)}</label>`).join('')}</div></div>`,
-    async fd=>{const ks=Object.keys(fd).filter(k=>k.startsWith('pt_')&&fd[k]===true).map(k=>k.slice(3));if(!ks.length)return 'Відмітьте хоча б одну точку';
-      const loc=Object.fromEntries(ks.map(k=>[k,Math.round(1/ks.length*10000)/10000]));const same=JSON.stringify(Object.keys(x.loc||{}).sort())===JSON.stringify(ks.slice().sort());
-      const d={...x,typ:fd.typ,loc,how:same?x.how:'адреса'};delete d.id;if(!await w(()=>db.doc('devx/'+id).set(d)))return 'Не збереглося';toast('Збережено')})}
+const DEV2ART=t=>['Автомати','Купюрники, терминали, зв\'язок','Акумулятори / БЖ'].includes(t)?'Обладнання':t==='Вода, труби, підключення'?'Підключення водоканалу':'Нова точка / будівництво';
+function devxForm(x){const pts=[...pointsList().map(p=>[p.id,p.name]),...Object.entries(invLoc().pts||{}).filter(([k])=>!S.points[k]).map(([k,o])=>[k,o.name||k]),['gen','Загальне, не по точках']];
+  const fund=x.fund==='inc'?'inc':(x.who||'Влад'), e=x.exp?S.exp[x.exp]:null, payer=(e&&e.payer)||ls.get('wl_payer')||'Даниїл';
+  const seg=(name,val,opts)=>`<div class="seg" style="grid-template-columns:repeat(${opts.length},minmax(0,1fr))">${opts.map(([k,l])=>`<label class="segb"><input type="radio" name="${name}" value="${k}" ${k===val?'checked':''}><span>${l}</span></label>`).join('')}</div>`;
+  return `<div class="full"><div class="glabel">Звідки гроші</div>${seg('fund',fund,[['inc','З доходу'],['Влад','Інвестиція Влада'],['Даниїл','Інвестиція Даниїла']])}</div>`+
+    `<div class="full payBox" style="display:${fund==='inc'?'block':'none'}"><div class="glabel">Хто платив</div>${seg('payer',payer==='Даниїл'?'Даниїл':'Влад',[['Даниїл','Даниїл'],['Влад','Влад']])}</div>`+
+    `<label class="full amount">Сума, грн<input id="f_amount" name="amount" value="${esc(x.a??'')}" inputmode="decimal" autocomplete="off" placeholder="0"></label>`+
+    `<label class="full">На що<input name="p" value="${esc(x.p||'')}" autocomplete="off" placeholder="напр.: кабель 100 м · двері · автомат"></label>`+
+    sel('typ','Тип',x.typ||'Оздоблення й будроботи',DEVT.map(t=>[t,t]),true)+
+    `<div class="full"><div class="glabel">Точки <span class="note">· кілька — порівну</span></div><div class="chkgrid">${pts.map(([k,n])=>`<label class="chk"><input type="checkbox" name="pt_${k}" ${x.loc&&x.loc[k]?'checked':''}> ${esc(n)}</label>`).join('')}</div></div>`+
+    fld('date','Дата',x.d||defDate(),{type:'date'})}
+function wireDevx(){const f=$('#sf');f.addEventListener('change',e=>{if(e.target.name==='fund'){const b=f.querySelector('.payBox');if(b)b.style.display=e.target.value==='inc'?'block':'none'}})}
+function saveDevx(id,x){return async fd=>{
+  const a=parseNum(fd.amount);if(a===null||!a)return 'Вкажіть суму';if(!String(fd.p||'').trim())return 'Напишіть, на що';
+  const ks=Object.keys(fd).filter(k=>k.startsWith('pt_')&&fd[k]===true).map(k=>k.slice(3));if(!ks.length)return 'Відмітьте точку (або «Загальне»)';
+  const d=fd.date||defDate(), m=d.slice(0,7), inc=fd.fund==='inc';
+  if(inc){if(!S.months[m])return 'Місяця '+mLabel(m).toLowerCase()+' ще немає';if(isClosed(m))return mLabel(m)+' закритий'}
+  const loc=Object.fromEntries(ks.map(k=>[k,Math.round(1/ks.length*10000)/10000]));
+  const same=x.loc&&JSON.stringify(Object.keys(x.loc).sort())===JSON.stringify(ks.slice().sort());
+  const doc={...x,d,a,p:String(fd.p).trim(),typ:fd.typ,loc,how:same?x.how:(ks.length>1?'порівну':'адреса'),src:x.src||'База',by:x.by||me||''};delete doc.id;delete doc.dApprox;
+  if(inc){const eid=x.exp||db.collection('exp').doc().id, e0=S.exp[eid]||{};
+    const ed={...e0,by:e0.by||me||'',month:m,date:d,article:DEV2ART(fd.typ),cat:'Розвиток',amount:a,payer:fd.payer||'Даниїл',paidFrom:fd.payer==='Влад'?'bank':'cash',point:ks.length===1&&S.points[ks[0]]?ks[0]:'',purpose:doc.p,note:''};
+    if(!await w(()=>db.doc('exp/'+eid).set(ed)))return 'Не збереглося';doc.fund='inc';doc.exp=eid;delete doc.who}
+  else{if(x.exp&&S.exp[x.exp])await w(()=>db.doc('exp/'+x.exp).delete());delete doc.exp;delete doc.fund;doc.who=fd.fund}
+  if(!await w(()=>db.doc('devx/'+id).set(doc)))return 'Не збереглося';toast('Збережено')}}
+function addDevx(){openSheet('Нова витрата',mLabel(cur),expModeSw('dev')+devxForm({}),saveDevx(db.collection('devx').doc().id,{}));wireDevx();wireMode()}
+function editDevx(id){const x=S.devx[id];if(!x)return;
+  openSheet('Розвиток',(x.d?dmy(x.d):''),devxForm(x),saveDevx(id,x),async()=>{if(x.exp&&S.exp[x.exp])await w(()=>db.doc('exp/'+x.exp).delete());const ok=await w(()=>db.doc('devx/'+id).delete());if(ok)toast('Видалено');return ok});wireDevx()}
 function pctPays(){return Object.entries(S.inv||{}).filter(([,v])=>v.kind==='pay').map(([id,v])=>({id,...v})).sort((a,b)=>(b.date||'').localeCompare(a.date||''))}
 function pctState(w){const L=invList().filter(i=>(i.investor||'Влад')===w), P=pctPays().filter(p=>p.investor===w);
   const yr=L.reduce((a,i)=>a+(+i.usd||0)*(+i.pct||0)/100,0), acc=L.reduce((a,i)=>a+invAccrued(i),0), paid=P.filter(p=>!p.reinv).reduce((a,p)=>a+(+p.usd||0),0), rein=P.filter(p=>p.reinv).reduce((a,p)=>a+(+p.usd||0),0);
