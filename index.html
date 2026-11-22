@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261122a">
+<meta name="wl-build" content="20261122b">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261122a"></script>
+<script src="config.js?v=20261122b"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261122a"></script>
+<script src="shim.js?v=20261122b"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1842,6 +1842,7 @@ async function addAllRent(){let n=0;for(const p of monthPts(cur)){const x=payRow
 function editRent(pid,mm){
   const m=mm||cur, p=S.points[pid]||{}, x=payRow(m,pid), py=x.py, closed=!!(S.months[m]||{}).closed;
   const fields=`<div class="calc full">До сплати за карткою точки: <b>${f0(x.rentPlan)} грн</b>${p.payee?' · отримувач: '+esc(p.payee):''}</div>`+
+    sel('rentFor','Період оплати',m,[...new Set([...monthsList(),m])].sort().reverse().map(k=>[k,mLabel(k)]),true)+
     fld('rentPaid','Сплачено, грн',py.rentPaid??'')+fld('rentDate','Дата оплати',py.rentDate||'',{type:'date'})+((+p.rentCash>0||+py.rentCash>0)?fld('rentCash','З них ф2, грн',py.rentCash??(py.rentPaid==null&&p.rentCash?p.rentCash:'')):'')+
     `<div class="full"><button type="button" class="btn sm" id="fillRent">Сплачено повністю сьогодні</button></div>`+
     fld('rentNote','Коментар',py.rentNote||'',{type:'text',full:true})+
@@ -1849,9 +1850,14 @@ function editRent(pid,mm){
   openSheet(p.name||pid,mLabel(m),fields,async fd=>{
     const raw=String(fd.rentPaid??'').trim(), rp=parseNum(raw); if(raw!==''&&rp===null)return 'Не зрозумів суму. Можна писати 2000 або 1500,50.';
     const rcRaw=String(fd.rentCash??'').trim(), rc=rcRaw===''?null:parseNum(rcRaw); if(rcRaw!==''&&rc===null)return 'Не зрозумів суму готівкою';
-    if(!await savePayDoc(m,pid,{rentPaid:raw===''?null:rp,rentCash:rc,rentDate:fd.rentDate||'',rentNote:fd.rentNote||''}))return 'Не збереглося';
+    const tm=fd.rentFor||m, patch={rentPaid:raw===''?null:rp,rentCash:rc,rentDate:fd.rentDate||'',rentNote:fd.rentNote||''};
+    if(tm!==m){const t=(S.pay[tm+'_'+pid]||{});if(t.rentPaid!=null)return 'За '+mLabel(tm).toLowerCase()+' вже є оплата '+f0(t.rentPaid)+' грн. Відкрийте той місяць і виправте там.';
+      if(!await savePayDoc(tm,pid,patch))return 'Не збереглося';
+      if(!await savePayDoc(m,pid,{rentPaid:null,rentCash:null,rentDate:'',rentNote:''}))return 'Не збереглося';
+      render();toast('Оплату перенесено в '+mLabel(tm).toLowerCase());return}
+    if(!await savePayDoc(m,pid,patch))return 'Не збереглося';
     toast('Оплату збережено');
-  });
+  },py.rentPaid!=null||py.rentDate?async()=>{const ok=await savePayDoc(m,pid,{rentPaid:null,rentCash:null,rentDate:'',rentNote:''});if(ok){render();toast('Оплату видалено')}return ok}:null);
   $('#fillRent').onclick=()=>{$('#f_rentPaid').value=x.rentPlan;if(!$('#f_rentDate').value)$('#f_rentDate').value=todayISO()};
 }
 
