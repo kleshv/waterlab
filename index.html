@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261123c">
+<meta name="wl-build" content="20261123d">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261123c"></script>
+<script src="config.js?v=20261123d"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261123c"></script>
+<script src="shim.js?v=20261123d"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1963,18 +1963,20 @@ function devxForm(x){const pts=[...pointsList().map(p=>[p.id,p.name]),...Object.
     arts+
     `<label class="full amount">Сума, грн<input id="f_amount" name="amount" value="${esc(x.a??'')}" inputmode="decimal" autocomplete="off" placeholder="0"></label>`+
     `<label class="full">Призначення платежу<input name="p" value="${esc(x.p||'')}" autocomplete="off" placeholder="напр.: кабель 100 м 3×1,5 · ДСП 12 листів · доставка автомата"></label>`+
-    `<div class="full"><div class="glabel">Точки <span class="note">· кілька — порівну</span></div><div class="chkgrid">${pts.map(([k,n])=>`<label class="chk"><input type="checkbox" name="pt_${k}" ${x.loc&&x.loc[k]?'checked':''}> ${esc(n)}</label>`).join('')}</div></div>`+
+    (()=>{const lk=Object.keys(x.loc||{}), multi=lk.length>1, cv=multi?'__keep':(lk[0]&&lk[0]!=='gen'?lk[0]:'');
+      const opts=(multi?[['__keep','Кілька точок: '+lk.map(ilName).join(', ')]]:[]).concat([['','Уся мережа']],pts.filter(([k])=>k!=='gen'));
+      return sel('point','Точка',cv,opts)})()+
     fld('date','Дата',x.d||defDate(),{type:'date'})}
 function wireDevx(){}
 function saveDevx(id,x){return async fd=>{
   if(!fd.art)return 'Оберіть статтю';const a=parseNum(fd.amount);if(a===null||!a)return 'Вкажіть суму';
-  const ks=Object.keys(fd).filter(k=>k.startsWith('pt_')&&fd[k]===true).map(k=>k.slice(3));if(!ks.length)return 'Відмітьте точку (або «Загальне»)';
+  const ks=fd.point==='__keep'?Object.keys(x.loc||{}):[fd.point||'gen'];
   const d=fd.date||defDate(), m=d.slice(0,7), inc=fd.fund==='inc';
   if(inc){if(!S.months[m])return 'Місяця '+mLabel(m).toLowerCase()+' ще немає';if(isClosed(m))return mLabel(m)+' закритий'}
   const loc=Object.fromEntries(ks.map(k=>[k,Math.round(1/ks.length*10000)/10000]));
   const same=x.loc&&JSON.stringify(Object.keys(x.loc).sort())===JSON.stringify(ks.slice().sort());
   const typ=DEVA_T[fd.art]||(DEVT.includes(fd.art)?fd.art:'Інше'), art=DEVA_T[fd.art]?fd.art:(x.art||'');
-  const doc={...x,d,a,p:String(fd.p||'').trim()||art||typ,typ,art,loc,how:same?x.how:(ks.length>1?'порівну':'адреса'),src:x.src||'База',by:x.by||me||''};delete doc.id;delete doc.dApprox;
+  const doc={...x,d,a,p:String(fd.p||'').trim()||art||typ,typ,art,loc,how:same?x.how:(ks[0]==='gen'?'загальне':ks.length>1?'порівну':'адреса'),src:x.src||'База',by:x.by||me||''};delete doc.id;delete doc.dApprox;
   if(inc){const eid=x.exp||db.collection('exp').doc().id, e0=S.exp[eid]||{};
     const ed={...e0,by:e0.by||me||'',month:m,date:d,article:DEV2ART(typ),cat:'Розвиток',amount:a,payer:fd.payer||'Даниїл',paidFrom:fd.payer==='Влад'?'bank':'cash',point:ks.length===1&&S.points[ks[0]]?ks[0]:'',purpose:doc.p,note:''};
     if(!await w(()=>db.doc('exp/'+eid).set(ed)))return 'Не збереглося';doc.fund='inc';doc.exp=eid;delete doc.who}
