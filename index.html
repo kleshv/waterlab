@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261123l">
+<meta name="wl-build" content="20261123m">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261123l"></script>
+<script src="config.js?v=20261123m"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261123l"></script>
+<script src="shim.js?v=20261123m"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1886,17 +1886,22 @@ function monthsBetween(from,to){if(!from)return 0;const [y1,m1]=from.split('-').
 function nowYM(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function invAccrued(i){return (+i.usd||0)*(+i.pct||0)/100*monthsBetween(i.from,nowYM())/12}
 const fUsd=v=>'$'+nf.format(Math.round(v));
+let gapOpen=false;function toggleGap(){gapOpen=!gapOpen;render()}
 function viewInv(){
   const L=invList(); let hrn=0,usd=0,rows='';
   for(const i of L){hrn+=+i.hrn||0;usd+=+i.usd||0;
     rows+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editInv':''}" data-id="${i.id}"><td><b>${i.date?esc(fmtD(i.date)+'.'+i.date.slice(2,4)):'без дати'}</b> ${esc(i.purpose||'')}${i.investor?`<div class="note">${esc(i.investor)}${i.reinv?' · реінвестовані %':''}</div>`:''}${i.note?`<div class="note">${esc(i.note)}</div>`:''}${i.holder?`<div class="note">${HOLD[i.holder]||esc(i.holder)}${i.via?' · '+(i.via==='bank'?'переказом':'готівкою'):''} · витрачено ${f0(invSpent(i.id))} · <b>залишок ${f0(invLeft(i.id))}</b></div>`:''}</td>
       <td class="num">${fUsd(i.usd)}<div class="note">${f0(i.hrn)}&nbsp;грн</div></td></tr>`}
+  const devInv=devRows().filter(r=>r.fund!=='inc'), gap=Math.round((devInv.reduce((a,r)=>a+r.a,0)-hrn)*100)/100;
+  const own=devInv.filter(r=>!r.inv&&r.who==='Даниїл').sort((a,b)=>(b.d||'').localeCompare(a.d||''));
   const hl={};for(const i of L)if(i.holder){const v=invLeft(i.id);if(Math.abs(v)>0.5)hl[i.holder]=(hl[i.holder]||0)+v}
   const by=w=>L.filter(i=>(i.investor||'Влад')===w).reduce((a,i)=>a+(+i.usd||0),0);
   return `<section class="card"><div class="shead"><h2>Інвестиції</h2>${canWrite?'<button class="btn sm pri" data-act="addInv" type="button">+ Внесок</button>':''}</div>
   <div class="tiles t3"><div class="tile"><div class="l">Вкладено</div><div class="v">${fUsd(usd)}</div><div class="s">${f0(hrn)} грн · середній курс ${usd?nf2.format(hrn/usd):'—'}</div></div>
+    ${Math.abs(gap)>0.5?`<button class="tile tapt" type="button" data-act="toggleGap"><div class="l">${gap>0?'Не профінансовано':'Внесено понад витрати'} ${gapOpen?'▾':'▸'}</div><div class="v">${f0(Math.abs(gap))} грн</div><div class="s">${gap>0?'витрати розвитку без внеску':'ще не витрачено'}</div></button>`:''}
     ${['Влад','Даниїл'].filter(x=>by(x)>0).length>1?['Влад','Даниїл'].map(x=>`<div class="tile"><div class="l">${x}</div><div class="v">${fUsd(by(x))}</div></div>`).join(''):''}</div>
   ${Object.keys(hl).length?`<div class="tiles" style="margin-top:8px">${Object.entries(hl).map(([k,v])=>`<div class="tile main"><div class="l">Залишок під інвестиції · ${HOLD[k]||esc(k)}</div><div class="v">${f0(v)} грн</div></div>`).join('')}</div>`:''}
+  ${gapOpen&&Math.abs(gap)>0.5?`<div class="calc" style="margin-top:8px">Витрачено на розвиток з інвестицій <b>${f0(hrn+gap)}</b> · внесено <b>${f0(hrn)}</b> · різниця <b>${f0(gap)}</b>${own.length?`<div style="margin-top:6px">З них Даниїл своїми грошима: <b>${f0(own.reduce((a,r)=>a+r.a,0))}</b></div><div class="note">${own.map(r=>(r.d?dmy(r.d):'—')+' · '+esc(r.p)+' · '+f0(r.a)).join('<br>')}</div>`:''}</div>`:''}
   <div class="tbl" style="margin-top:10px"><table class="ut"><thead><tr><th>Внесок</th><th class="num">Сума</th></tr></thead><tbody>${rows||'<tr><td colspan="2" class="note">Внесків поки немає.</td></tr>'}</tbody>
   <tfoot><tr class="final"><td>Разом</td><td class="num">${fUsd(usd)}<div class="note">${f0(hrn)}&nbsp;грн</div></td></tr></tfoot></table></div>
   </section>${viewInvOps()}`;
@@ -2844,7 +2849,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({setFlowAcc,flowCards,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilCMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,ilPick,ilType,editDevx,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,utilFromBank,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({setFlowAcc,flowCards,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilCMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,toggleGap,ilPick,ilType,editDevx,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,utilFromBank,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
