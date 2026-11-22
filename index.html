@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261123e">
+<meta name="wl-build" content="20261123f">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261123e"></script>
+<script src="config.js?v=20261123f"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261123e"></script>
+<script src="shim.js?v=20261123f"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1975,7 +1975,8 @@ function saveDevx(id,x){return async fd=>{
   let pv=fd.point;
   if(pv==='__new'){const nm=String(fd.newLoc||'').trim();if(!nm)return 'Напишіть назву нової локації';
     const L=invLoc(), ex=[...pointsList().map(p=>[p.id,p.name]),...Object.entries(L.pts||{}).map(([k,o])=>[k,o.name||k])].find(([,n])=>String(n).trim().toLowerCase()===nm.toLowerCase());
-    if(ex)pv=ex[0];else{pv='n'+Date.now().toString(36);const nl={...L,pts:{...(L.pts||{}),[pv]:{name:nm}}};if(!await w(()=>db.doc('meta/invloc').set(nl)))return 'Не збереглося';S.meta={...S.meta,invloc:nl}}}
+    if(ex)pv=ex[0];else{pv='p'+Date.now().toString(36);const np={name:nm,rent:0,active:true,openedAt:'',closedAt:'',note:'',payee:'',order:99};
+      if(!await w(()=>db.doc('points/'+pv).set(np)))return 'Не збереглося';S.points={...S.points,[pv]:np}}}
   const ks=pv==='__keep'?Object.keys(x.loc||{}):[pv||'gen'];
   const d=fd.date||defDate(), m=d.slice(0,7), inc=fd.fund==='inc';
   if(inc){if(!S.months[m])return 'Місяця '+mLabel(m).toLowerCase()+' ще немає';if(isClosed(m))return mLabel(m)+' закритий'}
