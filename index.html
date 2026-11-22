@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261123r">
+<meta name="wl-build" content="20261123s">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261123r"></script>
+<script src="config.js?v=20261123s"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261123r"></script>
+<script src="shim.js?v=20261123s"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -895,11 +895,23 @@ function viewSettle(){
   const JA=jobsAll(), anaDebt=JA.reduce((a,j)=>a+(j.type==='pay'?-(+j.amount||0):j.st==='new'?0:(+j.amount||0)),0), anaNew=JA.filter(j=>j.type==='work'&&j.st==='new').reduce((a,j)=>a+(+j.amount||0),0);
   let h=`<section class="card"><div class="shead"><h2>Взаєморозрахунки партнерів</h2>${canWrite?`<button class="btn sm pri" data-act="addPay" type="button">+ Переказ</button>`:''}</div>`;
   const tiles=[];
-  if(debt>0.5) tiles.push(`<div class="tile main"><div class="l">Влад винен Даниїлу</div><div class="v">${f0(debt)}</div><div class="s">за закритими місяцями</div></div>`);
+  const arr=danBalOpen?'▾':'▸';
+  if(debt>0.5) tiles.push(`<button class="tile tapt" type="button" data-act="toggleDanBal"><div class="l">Влад винен Даниїлу ${arr}</div><div class="v">${f0(debt)}</div><div class="s">за закритими місяцями</div></button>`);
   if(om&&(got>0.5||danExp>0.5)){const left=got-danExp;
-    tiles.push(`<div class="tile ${debt>0.5?'':'main'}"><div class="l">Баланс Даниїла · ${mLabel(om).toLowerCase()}</div><div class="v">${f0(Math.abs(left))}${left<-0.5?' <span style="font-size:13px;font-weight:400">витрачено зі своїх</span>':''}</div><div class="s">отримав ${f0(got)} · витрати ${f0(danExp)}</div></div>`)}
+    tiles.push(`<button class="tile tapt" type="button" data-act="toggleDanBal"><div class="l">Баланс Даниїла · ${mLabel(om).toLowerCase()} ${arr}</div><div class="v">${f0(Math.abs(left))}${left<-0.5?' <span style="font-size:13px;font-weight:400">витрачено зі своїх</span>':''}</div><div class="s">отримав ${f0(got)} · витрати ${f0(danExp)}</div></button>`)}
   const svcTile=(anaSum>0.5||Math.abs(anaDebt)>0.5)?`<button class="tile tapt" type="button" data-act="goTab" data-id="svc:job"><div class="l">Сервіс · Анатолій →</div><div class="v">${f0(Math.abs(anaDebt))}</div><div class="s">${anaDebt>=0?'борг Анатолію (роботи − виплати)':'Анатолію виплачено наперед'}${anaNew?` · ще ${f0(anaNew)} чекає підтвердження`:''}${anaSum>0.5?`<br>нараховано у витрати ${f0(anaSum)} (з фільтрами)`:''}</div></button>`:'';
   if(tiles.length)h+=`<div class="tiles">${tiles.join('')}</div>`;
+  if(tiles.length&&danBalOpen){const rowsB=[];
+    rowsB.push(`<span>${cut>=0?'Розраховано до '+(L[cut].kind==='p'?dmy(L[cut].p.date):mLabel(L[cut].key).toLowerCase()):'Початковий залишок'}</span><span class="num">${f0(cut>=0?0:-s0.opening)}</span>`);
+    for(const it of L.slice(cut+1)){
+      if(it.kind==='m')rowsB.push(`<span>Розподіл 50/50 за ${mLabel(it.key).toLowerCase()} · ${it.amount>=0?'належить Даниїлу':'належить Владу'}</span><span class="num">${it.amount>=0?'−':'+'}${f0(Math.abs(it.amount))}</span>`);
+      else rowsB.push(`<span class="${canWrite?'click':''}" data-act="${canWrite?'editPay':''}" data-id="${it.id}">Переказ ${esc(it.p.from)} → ${it.p.from==='Влад'?'Даниїл':'Влад'} · ${dmy(it.p.date)}${it.p.note?' · '+esc(it.p.note):''}</span><span class="num">${it.amount<0?'+':'−'}${f0(Math.abs(it.amount))}</span>`)}
+    rowsB.push(`<span><b>${debt>0.5?'= Влад винен Даниїлу':'= Даниїл отримав понад розрахунок'}</b></span><span class="num"><b>${f0(Math.abs(debt))}</b></span>`);
+    if(om&&danExp>0.5){const E=Object.values(S.exp).filter(e=>e.month===om&&e.payer==='Даниїл'&&!e.ana1).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      rowsB.push(...E.map(e=>`<span class="note">${e.date?dmy(e.date).slice(0,5):'—'} · ${esc(e.article)}${e.purpose?' · '+esc(e.purpose):''}</span><span class="num note">−${f0(e.amount)}</span>`));
+      rowsB.push(`<span>− Витрати Даниїла за ${mLabel(om).toLowerCase()}</span><span class="num">−${f0(danExp)}</span>`);
+      const left=got-danExp;rowsB.push(`<span><b>= Баланс Даниїла</b></span><span class="num"><b>${left<0?'−':''}${f0(Math.abs(left))}</b></span>`)}
+    h+=`<div class="check" style="margin-top:8px">${rowsB.join('')}</div>`}
   if(svcTile)h+=`<div class="sub" style="margin-top:14px">Сервіс</div><div class="tiles">${svcTile}</div><p class="note" style="margin:6px 0 0">Роботи Анатолія — на «Сервіс»; 1-го Влад переказує Даниїлу, Даниїл платить і вносить «+ Виплата».</p>`;
   {const dd=danDevOwed();if(dd>0.5){h+=`<div class="sub" style="margin-top:14px">Розвиток</div><div class="tiles"><button class="tile tapt" type="button" data-act="toggleDD"><div class="l">Компанія винна Даниїлу ${ddOpen?'▾':'▸'}</div><div class="v">${f0(dd)}</div><div class="s">розвиток своїми грошима · окремо від 50/50</div></button></div>`;
     if(ddOpen){const P=invList().filter(i=>i.holder==='Даниїл'), ids=new Set(P.map(i=>i.id));
@@ -909,7 +921,7 @@ function viewSettle(){
         ${D.map(x=>`<span class="note">${x.d?dmy(x.d).slice(0,5):'—'} · ${esc(x.p||'')}</span><span class="num note">−${f0(x.a)}</span>`).join('')}
         <span>Витрачено Даниїлом</span><span class="num">−${f0(out)}</span><span><b>${out-inn>=0?'Різниця — винні Даниїлу':'Залишок у Даниїла'}</b></span><span class="num"><b>${f0(Math.abs(out-inn))}</b></span></div>`}}}
   if(om)h+=`<p class="note" style="margin:6px 0 0">Після закриття ${mGen(om)} перекази й витрати зведуться в розподіл прибутку 50/50.</p>`;
-  if(P.length||M.length){
+  if(false){
     h+=`<div class="tbl" style="margin-top:12px"><table><thead><tr><th>Дата</th><th>Операція</th><th class="num">Сума</th></tr></thead><tbody>`;
     for(const it of L.slice(cut+1)){
       if(it.kind==='m') h+=`<tr><td>${mShort(it.key)}</td><td>Розподіл 50/50 за ${mLabel(it.key).toLowerCase()}<div class="note">${it.amount>=0?'Влад → Даниїл':'Даниїл → Влад'}</div></td><td class="num">${f0(Math.abs(it.amount))}</td></tr>`;
@@ -1897,6 +1909,7 @@ function danDevOwed(){const P=invList().filter(i=>i.holder==='Даниїл'), id
   const sp=Object.values(S.devx||{}).filter(x=>x.fund!=='inc'&&(ids.has(x.inv)||(!x.inv&&x.who==='Даниїл'))).reduce((a,x)=>a+(+x.a||0),0);
   const dep=P.reduce((a,i)=>a+(+i.hrn||0),0)+invList().filter(i=>i.investor==='Даниїл'&&!i.holder).reduce((a,i)=>a+(+i.hrn||0),0);return Math.max(0,Math.round((sp-dep)*100)/100)}
 let invOpen=null;function invPick(id){const i=(S.inv||{})[id];if(i&&i.holder){invOpen=invOpen===id?null:id;render()}else editInv(id)}
+let danBalOpen=false;function toggleDanBal(){danBalOpen=!danBalOpen;render()}
 let ddOpen=false;function toggleDD(){ddOpen=!ddOpen;render()}
 let gapOpen=false;function toggleGap(){gapOpen=!gapOpen;render()}
 function viewInv(){
@@ -2863,7 +2876,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({setFlowAcc,flowCards,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilCMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,toggleGap,invPick,toggleDD,ilPick,ilType,editDevx,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,utilFromBank,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({setFlowAcc,flowCards,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilCMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,toggleGap,invPick,toggleDD,toggleDanBal,ilPick,ilType,editDevx,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,utilFromBank,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
