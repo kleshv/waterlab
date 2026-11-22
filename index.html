@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261123h">
+<meta name="wl-build" content="20261123i">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261123h"></script>
+<script src="config.js?v=20261123i"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261123h"></script>
+<script src="shim.js?v=20261123i"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -876,7 +876,7 @@ function devMonthHtml(m){
   const rows=R.map(r=>{const isExp=String(r.id).startsWith('exp:'), act=canWrite?(isExp?'editExp':'editDevx'):'', id=isExp?r.id.slice(4):r.id;
     return `<tr class="${act?'click':''}" data-act="${act}" data-id="${esc(id)}"><td class="${r.d?'':'mut'}">${r.d?r.d.slice(8,10)+'.'+r.d.slice(5,7):'—'}</td><td>${esc(r.p||'')}<div class="note">${esc([locN(r),r.typ].filter(Boolean).join(' · '))}</div></td><td>${fk(r)}</td><td class="num">${f0(r.a)}</td></tr>`}).join('');
   return `<section class="card"><div class="shead"><h2>Інвестиції · розвиток</h2></div>
-  <p class="note" style="margin:0 0 8px">Не входить в операційні витрати. «З доходу» зменшує прибуток.</p>
+  <p class="note" style="margin:0 0 8px">Не входить в операційні витрати. «З доходу» зменшує суму до розподілу, не прибуток.</p>
   <div class="tbl"><table><thead><tr><th>Дата</th><th>На що</th><th>Звідки</th><th class="num">Сума</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="note">У цьому місяці витрат розвитку немає.</td></tr>'}</tbody>
   ${R.length?`<tfoot><tr><td colspan="3">Разом${inc&&inc<tot?' <span class="note">· з доходу '+f0(inc)+'</span>':''}</td><td class="num">${f0(tot)}</td></tr></tfoot>`:''}</table></div></section>`}
 
