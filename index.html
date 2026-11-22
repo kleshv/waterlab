@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261123k">
+<meta name="wl-build" content="20261123l">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261123k"></script>
+<script src="config.js?v=20261123l"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261123k"></script>
+<script src="shim.js?v=20261123l"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1889,7 +1889,7 @@ const fUsd=v=>'$'+nf.format(Math.round(v));
 function viewInv(){
   const L=invList(); let hrn=0,usd=0,rows='';
   for(const i of L){hrn+=+i.hrn||0;usd+=+i.usd||0;
-    rows+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editInv':''}" data-id="${i.id}"><td><b>${i.date?esc(fmtD(i.date)+'.'+i.date.slice(2,4)):'без дати'}</b> ${esc(i.purpose||'')}${i.investor?`<div class="note">${esc(i.investor)}${i.reinv?' · реінвестовані %':''}</div>`:''}${i.note?`<div class="note">${esc(i.note)}</div>`:''}${i.holder?`<div class="note">${HOLD[i.holder]||esc(i.holder)} · витрачено ${f0(invSpent(i.id))} · <b>залишок ${f0(invLeft(i.id))}</b></div>`:''}</td>
+    rows+=`<tr class="${canWrite?'click':''}" data-act="${canWrite?'editInv':''}" data-id="${i.id}"><td><b>${i.date?esc(fmtD(i.date)+'.'+i.date.slice(2,4)):'без дати'}</b> ${esc(i.purpose||'')}${i.investor?`<div class="note">${esc(i.investor)}${i.reinv?' · реінвестовані %':''}</div>`:''}${i.note?`<div class="note">${esc(i.note)}</div>`:''}${i.holder?`<div class="note">${HOLD[i.holder]||esc(i.holder)}${i.via?' · '+(i.via==='bank'?'переказом':'готівкою'):''} · витрачено ${f0(invSpent(i.id))} · <b>залишок ${f0(invLeft(i.id))}</b></div>`:''}</td>
       <td class="num">${fUsd(i.usd)}<div class="note">${f0(i.hrn)}&nbsp;грн</div></td></tr>`}
   const hl={};for(const i of L)if(i.holder){const v=invLeft(i.id);if(Math.abs(v)>0.5)hl[i.holder]=(hl[i.holder]||0)+v}
   const by=w=>L.filter(i=>(i.investor||'Влад')===w).reduce((a,i)=>a+(+i.usd||0),0);
@@ -2035,9 +2035,9 @@ function editPctPay(id){const p=S.inv[id];if(!p)return;
       if(p.depId&&S.inv[p.depId]){const dep={...S.inv[p.depId],usd:u,date:d.date};delete dep.id;await w(()=>db.doc('inv/'+p.depId).set(dep))}toast('Збережено')},
     async()=>{if(p.depId)await w(()=>db.doc('inv/'+p.depId).delete());return await w(()=>db.doc('inv/'+id).delete())});
 }
-function invForm(i){return fld('date','Дата внеску',i.date||'',{type:'date'})+fld('purpose','Призначення',i.purpose||'',{type:'text',full:true})+fld('hrn','Сума, грн',i.hrn??'')+fld('usd','Сума, $',i.usd??'')+fld('pct','% річних',i.pct??5)+fld('from','Відсотки з місяця',i.from||'',{type:'month'})+sel('investor','Інвестор',i.investor||'Влад',[['Влад','Влад'],['Даниїл','Даниїл']])+sel('holder','Гроші під витрати — у кого',i.holder||'',[['','Не відстежувати залишок'],['Даниїл','У Даниїла'],['Влад','У Влада'],['bank','На рахунку ФОП']])+fld('note','Примітка',i.note||'',{type:'text',full:true})}
+function invForm(i){return fld('date','Дата внеску',i.date||'',{type:'date'})+fld('purpose','Призначення',i.purpose||'',{type:'text',full:true})+fld('hrn','Сума, грн',i.hrn??'')+fld('usd','Сума, $',i.usd??'')+fld('pct','% річних',i.pct??5)+fld('from','Відсотки з місяця',i.from||'',{type:'month'})+sel('investor','Інвестор',i.investor||'Влад',[['Влад','Влад'],['Даниїл','Даниїл']])+sel('holder','Кому передав',i.holder??(i.date?'':'Даниїл'),[['Даниїл','Даниїлу'],['Влад','Владу'],['bank','На рахунок ФОП'],['','Не відстежувати залишок']])+sel('via','Як',i.via||'cash',[['cash','Готівкою'],['bank','Переказ на рахунок / картку']])+fld('note','Примітка',i.note||'',{type:'text',full:true})}
 function saveInv(id){return async fd=>{const h=parseNum(fd.hrn),u=parseNum(fd.usd),pc=parseNum(fd.pct);if(h===null||u===null||pc===null)return 'Перевірте числа';if(!fd.purpose)return 'Вкажіть призначення';
-  const doc={date:fd.date||'',purpose:fd.purpose,hrn:h,usd:u,pct:pc,from:fd.from||'',investor:fd.investor||'',note:fd.note||''};if(fd.holder)doc.holder=fd.holder;
+  const doc={date:fd.date||'',purpose:fd.purpose,hrn:h,usd:u,pct:pc,from:fd.from||'',investor:fd.investor||'',note:fd.note||''};if(fd.holder){doc.holder=fd.holder;doc.via=fd.via||'cash'}
   if(!await w(()=>db.doc('inv/'+id).set(doc)))return 'Не збереглося';S.inv={...S.inv,[id]:doc};toast('Збережено')}}
 function addInv(){openSheet('Новий внесок','',invForm({pct:5}),saveInv(db.collection('inv').doc().id))}
 function editInv(id){const i=S.inv[id];if(!i)return;openSheet('Внесок',i.date?fmtD(i.date):'',invForm(i),saveInv(id),async()=>{if(await w(()=>db.doc('inv/'+id).delete()))toast('Видалено')})}
