@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261123t">
+<meta name="wl-build" content="20261123u">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261123t"></script>
+<script src="config.js?v=20261123u"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261123t"></script>
+<script src="shim.js?v=20261123u"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -898,25 +898,27 @@ function viewSettle(){
   const svcTile=(anaSum>0.5||Math.abs(anaDebt)>0.5)?`<button class="tile tapt" type="button" data-act="goTab" data-id="svc:job"><div class="l">Сервіс · Анатолій →</div><div class="v">${f0(Math.abs(anaDebt))}</div><div class="s">${anaDebt>=0?'борг Анатолію (роботи − виплати)':'Анатолію виплачено наперед'}${anaNew?` · ще ${f0(anaNew)} чекає підтвердження`:''}${anaSum>0.5?`<br>нараховано у витрати ${f0(anaSum)} (з фільтрами)`:''}</div></button>`:'';
   const arr=k=>setOpen===k?'▾':'▸', dd=danDevOwed();
   const tile=(k,l,v,sub)=>`<button class="tile tapt" type="button" data-act="setSetOpen" data-id="${k}"><div class="l">${l} ${arr(k)}</div><div class="v">${v}</div><div class="s">${sub}</div></button>`;
-  const left=got-danExp, hasOp=debt>0.5||(om&&(got>0.5||danExp>0.5));
-  if(hasOp)tiles.push(debt>0.5?tile('op','Операційна діяльність',f0(debt),'Влад винен Даниїлу · за закритими місяцями'):tile('op','Операційна діяльність',(left<-0.5?'−':'')+f0(Math.abs(left)),'баланс Даниїла · '+mLabel(om).toLowerCase()+' · отримав '+f0(got)+' · витрати '+f0(danExp)));
-  if(dd>0.5)tiles.push(tile('dev','Розвиток',f0(dd),'компанія винна Даниїлу · окремо від 50/50'));
-  if(tiles.length)h+=`<div class="tiles">${tiles.join('')}</div>`;
-  const R=[], row=(l,v,cls='')=>R.push(`<span class="${cls}">${l}</span><span class="num ${cls}">${v}</span>`), sg=v=>(v<0?'−':'+')+f0(Math.abs(v));
+  const sg=v=>(v<-0.5?'−':v>0.5?'+':'')+f0(Math.abs(v)), dE=om?danExp:0, bal=-debt-dE, hasOp=Math.abs(debt)>0.5||dE>0.5;
+  const who=v=>v<-0.5?'Даниїлу винні':'у Даниїла на руках';
+  if(hasOp)tiles.push(tile('op','Операційна діяльність',sg(bal),who(bal)+(om?' · '+mLabel(om).toLowerCase():'')));
+  if(dd>0.5)tiles.push(tile('dev','Розвиток',sg(-dd),'компанія винна Даниїлу · окремо від 50/50'));
+  if(tiles.length)h+=`<div class="tiles">${tiles.join('')}</div><p class="note" style="margin:4px 0 0">Баланс Даниїла: «+» — гроші в нього, «−» — йому винні.</p>`;
+  const R=[], row=(l,v,cls='')=>R.push(`<span class="${cls}">${l}</span><span class="num ${cls}">${v}</span>`);
   if(setOpen==='op'&&hasOp){
-    row(cut>=0?'Розраховано до '+(L[cut].kind==='p'?dmy(L[cut].p.date):mLabel(L[cut].key).toLowerCase()):'Початковий залишок',f0(cut>=0?0:-s0.opening));
+    row(cut>=0?'Розраховано до '+(L[cut].kind==='p'?dmy(L[cut].p.date):mLabel(L[cut].key).toLowerCase()):'Початковий залишок',sg(cut>=0?0:-s0.opening));
     for(const it of L.slice(cut+1)){
       if(it.kind==='m')row('Розподіл 50/50 за '+mLabel(it.key).toLowerCase()+' · '+(it.amount>=0?'належить Даниїлу':'належить Владу'),sg(-it.amount));
       else R.push(`<span class="${canWrite?'click':''}" data-act="${canWrite?'editPay':''}" data-id="${it.id}">Переказ ${esc(it.p.from)} → ${it.p.from==='Влад'?'Даниїл':'Влад'} · ${dmy(it.p.date)}${it.p.note?' · '+esc(it.p.note):''}</span><span class="num">${sg(-it.amount)}</span>`)}
-    row('<b>'+(debt>0.5?'= Влад винен Даниїлу':'= Даниїл отримав понад розрахунок')+'</b>','<b>'+f0(Math.abs(debt))+'</b>');
-    if(om&&danExp>0.5){for(const e of Object.values(S.exp).filter(e=>e.month===om&&e.payer==='Даниїл'&&!e.ana1).sort((a,b)=>(a.date||'').localeCompare(b.date||'')))row((e.date?dmy(e.date).slice(0,5):'—')+' · '+esc(e.article)+(e.purpose?' · '+esc(e.purpose):''),'−'+f0(e.amount),'note');
-      row('− Витрати Даниїла за '+mLabel(om).toLowerCase(),'−'+f0(danExp));row('<b>= Баланс Даниїла</b>','<b>'+(left<0?'−':'')+f0(Math.abs(left))+'</b>')}}
+    row('<b>= Після переказів і 50/50</b>','<b>'+sg(-debt)+'</b>');
+    if(dE>0.5){for(const e of Object.values(S.exp).filter(e=>e.month===om&&e.payer==='Даниїл'&&!e.ana1).sort((a,b)=>(a.date||'').localeCompare(b.date||'')))row((e.date?dmy(e.date).slice(0,5):'—')+' · '+esc(e.article)+(e.purpose?' · '+esc(e.purpose):''),'−'+f0(e.amount),'note');
+      row('Витрати Даниїла за '+mLabel(om).toLowerCase(),'−'+f0(dE))}
+    row('<b>= Баланс Даниїла</b>','<b>'+sg(bal)+'</b>')}
   if(setOpen==='dev'&&dd>0.5){const P=invList().filter(i=>i.holder==='Даниїл'), ids=new Set(P.map(i=>i.id));
     const D=Object.values(S.devx||{}).filter(x=>x.fund!=='inc'&&(ids.has(x.inv)||(!x.inv&&x.who==='Даниїл'))).sort((a,b)=>(a.d||'').localeCompare(b.d||''));
     const inn=P.reduce((a,i)=>a+(+i.hrn||0),0), out=D.reduce((a,x)=>a+(+x.a||0),0);
     for(const i of P)row('Внесок '+esc(i.investor||'')+' '+(i.date?dmy(i.date):'')+' · '+fUsd(i.usd),'+'+f0(i.hrn));
     for(const x of D)row((x.d?dmy(x.d).slice(0,5):'—')+' · '+esc(x.p||''),'−'+f0(x.a),'note');
-    row('− Витрачено Даниїлом','−'+f0(out));row('<b>'+(out-inn>=0?'= Компанія винна Даниїлу':'= Залишок у Даниїла')+'</b>','<b>'+f0(Math.abs(out-inn))+'</b>')}
+    row('Витрачено Даниїлом','−'+f0(out));row('<b>= Баланс Даниїла</b>','<b>'+sg(inn-out)+'</b>')}
   if(R.length)h+=`<div class="check" style="margin-top:8px">${R.join('')}</div>`;
   if(svcTile)h+=`<div class="sub" style="margin-top:14px">Сервіс</div><div class="tiles">${svcTile}</div><p class="note" style="margin:6px 0 0">Роботи Анатолія — на «Сервіс»; 1-го Влад переказує Даниїлу, Даниїл платить і вносить «+ Виплата».</p>`;
   if(om)h+=`<p class="note" style="margin:6px 0 0">Після закриття ${mGen(om)} перекази й витрати зведуться в розподіл прибутку 50/50.</p>`;
