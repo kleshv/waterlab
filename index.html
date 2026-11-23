@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261124i">
+<meta name="wl-build" content="20261124j">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261124i"></script>
+<script src="config.js?v=20261124j"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261124i"></script>
+<script src="shim.js?v=20261124j"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1981,12 +1981,14 @@ function viewInvLoc(){const R=devRows().map(r=>({...r,g:ILG[r.typ]||'Інше'})
     <div class="tbl"><table class="ut"><thead><tr><th>Дата</th><th>На що</th><th class="hide-sm">Тип</th><th>Фонд</th><th class="num">Сума</th></tr></thead><tbody>${D.map(r=>{const ed=canWrite&&!String(r.id).includes(':');
       return `<tr class="${ed?'click':''}" data-act="${ed?'editDevx':''}" data-id="${r.id}"><td>${r.d?dmy(r.d):'—'}</td><td>${esc(r.p)}</td><td class="hide-sm">${esc(r.typ)}</td><td>${fk(r)}</td><td class="num">${f0(r.v)}</td></tr>`}).join('')}</tbody>
       <tfoot><tr class="final"><td colspan="2">Разом</td><td class="hide-sm"></td><td></td><td class="num">${f0(D.reduce((a,r)=>a+r.v,0))}</td></tr></tfoot></table></div></section>`}
-  return `<style>tr.sel td{background:var(--accent-soft)}.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 12px}</style>
+  return `<style>tr.sel td{background:var(--accent-soft)}tr.grp td{background:var(--bg,#f5f6f8);padding-top:10px}.chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 12px}</style>
   <section class="card"><div class="shead"><h2>Куди вкладено</h2><span class="note">грн</span></div>
   <div class="tiles"><div class="tile main"><div class="l">Вкладено всього</div><div class="v">${f0(all)}</div></div>${types.map(t=>`<div class="tile"><div class="l">${t}</div><div class="v">${f0(tt[t])}</div><div class="s">${Math.round(tt[t]/all*100)}%</div></div>`).join('')}</div></section>
   <section class="card"><div class="shead"><h2>По локаціях</h2></div>
    <div class="tbl"><table class="ut"><thead><tr><th>Локація</th>${types.map(t=>`<th class="num">${esc(t)}</th>`).join('')}<th class="num">Разом</th></tr></thead>
-   <tbody>${locs.map(rowH).join('')}</tbody><tfoot><tr class="final"><td>Разом</td>${types.map(t=>`<td class="num">${f0(tt[t])}</td>`).join('')}<td class="num">${f0(all)}</td></tr></tfoot></table></div></section>${det}`}
+   <tbody>${(()=>{const kd=l=>{const k=(S.points[l]||{}).kind||'';return /пункт/.test(k)?'Пункти':k==='автомат'?'Автомати':'Інше'};
+     return ['Пункти','Автомати','Інше'].map(g=>{const ls=locs.filter(l=>kd(l)===g);if(!ls.length)return '';
+       const tot=ls.reduce((a,l)=>a+sm(A[l]),0);return `<tr class="grp"><td colspan="${types.length+1}"><b>${g}</b> <span class="note">· ${ls.length}</span></td><td class="num"><b>${f0(tot)}</b></td></tr>`+ls.map(rowH).join('')}).join('')})()}</tbody><tfoot><tr class="final"><td>Разом</td>${types.map(t=>`<td class="num">${f0(tt[t])}</td>`).join('')}<td class="num">${f0(all)}</td></tr></tfoot></table></div></section>${det}`}
 function ilPick(id){ilSel=ilSel===id?null:id;render();if(ilSel)setTimeout(()=>{const c=[...document.querySelectorAll('section.card')].pop();c&&c.scrollIntoView({behavior:'smooth',block:'start'})},50)}
 function ilType(t){ilT=ilT===t?null:t;render()}
 const DEV2ART=t=>['Автомати','Купюрники, терминали, зв\'язок','Акумулятори / БЖ'].includes(t)?'Обладнання':t==='Вода, труби, підключення'?'Підключення водоканалу':'Нова точка / будівництво';
