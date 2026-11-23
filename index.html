@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261124e">
+<meta name="wl-build" content="20261124f">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261124e"></script>
+<script src="config.js?v=20261124f"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261124e"></script>
+<script src="shim.js?v=20261124f"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2002,8 +2002,8 @@ function devxForm(x){const pts=[...pointsList().map(p=>[p.id,p.name]),...Object.
   if(!art&&x.typ)arts=`<div class="full"><div class="glabel">Поточна стаття</div><div class="chips">${chip(x.typ,true)}</div></div>`+arts;
   return `<div class="full"><div class="glabel">Хто платив</div>${seg('payer',payer,[['Даниїл','Даниїл'],['Влад','Влад']])}</div>`+
     `<div class="full"><div class="glabel">Звідки оплачено</div>${seg('src',src2(x.paidFrom||(e&&e.paidFrom)||(payer==='Влад'?'bank':'cash')),Object.entries(SRC2))}</div>`+
-    `<div class="full"><div class="glabel">Як рахуємо</div>${seg('fund',fund,[['inc','З доходу'],['inv','Інвестиція']])}</div>`+
-    `<div class="full poolBox" style="display:${fund==='inv'?'block':'none'}">${sel('inv','З яких грошей',x.inv||(x.a?'':(invPools()[0]||{}).id||''),[['','Свої гроші платника']].concat(invPools(x.inv).map(i=>[i.id,'Внесок '+(i.investor||'')+' '+(i.date?dmy(i.date):'')+' · '+HOLD[i.holder]+' · залишок '+f0(invLeft(i.id)+(i.id===x.inv?+x.a||0:0))])),true)}</div>`+
+    `<input type="hidden" name="fund" value="${x.fund==='inc'?'inc':'inv'}">`+
+    `<div class="full poolBox" style="display:${x.fund!=='inc'&&(invPools(x.inv).length)?'block':'none'}">${sel('inv','З яких грошей',x.inv||(x.a?'':(invPools()[0]||{}).id||''),[['','Свої гроші платника']].concat(invPools(x.inv).map(i=>[i.id,'Внесок '+(i.investor||'')+' '+(i.date?dmy(i.date):'')+' · '+HOLD[i.holder]+' · залишок '+f0(invLeft(i.id)+(i.id===x.inv?+x.a||0:0))])),true)}</div>`+
     arts+
     `<label class="full amount">Сума, грн<input id="f_amount" name="amount" value="${esc(x.a??'')}" inputmode="decimal" autocomplete="off" placeholder="0"></label>`+
     `<label class="full">Призначення платежу<input name="p" value="${esc(x.p||'')}" autocomplete="off" placeholder="напр.: кабель 100 м 3×1,5 · ДСП 12 листів · доставка автомата"></label>`+
