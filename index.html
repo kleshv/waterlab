@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261124w">
+<meta name="wl-build" content="20261124x">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261124w"></script>
+<script src="config.js?v=20261124x"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261124w"></script>
+<script src="shim.js?v=20261124x"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -499,7 +499,7 @@ function viewMonth(m){
   const margin=t.T.rv?t.op/t.T.rv*100:0, gw=(S.months[m]||{}).gwThru, gwL=gw&&gw<monthEnd(m)?` <span class="gwd">по ${dmy(gw).slice(0,5)}</span>`:'';
   let h=`<section class="card"><div class="shead"><h2>${mLabel(m)}</h2>
     <span class="pill ${closed?'closed':'open'}">${closed?'закритий':'відкритий'}</span>
-    ${canWrite?`<button class="btn sm" data-act="toggleClose" type="button">${closed?'Відкрити для змін':'Закрити місяць'}</button>`:''}</div>
+    ${role==='owner'&&window.WL_NAME==='Влад'?`<button class="btn sm" data-act="toggleClose" type="button">${closed?'Відкрити для змін':'Закрити місяць'}</button>`:''}</div>
   <div class="tiles">
     ${(()=>{const inn=`<div class="l">Виручка${gwL}</div><div class="v">${f0(t.T.rv)}</div><div class="s">${f0(t.T.L)} л · ${nf2.format(t.T.L?t.T.rv/t.T.L:0)} грн/л</div><div class="s">банк ${c.bank?f0(c.bank):'—'} · готівка ${c.cash?f0(c.cash):'не внесено'}</div>`;return ed?`<button type="button" class="tile tapt" data-act="editMoney" title="Внести банк і готівку">${inn}</button>`:`<div class="tile">${inn}</div>`})()}
     <div class="tile"><div class="l">Операційні витрати</div><div class="v">${f0(t.opex)}</div><div class="s">${nf2.format(t.T.L?t.opex/t.T.L:0)} грн/л</div></div>
@@ -899,7 +899,7 @@ function ddsHtml(m){if(role!=='owner'||!m)return '';
   const c=v=>`<td class="num">${Math.abs(v||0)<0.5?'<span class="mut">—</span>':f0(v)}</td>`;
   const rows=R.map(([key,l,o])=>`<tr class="${D[key]?'click':''}" ${D[key]?`data-act="balTog" data-id="${key}"`:''}><td>${l}</td>${A.map(k=>c(o[k])).join('')}</tr>`).join('');
   return `<section class="card"><div class="shead"><h2>Рух грошей · ${mLabel(m)}</h2><span class="note">по рахунках</span></div>
-  <div class="tbl"><table class="ut"><thead><tr><th></th><th class="num">ФОП</th><th class="num">Каса Даниїла</th><th class="num">Влад</th><th class="num">Даниїл</th></tr></thead><tbody>${rows}</tbody>
+  <div class="tbl"><table class="ut"><thead><tr><th></th><th class="num">Рахунок ФОП</th><th class="num">Каса Даниїла</th><th class="num">Влад особисто</th><th class="num">Даниїл особисто</th></tr></thead><tbody>${rows}</tbody>
   <tfoot><tr class="final"><td>= ${rb||rc?'Залишок':'Рух за місяць'}</td>${A.map(k=>c(tot[k])).join('')}</tr></tfoot></table></div>
   <p class="note" style="margin:4px 0 0">ФОП і каса — залишок на кінець. Влад і Даниїл — скільки особистих грошей прийшло (+) чи пішло (−) за місяць. Натисніть рядок — розшифровка.</p></section>`}
 function expGrpSheet(a){const [m,g,rs]=String(a).split('|'), c=calc(m);let L,T=g;
@@ -1242,7 +1242,20 @@ function editPoint(id){openSheet('Точка','',pointForm(S.points[id]),savePoi
   for(const col of ['pay','meter'])for(const [k,x] of Object.entries(S[col]))if(x.point===id&&!await w(()=>db.doc(col+'/'+k).delete()))return false;
   if(!await w(()=>db.doc('points/'+id).delete()))return false;toast('Точку видалено');return true}:null)}
 
-async function toggleClose(){const md=S.months[cur];if(await w(()=>db.doc('months/'+cur).set({...md,closed:!md.closed})))toast(md.closed?'Місяць відкрито':'Місяць закрито')}
+function closeChecks(m){const C=[];
+  const me_=monthEnd(m), stOk=bankCovered(me_);C.push([stOk,'Виписка ФОП завантажена по '+dmy(me_),stOk?'':'завантажте виписку за весь місяць']);
+  if(stOk){const R=flowRows(m).filter(r=>['base','bank','diff'].includes(r.st));C.push([!R.length,'Рух по рахунку звірено',R.length?R.length+' операцій не збігаються або немає в базі':''])}
+  const pts=monthPts(m), noU=pts.filter(p=>{const x=payRow(m,p.id);return x.py.utilBill==null&&x.utilPaid==null&&!(x.u&&x.u.w1!=null)});C.push([!noU.length,'Комуналка внесена по всіх точках',noU.length?'немає: '+noU.map(p=>p.name).join(', '):'']);
+  const noR=pts.filter(p=>{const x=payRow(m,p.id);return x.rentDue>0.5&&!x.rentPaid});C.push([!noR.length,'Оренда сплачена по всіх точках',noR.length?'не сплачено: '+noR.map(p=>p.name).join(', '):'']);
+  const md=S.months[m]||{}, gwOk=!md.gwThru||md.gwThru>=me_;C.push([gwOk,'Продажі Gwaters по кінець місяця',gwOk?'':'є лише по '+dmy(md.gwThru)]);
+  return C}
+async function toggleClose(){const md=S.months[cur];if(!(role==='owner'&&window.WL_NAME==='Влад')){toast('Закриває місяць Влад');return}
+  if(md.closed){if(await w(()=>db.doc('months/'+cur).set({...md,closed:false})))toast('Місяць відкрито');return}
+  const C=closeChecks(cur), bad=C.filter(c=>!c[0]).length;
+  openSheet('Закрити '+mLabel(cur).toLowerCase(),bad?'Ще не все готово — можна закрити й так':'Усе готово',
+    `<div class="full">${C.map(([ok,t,n])=>`<div class="kv"><span>${ok?'✅':'⚠️'} ${esc(t)}${n?`<div class="note">${esc(n)}</div>`:''}</span><b></b></div>`).join('')}</div>`+
+    `<label class="full chk"><input type="checkbox" name="cashOk"> Касу з Даниїлом звірено</label><label class="full chk"><input type="checkbox" name="expOk"> Даниїл вніс усі витрати</label>`,
+    async fd=>{if(!fd.cashOk||!fd.expOk)return 'Відмітьте обидва пункти';if(!await w(()=>db.doc('months/'+cur).set({...md,closed:true,closedAt:new Date().toISOString()})))return 'Не збереглося';toast('Місяць закрито')})}
 
 function newMonth(){
   const ms=monthsList();const last=ms[ms.length-1];
@@ -2131,7 +2144,7 @@ const src2=v=>v==='bank'?'bank':'own', srcSave=(v,payer)=>v==='bank'?'bank':(pay
 const expSrc=e=>(SRC[e.paidFrom]?e.paidFrom:null)||(e.payer===PAY_VC?'card':e.payer==='Даниїл'?'cash':e.payer==='Сервіс'?'none':'bank');
 const payerOf=e=>e.payer===PAY_VC?'Влад':e.payer;
 const MOVK={profit:'Прибуток собі',reimb:'Під оплати (компенсація витрат з картки)'};
-const ACC={bank:'Рахунок ФОП Влада',cash:'Готівка Даниїла',vlad:'Влад особисто',dan:'Даниїл особисто',ext:'Інше / зовні'};
+const ACC={bank:'Рахунок ФОП',cash:'Каса Даниїла',vlad:'Влад особисто',dan:'Даниїл особисто',ext:'Інше / зовні'};
 const balStart=()=>((S.meta.settings||{}).balStart)||'2026-11';
 const balStartTxt=()=>'01.'+balStart().slice(5)+'.'+balStart().slice(0,4);
 function balOpen(){const o=(S.meta.settings||{}).balOpen;return o||null}
@@ -2475,7 +2488,6 @@ function moneyCard(){
    ${dB!=null||dC!=null?kv('Розбіжність з фактом',dB||0,dC||0,Math.abs(dB||0)+Math.abs(dC||0)>1?'neg':''):''}
   </tbody></table></div>
   ${dB&&Math.abs(dB)>1?`<p class="note" style="margin:4px 0 0">Розбіжність по рахунку — операції у виписці, яких немає в базі. Їх видно в «Рух по рахунку» з позначкою «немає в базі».</p>`:''}
-  ${profBlock(ms,profM,B0)}
   <div class="glabel" style="margin-top:14px">Кому ми винні</div>
    ${kv2('Владу — витрати з його картки, ще не компенсовані',f0(vOwe),'','oV')}${dOwe>0.5?kv2('Даниїлу — витрати з його картки, ще не компенсовані',f0(dOwe),'','oD'):''}${kv2('Анатолію за роботи',f0(ana),'','ana')}${kv2('Оренда й комуналка — нараховано, не сплачено',f0(unpaid),'','unp')}${danDev>0.5?kv2('Даниїлу — розвиток своїми грошима, без внеску <span class="note">· Інвестиції</span>',f0(danDev),'','dev'):''}${kv2('= Разом боргів',f0(obl),'final')}
    ${kv2('Вільні гроші',f0(money-obl),'final')}${depBlock()}</section>`;
