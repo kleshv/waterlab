@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261125i">
+<meta name="wl-build" content="20261125j">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261125i"></script>
+<script src="config.js?v=20261125j"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261125i"></script>
+<script src="shim.js?v=20261125j"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2472,30 +2472,31 @@ function moneyCard(){
     return `<div class="kv ${c}${has?' click':''}" ${has?`data-act="balTog" data-id="${key}"`:''}><span>${a}</span><b class="${has?'lnk':''}">${b}</b></div>`};
   return `<section class="card info mcard"><div class="shead"><h2>Де гроші</h2><span class="note">з ${balStartTxt()}</span></div>
   ${(()=>{const DL=depList(), held=DL.filter(p=>(p.depSt||'paid')==='paid'), unc=DL.filter(p=>p.depSt==='contract'), dep=held.reduce((a,p)=>a+(+p.dep||0),0);
-    D.dep=held.map(p=>[esc(p.name),+p.dep]).concat(unc.map(p=>[esc(p.name)+' · оплату не підтверджено (не враховано)',+p.dep]));balT.dep='Страхові платежі у орендодавців';
-    return `<div class="tiles"><div class="tile"><div class="l">${ACC.bank}</div><div class="v">${f0(bank)}</div><div class="s">${bFact!=null?'за випискою на '+dmy(ls.to):'розрахунок'}</div></div>
+    D.dep=held.map(p=>[esc(p.name),+p.dep]).concat(unc.map(p=>[esc(p.name)+' · оплату не підтверджено (не враховано)',+p.dep]));balT.dep='Страхові у орендодавців';
+    D.ru=[].concat(...Object.keys(rentM).sort().map(m=>(D['rent'+m]||[]).map(([t,v])=>['Оренда за '+mLow(m)+' · '+t,v])),...Object.keys(utilM).sort().map(m=>(D['util'+m]||[]).map(([t,v])=>['Комуналка за '+mLow(m)+' · '+t,v])));
+    D.pay=[].concat(...Object.keys(profM).sort().map(m=>(D['prof'+m]||[]).map(([t,v])=>[t+' · за '+mLow(m),v])));
+    D.tr=(D.oth||[]).concat(D.reimb||[]);
+    const RT=Object.values(rentM).reduce((a,v)=>a+v,0), UT=Object.values(utilM).reduce((a,v)=>a+v,0), trB=oth.bank+reimb.bank, trC=oth.cash+reimb.cash;
+    const nt=t=>`<div class="note">${t}</div>`, mm=o=>Object.keys(o).sort().map(m=>mLow(m)).join(', ');
+    const tot=(lbl,v,cls='',key='')=>{const has=key&&D[key]&&D[key].length;if(has)balT[key]=lbl.replace(/<[^>]+>/g,'').replace(/^[+−±=\s]+/,'').trim();return `<tr class="${cls}${has?' click':''}" ${has?`data-act="balTog" data-id="${key}"`:''}><td colspan="3">${lbl}</td><td class="num"><b class="${has?'lnk':''}">${f0(v)}</b></td></tr>`};
+    return `<div class="tiles t3"><div class="tile"><div class="l">${ACC.bank}</div><div class="v">${f0(bank)}</div><div class="s">${bFact!=null?'за випискою на '+dmy(ls.to):'розрахунок'}</div></div>
     <div class="tile"><div class="l">${ACC.cash}</div><div class="v">${f0(cash)}</div><div class="s">${factC!=null?'факт':'розрахунок'}</div></div>
-    ${dep?`<button class="tile tapt" type="button" data-act="balTog" data-id="dep"><div class="l">Страхові у орендодавців</div><div class="v">${f0(dep)}</div><div class="s">повернуться при закритті точок</div></button>`:''}
-    <div class="tile main"><div class="l">Усього наших грошей</div><div class="v">${f0(money+dep)}</div><div class="s">вільні до виплати: ${f0(money-obl)}</div></div></div>`})()}
+    <div class="tile main"><div class="l">Усього наших грошей</div><div class="v">${f0(money+dep)}</div><div class="s">${dep?'з них страхові '+f0(dep)+' · ':''}вільні до виплати ${f0(money-obl)}</div></div></div>
   <div class="tbl" style="margin-top:12px"><table class="ut"><thead><tr><th>Звідки</th><th class="num">Рахунок</th><th class="num">Готівка</th><th class="num">Разом</th></tr></thead><tbody>
    ${kv('Залишок на '+balStartTxt(),+op.bank||0,+op.cash||0)}
-   ${kv('+ Виручка'+(thru?' по '+dmy(thru):'')+' <span class="note">· Звіти</span>',revB,revC,'','rev')}
-   ${tail?kv('+ Картка за '+dmy(tailD)+', зарахована '+dmy(B0+'-01'),tail,null):''}
-   ${notYet?kv('− Картка, ще не зарахована банком',-notYet,null):''}
-   ${kv('− Витрати <span class="note">· Витрати</span>',-expB2,-expC2,'','exp')}
-   ${byM(rentM,'− Оренда','Оренда','rent')}
-   ${byM(utilM,'− Комуналка','Комуналка','util')}
-   ${Object.keys(profM).sort().map(m=>kv('− Виплата прибутку за '+mLow(m)+' <span class="note">· Рух коштів</span>',profM[m].bank||null,profM[m].cash||null,'','prof'+m)).join('')}
-   ${reimb.bank||reimb.cash?kv('− Компенсація витрат з особистої картки <span class="note">· Рух коштів</span>',reimb.bank||null,reimb.cash||null,'','reimb'):''}
-   ${oth.bank||oth.cash?kv('± Перекази між рахунком і готівкою <span class="note">· Рух коштів, Взаєморозрахунки</span>',oth.bank||null,oth.cash||null,'','oth'):''}
-   ${kv('= За базою',calcB,calcC,'final')}
-   ${dB!=null||dC!=null?kv('Факт'+(bFact!=null?' (рахунок — виписка '+dmy(ls.to)+')':''),bFact!=null?bFact:calcB,factC!=null?factC:calcC):''}
-   ${dB!=null||dC!=null?kv('Розбіжність з фактом',dB||0,dC||0,Math.abs(dB||0)+Math.abs(dC||0)>1?'neg':''):''}
+   ${kv('+ Виручка'+(thru?' по '+dmy(thru):''),revB+tail-notYet,revC,'','rev')}
+   ${kv('− Витрати',-expB2,-expC2,'','exp')}
+   ${RT||UT?kv('− Оренда й комуналка'+nt([RT?'оренда за '+mm(rentM)+' '+f0(RT):'',UT?'комуналка за '+mm(utilM)+' '+f0(UT):''].filter(Boolean).join(' · ')),-(RT+UT),null,'','ru'):''}
+   ${prof.bank||prof.cash?kv('− Виплата прибутку'+nt('за '+mm(profM)),prof.bank||null,prof.cash||null,'','pay'):''}
+   ${trB||trC?kv('± Перекази',trB||null,trC||null,'','tr'):''}
+   ${kv('= Рахунок і готівка',calcB,calcC,'final')}
+   ${dep?tot('+ Страхові у орендодавців',dep,'','dep'):''}
+   ${dep?tot('= Усього наших грошей',calcB+calcC+dep,'final'):''}
   </tbody></table></div>
-  ${dB&&Math.abs(dB)>1?`<p class="note" style="margin:4px 0 0">Розбіжність по рахунку — операції у виписці, яких немає в базі. Їх видно в «Рух по рахунку» з позначкою «немає в базі».</p>`:''}
+  ${bFact!=null?`<p class="note" style="margin:4px 0 0">Рахунок за випискою на ${dmy(ls.to)}: <b>${f0(bFact)}</b>${dB&&Math.abs(dB)>1?` · розбіжність ${f0(dB)} — див. «Рух по рахунку»`:' ✓'}</p>`:''}`})()}
   <div class="glabel" style="margin-top:14px">Кому ми винні</div>
-   ${kv2('Владу — витрати з його картки, ще не компенсовані',f0(vOwe),'','oV')}${dOwe>0.5?kv2('Даниїлу — витрати з його картки, ще не компенсовані',f0(dOwe),'','oD'):''}${kv2('Анатолію за роботи',f0(ana),'','ana')}${kv2('Оренда й комуналка — нараховано, не сплачено',f0(unpaid),'','unp')}${danDev>0.5?kv2('Даниїлу — розвиток своїми грошима, без внеску <span class="note">· Інвестиції</span>',f0(danDev),'','dev'):''}${kv2('= Разом боргів',f0(obl),'final')}
-   ${kv2('Вільні гроші',f0(money-obl),'final')}</section>`;
+   ${vOwe>0.5?kv2('Владу — витрати з його картки',f0(vOwe),'','oV'):''}${dOwe>0.5?kv2('Даниїлу — витрати з його картки',f0(dOwe),'','oD'):''}${ana>0.5?kv2('Анатолію за роботи',f0(ana),'','ana'):''}${unpaid>0.5?kv2('Оренда й комуналка — не сплачено',f0(unpaid),'','unp'):''}${danDev>0.5?kv2('Даниїлу — розвиток без внеску',f0(danDev),'','dev'):''}${kv2('= Разом боргів',f0(obl),'final')}
+   ${kv2('Вільні до виплати',f0(money-obl),'final')}</section>`;
 }
 function profBlock(ms,profM,B0){
   const pm=prevMonthOf(B0), list=(pm?[pm]:[]).concat(ms), mLow=m=>MN[+m.slice(5)-1];
