@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261124a">
+<meta name="wl-build" content="20261124b">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261124a"></script>
+<script src="config.js?v=20261124b"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261124a"></script>
+<script src="shim.js?v=20261124b"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2001,9 +2001,10 @@ function devxForm(x){const pts=[...pointsList().map(p=>[p.id,p.name]),...Object.
   let arts=DEVA.map(g=>`<div class="full"><div class="glabel">${g.g}</div><div class="chips">${g.items.map(([a])=>chip(a,art===a)).join('')}</div></div>`).join('');
   if(!art&&x.typ)arts=`<div class="full"><div class="glabel">Поточна стаття</div><div class="chips">${chip(x.typ,true)}</div></div>`+arts;
   return `<div class="full"><div class="glabel">Хто платив</div>${seg('payer',payer,[['Даниїл','Даниїл'],['Влад','Влад']])}</div>`+
-    `<div class="full"><div class="glabel">Звідки оплачено</div>${seg('src',x.paidFrom||(e&&e.paidFrom)||(payer==='Влад'?'bank':'cash'),Object.entries(SRC))}</div>`+
-    `<div class="full"><div class="glabel">Як рахуємо</div>${seg('fund',fund,[['inc','З доходу'],['inv','Інвестиція']])}</div>`+
-    `<div class="full poolBox" style="display:${fund==='inv'?'block':'none'}">${sel('inv','З яких грошей',x.inv||(x.a?'':(invPools()[0]||{}).id||''),[['','Свої гроші платника']].concat(invPools(x.inv).map(i=>[i.id,'Внесок '+(i.investor||'')+' '+(i.date?dmy(i.date):'')+' · '+HOLD[i.holder]+' · залишок '+f0(invLeft(i.id)+(i.id===x.inv?+x.a||0:0))])),true)}</div>`+
+    (()=>{const pl=invPools(x.inv), left=pl.reduce((a,q)=>a+invLeft(q.id),0)+(x.inv?+x.a||0:0);
+      const v=x.fund==='inc'?'inc':x.inv?'pool':(x.a?'own':(pl.length?'pool':'own'));
+      const o=[['inc','З доходу'],...(pl.length||x.inv?[['pool','З внеску'+(left>0.5?' · '+f0(left):'')]]:[]),['own','Свої гроші']];
+      return `<div class="full"><div class="glabel">Звідки гроші</div>${seg('fund',v,o)}</div>`})()+
     arts+
     `<label class="full amount">Сума, грн<input id="f_amount" name="amount" value="${esc(x.a??'')}" inputmode="decimal" autocomplete="off" placeholder="0"></label>`+
     `<label class="full">Призначення платежу<input name="p" value="${esc(x.p||'')}" autocomplete="off" placeholder="напр.: кабель 100 м 3×1,5 · ДСП 12 листів · доставка автомата"></label>`+
@@ -2013,7 +2014,7 @@ function devxForm(x){const pts=[...pointsList().map(p=>[p.id,p.name]),...Object.
       const opts=(multi?[['__keep','Кілька точок: '+lk.map(ilName).join(', ')]]:[]).concat([['','Уся мережа']],open,[['__new','+ Нова локація…']]);
       return sel('point','Точка',cv,opts)+`<label class="full newLoc" style="display:none">Назва нової локації<input name="newLoc" autocomplete="off" placeholder="напр.: Урлівська 21А"></label>`})()+
     fld('date','Дата',x.d||defDate(),{type:'date'})}
-function wireDevx(){const f=$('#sf');f.addEventListener('change',e=>{if(e.target.name==='fund'){const b=f.querySelector('.poolBox');if(b)b.style.display=e.target.value==='inv'?'block':'none'}if(e.target.name==='payer'&&!f.dataset.srcTouched){const r=f.querySelector(`input[name=src][value=${e.target.value==='Влад'?'bank':'cash'}]`);if(r)r.checked=true}if(e.target.name==='src')f.dataset.srcTouched='1'});const sp=f.querySelector('[name=point]'),b=f.querySelector('.newLoc');if(sp&&b)sp.addEventListener('change',()=>{b.style.display=sp.value==='__new'?'':'none';if(sp.value==='__new')b.querySelector('input').focus()})}
+function wireDevx(){const f=$('#sf');f.addEventListener('change',e=>{if(e.target.name==='payer'&&!f.dataset.srcTouched){const r=f.querySelector(`input[name=src][value=${e.target.value==='Влад'?'bank':'cash'}]`);if(r)r.checked=true}if(e.target.name==='src')f.dataset.srcTouched='1'});const sp=f.querySelector('[name=point]'),b=f.querySelector('.newLoc');if(sp&&b)sp.addEventListener('change',()=>{b.style.display=sp.value==='__new'?'':'none';if(sp.value==='__new')b.querySelector('input').focus()})}
 function saveDevx(id,x){return async fd=>{
   if(!fd.art)return 'Оберіть статтю';const a=parseNum(fd.amount);if(a===null||!a)return 'Вкажіть суму';
   let pv=fd.point;
@@ -2029,10 +2030,11 @@ function saveDevx(id,x){return async fd=>{
   const typ=DEVA_T[fd.art]||(DEVT.includes(fd.art)?fd.art:'Інше'), art=DEVA_T[fd.art]?fd.art:(x.art||'');
   const doc={...x,d,a,p:String(fd.p||'').trim()||art||typ,typ,art,loc,how:same?x.how:(ks[0]==='gen'?'загальне':ks.length>1?'порівну':'адреса'),src:x.src||'База',by:x.by||me||''};delete doc.id;delete doc.dApprox;
   if(inc){const eid=x.exp||db.collection('exp').doc().id, e0=S.exp[eid]||{};
-    const ed={...e0,by:e0.by||me||'',month:m,date:d,article:DEV2ART(typ),cat:'Розвиток',amount:a,payer:fd.payer||'Даниїл',paidFrom:fd.src||(fd.payer==='Влад'?'bank':'cash'),point:ks.length===1&&S.points[ks[0]]?ks[0]:'',purpose:doc.p,note:''};
+    const ed={...e0,by:e0.by||me||'',month:m,date:d,article:DEV2ART(typ),cat:'Розвиток',amount:a,payer:fd.payer||'Даниїл',paidFrom:x.exp&&S.exp[x.exp]&&S.exp[x.exp].payer===fd.payer?S.exp[x.exp].paidFrom||(fd.payer==='Влад'?'bank':'cash'):(fd.payer==='Влад'?'bank':'cash'),point:ks.length===1&&S.points[ks[0]]?ks[0]:'',purpose:doc.p,note:''};
     if(!await w(()=>db.doc('exp/'+eid).set(ed)))return 'Не збереглося';doc.fund='inc';doc.exp=eid;delete doc.who;delete doc.inv}
-  else{if(x.exp&&S.exp[x.exp])await w(()=>db.doc('exp/'+x.exp).delete());delete doc.exp;delete doc.fund;doc.who=fd.payer||'Даниїл';if(fd.inv&&(S.inv||{})[fd.inv]){doc.inv=fd.inv;doc.who=S.inv[fd.inv].investor||doc.who}else delete doc.inv}
-  doc.paidFrom=fd.src||(fd.payer==='Влад'?'bank':'cash');
+  else{if(x.exp&&S.exp[x.exp])await w(()=>db.doc('exp/'+x.exp).delete());delete doc.exp;delete doc.fund;doc.who=fd.payer||'Даниїл';
+    if(fd.fund==='pool'){const pl=invPools(x.inv), pick=(x.inv&&pl.find(q=>q.id===x.inv))||pl.find(q=>q.holder===doc.who&&invLeft(q.id)>0.5)||pl.find(q=>invLeft(q.id)>0.5);if(!pick)return 'Немає внеску із залишком';doc.inv=pick.id}else delete doc.inv}
+  delete doc.paidFrom;
   if(!doc.art)delete doc.art;ls.set('wl_payer',fd.payer||'Даниїл');
   if(!await w(()=>db.doc('devx/'+id).set(doc)))return 'Не збереглося';toast('Збережено')}}
 function addDevx(){openSheet('Нова витрата',mLabel(cur),expModeSw('dev')+devxForm({}),saveDevx(db.collection('devx').doc().id,{}));wireDevx();wireMode()}
