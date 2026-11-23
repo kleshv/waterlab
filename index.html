@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261125k">
+<meta name="wl-build" content="20261125l">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261125k"></script>
+<script src="config.js?v=20261125l"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261125k"></script>
+<script src="shim.js?v=20261125l"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -929,7 +929,8 @@ function viewSettle(){
   const debt=b; // >0: Влад винен; <0: у Даниїла гроші понад розрахунок
   let cut=-1;L.forEach((it,i)=>{if(Math.abs(it.bal)<0.5)cut=i});
   const P=L.slice(cut+1).filter(it=>it.kind==='p'), M=L.slice(cut+1).filter(it=>it.kind==='m');
-  const danExp=om?Object.values(S.exp).filter(e=>e.month===om&&e.payer==='Даниїл'&&!e.ana1).reduce((a,e)=>a+(+e.amount||0),0):0;
+  const DE=om?Object.values(S.exp).filter(e=>e.month===om&&e.payer==='Даниїл'&&!e.ana1).map(e=>({date:e.date,t:esc(e.article)+(e.purpose?' · '+esc(e.purpose):'')+(svcLab(e)?' · фільтри (робота — у виплаті Анатолію)':''),a:expCashAmt(e)})).concat(Object.values(S.svc).filter(j=>j.type==='pay'&&(j.date||'').slice(0,7)===om&&+j.amount).map(j=>({date:j.date,t:'Виплата Анатолію',a:+j.amount}))).filter(r=>r.a>0.005).sort((a,b)=>(a.date||'').localeCompare(b.date||'')):[];
+  const danExp=DE.reduce((a,r)=>a+r.a,0);
   const got=debt<0?-debt:0;
   const ANA=Object.values(S.exp).filter(e=>e.payer==='Сервіс'&&!isClosed(e.month)), anaSum=ANA.reduce((a,e)=>a+(+e.amount||0),0);
   const JA=jobsAll(), anaDebt=JA.reduce((a,j)=>a+(j.type==='pay'?-(+j.amount||0):j.st==='new'?0:(+j.amount||0)),0), anaNew=JA.filter(j=>j.type==='work'&&j.st==='new').reduce((a,j)=>a+(+j.amount||0),0);
@@ -942,7 +943,7 @@ function viewSettle(){
   const DP=invList().filter(i=>i.holder==='Даниїл'), dIds=new Set(DP.map(i=>i.id));
   const DD=Object.values(S.devx||{}).filter(x=>x.fund!=='inc'&&(dIds.has(x.inv)||(!x.inv&&x.who==='Даниїл'))).sort((a,b)=>(a.d||'').localeCompare(b.d||''));
   const dIn=DP.reduce((a,i)=>a+(+i.hrn||0),0), dOut=DD.reduce((a,x)=>a+(+x.a||0),0);
-  const sm='<span style="font-size:13px;font-weight:400">', DE=om?Object.values(S.exp).filter(e=>e.month===om&&e.payer==='Даниїл'&&!e.ana1).sort((a,b)=>(a.date||'').localeCompare(b.date||'')):[];
+  const sm='<span style="font-size:13px;font-weight:400">';
   if(hasOp)tiles.push(debt>0.5?tile('op','Операційна діяльність',f0(debt)+' '+sm+'Влад винен</span>','за закритими місяцями'):tile('op','Операційна діяльність',f0(Math.abs(left))+(left<-0.5?' '+sm+'винні Даниїлу</span>':' '+sm+'у Даниїла</span>'),mLabel(om).toLowerCase()+' · отримав '+f0(got)+' · витрати '+f0(danExp)));
   if(dd>0.5)tiles.push(tile('dev','Розвиток',f0(dd)+' '+sm+'винні Даниїлу</span>','отримав '+f0(dIn)+' · витрати '+f0(dOut)));
   if(tiles.length)h+=`<div class="tiles">${tiles.join('')}</div>`;
@@ -954,7 +955,7 @@ function viewSettle(){
       if(it.kind==='m')row('Розподіл 50/50 за '+mLabel(it.key).toLowerCase()+' · '+(it.amount>=0?'належить Даниїлу':'належить Владу'),(it.amount>=0?'−':'')+f0(Math.abs(it.amount)),'note');
       else R.push(`<span class="inrow ${canWrite?'click':''}" data-act="${canWrite?'editPay':''}" data-id="${it.id}">${dmy(it.p.date).slice(0,5)} · переказ ${esc(it.p.from)} → ${it.p.from==='Влад'?'Даниїл':'Влад'}${it.p.src==='bank'?' з ФОП':''}${it.p.note?' · '+esc(it.p.note):''}</span><span class="num inrow">${it.amount<0?'':'−'}${f0(Math.abs(it.amount))}</span>`)}
     row(debt>0.5?'Влад винен Даниїлу':'Отримав',f0(Math.abs(debt)));
-    if(om){hd('Витрати · '+mLabel(om).toLowerCase());for(const e of DE)row((e.date?dmy(e.date).slice(0,5):'—')+' · '+esc(e.article)+(e.purpose?' · '+esc(e.purpose):''),f0(e.amount),'note');
+    if(om){hd('Витрати · '+mLabel(om).toLowerCase());for(const e of DE)row((e.date?dmy(e.date).slice(0,5):'—')+' · '+e.t,f0(e.a),'note');
       row('Витрати',f0(danExp));
       row('<b>'+(left<-0.5?'= Винні Даниїлу':'= У Даниїла')+'</b>','<b>'+f0(Math.abs(left))+'</b>')}}
   if(setOpen==='dev'&&dd>0.5){
