@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261124k">
+<meta name="wl-build" content="20261124l">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261124k"></script>
+<script src="config.js?v=20261124l"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261124k"></script>
+<script src="shim.js?v=20261124l"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2685,7 +2685,7 @@ function reconData(){
   for(const m of monthsList()) if(m>=st) for(const pid of pids){ if(!S.pm[m+'_'+pid])continue; const x=payRow(m,pid), me_=monthEnd(m), nm=S.points[pid]?.name||pid;
     if(W){ if(!hasW(x.py))continue; const wd=+x.py.waterDue||0;
       if(U&&wd) ev.push({m,d:x.py.bTo||me_,doc:'Вода за '+mLabel(m).toLowerCase(),pid,acc:wd,paid:0,k:'w'});
-      if(U&&x.py.utilPaidW) ev.push({m,d:x.py.utilDateW||me_,doc:'Оплата за воду за '+mLabel(m).toLowerCase(),pid,acc:0,paid:+x.py.utilPaidW,k:'w'});
+      if(U&&x.py.utilPaidW) ev.push({m,d:x.py.utilDateW||me_,doc:'Оплата за воду за '+mLabel(m).toLowerCase(),pid,acc:0,paid:+x.py.utilPaidW,k:'w',t:'pay'});
       continue}
     const f2a=f2Of(m,pid,x.rentDue), f2p=(S.points[pid]?.payeeF2||'').trim()?(+x.py.rentCash||0):0;
     if(F2){ if(R&&f2a) ev.push({m,d:me_,doc:'Оренда за '+mLabel(m).toLowerCase(),pid,acc:f2a,paid:0,k:'r'});
@@ -2693,10 +2693,10 @@ function reconData(){
       continue}
     const wPart=S.points[pid]?.payee2&&hasW(x.py)?(+x.py.waterDue||0):0;
     if(R&&x.rentDue-f2a) ev.push({m,d:me_,doc:'Оренда за '+mLabel(m).toLowerCase(),pid,acc:x.rentDue-f2a,paid:0,k:'r'});
-    if(R&&x.rentPaid-f2p) ev.push({m,d:x.rentDate||me_,doc:'Оплата оренди за '+mLabel(m).toLowerCase(),pid,acc:0,paid:x.rentPaid-f2p,k:'r'});
+    if(R&&x.rentPaid-f2p) ev.push({m,d:x.rentDate||me_,doc:'Оплата оренди за '+mLabel(m).toLowerCase(),pid,acc:0,paid:x.rentPaid-f2p,k:'r',t:'pay'});
     if(U&&x.utilDue-wPart) ev.push({m,d:x.py.bTo||me_,doc:'Комуналка за '+mLabel(m).toLowerCase()+(x.py.utilBill!=null?(isDocRef(x.py.basis)?' · '+x.py.basis.trim():'')+(billPeriodTxt(x.py)?' · період '+billPeriodTxt(x.py):''):' (за показниками)'),pid,acc:x.utilDue-wPart,paid:0,k:'u'});
-    if(U&&+x.py.utilPaid) ev.push({m,d:x.utilDate||me_,doc:'Оплата комуналки за '+mLabel(m).toLowerCase(),pid,acc:0,paid:+x.py.utilPaid,k:'u'});
-    if(U)for(const e of utilX(x.py))ev.push({m,d:e.d||me_,doc:'Оплата комуналки за '+mLabel(m).toLowerCase()+(e.cp?' · '+e.cp:'')+(e.to?' · '+e.to:''),pid,acc:0,paid:+e.a,k:'u'});}
+    if(U&&+x.py.utilPaid) ev.push({m,d:x.utilDate||me_,doc:'Оплата комуналки за '+mLabel(m).toLowerCase(),pid,acc:0,paid:+x.py.utilPaid,k:'u',t:'pay',xi:-1});
+    if(U)(x.py.utilX||[]).forEach((e,i)=>{if(+e.a)ev.push({m,d:e.d||me_,doc:'Оплата комуналки за '+mLabel(m).toLowerCase()+(e.cp?' · '+e.cp:'')+(e.to?' · '+e.to:''),pid,acc:0,paid:+e.a,k:'u',t:'pay',xi:i})});}
   const cpk=reconCp==='all'?'main':reconCp;
   for(const [id,a] of Object.entries(S.radj))if(pids.includes(a.point)&&(a.cp||'main')===cpk&&(a.kind!=='rent'||R)&&(a.kind!=='util'||U)){const v=+a.amount||0;
     ev.push({m:(a.date||'').slice(0,7),d:a.date,doc:(a.type==='open'?'Початкове сальдо':'Коригування')+(a.kind&&a.kind!=='all'?(a.kind==='rent'?' · оренда':' · комуналка'):'')+(a.note?' · '+a.note:''),pid:a.point,acc:v>0?v:0,paid:v<0?-v:0,k:'a',aid:id})}
@@ -2720,6 +2720,16 @@ function radjForm(a){
 function saveRadj(id,base){return async fd=>{const n=parseNum(String(fd.amount||''));if(n===null||n<=0)return 'Вкажіть суму';if(!fd.date)return 'Вкажіть дату';
   const doc={...base,date:fd.date,amount:(fd.dir==='minus'?-1:1)*n,kind:fd.kind||'all',note:fd.note||'',by:me||''};
   if(!await w(()=>db.doc('radj/'+id).set(doc)))return 'Не збереглося';toast('Збережено')}}
+function addReconPay(){if(!reconPid)return;const p=S.points[reconPid]||{};const ms=monthsList().filter(m=>S.pm[m+'_'+reconPid]).reverse();
+  openSheet('Нова оплата',p.name||reconPid,sel('kind','Що',reconKind==='rent'?'rent':'util',[['util','Комуналка'],['rent','Оренда']],true)+sel('m','За місяць',ms[1]||ms[0]||cur,ms.map(m=>[m,mLabel(m)]),true)+
+    fld('amount','Сума, грн','')+fld('date','Дата оплати',todayISO(),{type:'date'})+fld('cp','Контрагент',p.payee||'',{type:'text',full:true})+fld('to','Призначення','',{type:'text',full:true}),
+    async fd=>{const a=parseNum(fd.amount);if(a===null||a<=0)return 'Вкажіть суму';const m=fd.m, py=S.pay[m+'_'+reconPid]||{};
+      if(fd.kind==='rent'){if(py.rentPaid!=null)return 'Оплата оренди за '+mLabel(m).toLowerCase()+' вже є ('+f0(py.rentPaid)+'). Відкрийте її в таблиці.';
+        if(!await savePayDoc(m,reconPid,{rentPaid:a,rentDate:fd.date||''}))return 'Не збереглося'}
+      else{const it={a,d:fd.date||'',cp:fd.cp||'',to:fd.to||''};
+        if(py.utilPaid==null){if(!await savePayDoc(m,reconPid,{utilPaid:a,utilDate:it.d,utilCp:it.cp,utilTo:it.to}))return 'Не збереглося'}
+        else if(!await savePayDoc(m,reconPid,{utilX:[...(py.utilX||[]),it]}))return 'Не збереглося'}
+      render();toast('Оплату додано')})}
 function addRadj(type){
   if(!reconPid)return; const p=S.points[reconPid]||{}, cpn=(reconCps(reconPid).find(c=>c.k===reconCp)||{}).name||'';
   const base={type,point:reconPid,cp:reconCp==='all'?'main':reconCp};
@@ -2729,13 +2739,23 @@ function editRadj(id){
   const a=S.radj[id];if(!a)return; const p=S.points[a.point]||{};
   openSheet(a.type==='open'?'Початкове сальдо':'Коригування',(p.name||a.point),radjForm(a),saveRadj(id,{type:a.type,point:a.point,cp:a.cp||'main'}),canWrite?async()=>await w(()=>db.doc('radj/'+id).delete()):null);
 }
-function infoSheet(title,sub,html,onEdit){
+async function reconDel(r){const id=r.m+'_'+r.pid, py=S.pay[id]||{};
+  if(r.k==='r'&&r.t==='pay')return savePayDoc(r.m,r.pid,{rentPaid:null,rentCash:null,rentDate:''});
+  if(r.k==='w'&&r.t==='pay')return savePayDoc(r.m,r.pid,{utilPaidW:null,utilDateW:''});
+  if(r.k==='u'&&r.t==='pay'){const X=[...(py.utilX||[])];
+    if(r.xi>=0){X.splice(r.xi,1);return savePayDoc(r.m,r.pid,{utilX:X})}
+    const f=X.findIndex(e=>+e.a);if(f>=0){const n=X.splice(f,1)[0];return savePayDoc(r.m,r.pid,{utilPaid:+n.a,utilDate:n.d||'',utilCp:n.cp||'',utilTo:n.to||'',utilX:X})}
+    return savePayDoc(r.m,r.pid,{utilPaid:null,utilDate:'',utilCp:'',utilTo:''})}
+  if(r.k==='u')return savePayDoc(r.m,r.pid,{utilBill:null,utilB0:null,basis:''});
+  return false}
+function infoSheet(title,sub,html,onEdit,onDel){
   const md=$('#modal');
   md.innerHTML=`<div class="overlay" id="ov"><div class="sheet"><h3>${esc(title)}</h3>${sub?`<div class="note">${esc(sub)}</div>`:''}<div class="info">${html}</div>
-  <div class="actions">${onEdit?`<button type="button" class="btn left" id="edBtn">Змінити</button>`:''}<button type="button" class="btn pri" id="cancelBtn">Закрити</button></div></div></div>`;
+  <div class="actions">${onDel?`<button type="button" class="btn left danger" id="delBtn">Видалити</button>`:''}${onEdit?`<button type="button" class="btn ${onDel?'':'left'}" id="edBtn">Змінити</button>`:''}<button type="button" class="btn pri" id="cancelBtn">Закрити</button></div></div></div>`;
   const close=()=>{md.innerHTML=''};
   $('#ov').addEventListener('click',e=>{if(e.target.id==='ov')close()}); $('#cancelBtn').onclick=close;
   if(onEdit) $('#edBtn').onclick=()=>{close();onEdit()};
+  if(onDel){const b=$('#delBtn');b.onclick=async()=>{if(!b.dataset.c){b.dataset.c=1;b.textContent='Точно видалити?';return}b.disabled=true;const ok=await onDel();if(ok!==false){close();render();toast('Видалено')}else b.disabled=false}}
 }
 function reconInfo(i){
   const r=reconRows[+i]; if(!r) return;
@@ -2746,7 +2766,7 @@ function reconInfo(i){
   const kv=(k,v)=>`<div class="kv"><span>${k}</span><b>${v}</b></div>`;
   const edit=canWrite?(r.k==='u'||r.k==='w'?()=>editBill(r.pid,r.m):()=>editRent(r.pid,r.m)):null;
   let h='';
-  if(r.k==='w'){h+=kv('Нараховано за воду',f0(+py.waterDue||0)+' грн')+kv('Сплачено',py.utilPaidW!=null?f0(py.utilPaidW)+' грн'+(py.utilDateW?' · '+dmy(py.utilDateW):''):'ще ні');infoSheet(r.doc,(p.name||r.pid)+' · '+(p.payee2||''),h,edit);return}
+  if(r.k==='w'){h+=kv('Нараховано за воду',f0(+py.waterDue||0)+' грн')+kv('Сплачено',py.utilPaidW!=null?f0(py.utilPaidW)+' грн'+(py.utilDateW?' · '+dmy(py.utilDateW):''):'ще ні');infoSheet(r.doc,(p.name||r.pid)+' · '+(p.payee2||''),h,edit,canWrite&&r.t==='pay'?()=>reconDel(r):null);return}
   if(r.k==='u'){
     const hasB=py.bw1!=null||py.be1!=null, src=hasB?'з рахунку':'наші показники';
     const W=hasB?{a:py.bw0,b:py.bw1,t:py.bwT}:{a:u.w0,b:u.w1,t:u.wT}, E=hasB?{a:py.be0,b:py.be1,t:py.beT}:{a:u.e0,b:u.e1,t:u.eT};
@@ -2769,7 +2789,7 @@ function reconInfo(i){
     h+=kv('Сплачено',x.rentPaid!=null?f0(x.rentPaid)+' грн'+(x.rentDate?' · '+dmy(x.rentDate):''):'ще ні');
     if(py.rentNote) h+=kv('Коментар',esc(py.rentNote));
   }
-  infoSheet(r.doc,(p.name||r.pid)+(p.payee?' · '+p.payee:''),h,edit);
+  infoSheet(r.doc,(p.name||r.pid)+(p.payee?' · '+p.payee:''),h,edit,canWrite&&(r.t==='pay'||(r.k==='u'&&py.utilBill!=null))?()=>reconDel(r):null);
 }
 const dmy=d=>d?d.slice(8,10)+'.'+d.slice(5,7)+'.'+d.slice(0,4):'';
 function viewRecon(){
@@ -2788,7 +2808,7 @@ function viewRecon(){
     <label>З дати<input type="date" id="rc_from" value="${reconFrom}" min="${payStart()}-01"></label>
     <label>По дату<input type="date" id="rc_to" value="${reconTo}"></label>
   </div>
-  ${reconCp!=='all'?`<div class="actions" style="justify-content:flex-start;margin:0 0 8px"><button class="btn sm" data-act="addRadj" data-id="open" type="button">+ Початкове сальдо</button><button class="btn sm" data-act="addRadj" data-id="adj" type="button">+ Коригування</button></div>`:''}
+  ${reconCp!=='all'?`<div class="actions" style="justify-content:flex-start;margin:0 0 8px"><button class="btn sm" data-act="addReconPay" type="button">+ Оплата</button><button class="btn sm" data-act="addRadj" data-id="adj" type="button">+ Нарахування / коригування</button><button class="btn sm" data-act="addRadj" data-id="open" type="button">+ Початкове сальдо</button></div>`:''}
   <div class="seg2" role="tablist">${[['all','Усе'],['rent','Оренда'],['util','Комуналка']].map(([k,l])=>`<button type="button" class="${reconKind===k?'on':''}" data-act="setRecon" data-id="kind|${k}">${l}</button>`).join('')}</div>
   
   <div class="tiles t3"><div class="tile"><div class="l">Сальдо на ${dmy(reconFrom)}</div><div class="v">${f0(d.open)}</div><div class="s">на початок періоду</div></div>
@@ -2888,7 +2908,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({setFlowAcc,flowCards,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilCMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,toggleGap,invPick,toggleDD,setSetOpen,ilPick,ilType,editDevx,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,utilFromBank,pmInfo,centralInfo,capexInfo,addRadj,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({setFlowAcc,flowCards,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilCMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,toggleGap,invPick,toggleDD,setSetOpen,ilPick,ilType,editDevx,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,utilFromBank,pmInfo,centralInfo,capexInfo,addRadj,addReconPay,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
