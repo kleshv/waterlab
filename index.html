@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261124x">
+<meta name="wl-build" content="20261124y">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261124x"></script>
+<script src="config.js?v=20261124y"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261124x"></script>
+<script src="shim.js?v=20261124y"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -774,12 +774,12 @@ const JOBART={kit:'Сервіс і заміна фільтрів',mem:'Серв�
 const jobsAll=()=>Object.entries(S.svc).filter(([,e])=>e.type==='work'||e.type==='pay').map(([id,e])=>({id,...e})).sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
 const jobPend=()=>jobsAll().filter(j=>j.type==='work'&&j.st==='new');
 function viewJobs(){
-  const L=jobsAll(), owner=role==='owner';let bal=0;for(const j of L)bal+=j.type==='work'?(+j.amount||0):-(+j.amount||0);
+  const L=jobsAll(), owner=role==='owner';let bal=0,pend=0;for(const j of L){if(j.type==='work'&&j.st==='new'){pend+=+j.amount||0;continue}bal+=j.type==='work'?(+j.amount||0):-(+j.amount||0)}
   const m=todayISO2().slice(0,7), mw=L.filter(j=>j.type==='work'&&j.date.slice(0,7)===m), mp=L.filter(j=>j.type==='pay'&&j.date.slice(0,7)===m), P=jobPend();
   const sum=a=>a.reduce((x,j)=>x+(+j.amount||0),0);
   let h=`<section class="card"><div class="shead"><h2>Роботи Анатолія й розрахунок</h2></div>
   ${canWrite?`<div class="jacts"><button class="btn pri" data-act="addSvc" type="button">+ Заміна</button><button class="btn" data-act="addJob" type="button">+ Інша робота</button>${owner?`<button class="btn" data-act="addJobPay" type="button">+ Виплата</button>`:''}</div>`:''}
-  <div class="tiles t3"><div class="tile hi"><div class="l">${bal>=0?'Винні Анатолію':'Анатолій винен'}</div><div class="v">${f0(Math.abs(bal))}</div><div class="s">роботи − виплати</div></div>
+  <div class="tiles t3"><div class="tile hi"><div class="l">${bal>=0?'Винні Анатолію':'Анатолій винен'}</div><div class="v">${f0(Math.abs(bal))}</div><div class="s">підтверджені роботи − виплати${pend?' · ще чекає '+f0(pend):''}</div></div>
   <div class="tile"><div class="l">Роботи · ${MN[+m.slice(5)-1]}</div><div class="v">${f0(sum(mw))}</div><div class="s">${mw.length} записів</div></div>
   <div class="tile"><div class="l">Виплачено · ${MN[+m.slice(5)-1]}</div><div class="v">${f0(sum(mp))}</div><div class="s">${mp.length} виплат</div></div></div></section>`;
   if(P.length)h+=`<section class="card"><h2>Чекає підтвердження</h2><p class="note">${owner?'Після підтвердження робота й фільтри потрапляють у витрати WaterLab (платить Даниїл).':'Даниїл підтвердить — і запис піде у витрати.'}</p>
