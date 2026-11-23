@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261125m">
+<meta name="wl-build" content="20261125n">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261125m"></script>
+<script src="config.js?v=20261125n"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261125m"></script>
+<script src="shim.js?v=20261125n"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2155,7 +2155,7 @@ function balState(){
   for(const m of ms){
     const md=S.months[m]||{};
     const ex={bank:0,cash:0};for(const e of Object.values(S.exp))if(e.month===m){const sr=expSrc(e);if(sr==='cash')ex.cash+=+e.amount||0;else if(sr==='bank')ex.bank+=+e.amount||0}
-    for(const j of Object.values(S.svc))if(j.type==='pay'&&(j.date||'').slice(0,7)===m)ex.cash+=+j.amount||0; /* роботи Анатолія: нараховані на «Сервіс», гроші йдуть з готівки при виплаті */
+    /* виплати Анатолію не віднімаються окремо: роботи вже у витратах (Даниїл платить з грошей під витрати) */ /* роботи Анатолія: нараховані на «Сервіс», гроші йдуть з готівки при виплаті */
     let rent=0,util=0,rentCashOut=0;
     for(const p of Object.values(S.pay)){
       if(p.rentPaid){const d=p.rentDate||monthEnd(p.month);if(inM(d,m)){rent+=(+p.rentPaid)-(+p.rentCash||0);rentCashOut+=(+p.rentCash||0)}}
@@ -2227,7 +2227,6 @@ function flowBase(m,k){const it=[],add=(date,amt,label,kind,ref)=>{if(Math.abs(a
   }else{
     for(const [d,v] of Object.entries(SD))if(v.cash>0)add(d,v.cash,'Готівка з автоматів','cashin',d);
     for(const [id,e] of Object.entries(S.exp))if(e.month===m&&expSrc(e)==='cash')add(e.date||monthEnd(m),-(+e.amount||0),e.article+(e.cp?' · '+e.cp:e.purpose?' · '+e.purpose:'')+(e.point?' · '+pn(e.point):''),'exp','exp/'+id);
-    for(const [id,j] of Object.entries(S.svc))if(j.type==='pay'&&(j.date||'').slice(0,7)===m&&+j.amount)add(j.date,-(+j.amount),'Виплата Анатолію','svcpay','svc/'+id);
   }
   for(const [id,x] of Object.entries(S.mov))if((x.date||'').slice(0,7)===m){const a=+x.amount||0;
     if(x.to===k)add(x.date,a,(ACC[x.from]||x.from)+' → '+(ACC[k]||k)+(x.note?' · '+x.note:''),'mov','mov/'+id);
@@ -2429,7 +2428,7 @@ function moneyCard(){
   const expB=sum('bank',r=>r.exp), expC=sum('cash',r=>r.exp), rent=sum('bank',r=>r.rent), util=sum('bank',r=>r.util);
   D.rev=ms.map(m=>{const md=S.months[m]||{};return [mLabel(m)+(md.gwThru?' · по '+dd(md.gwThru):'')+' · картка '+f0(+md.bank||0)+' · готівка '+f0(+md.cash||0),(+md.bank||0)+(+md.cash||0)]});
   D.exp=Object.values(S.exp).filter(e=>e.month>=B0&&['bank','cash'].includes(expSrc(e))).sort((a,b)=>(a.date||a.month).localeCompare(b.date||b.month)).map(e=>[dd(e.date)+' · '+esc(e.article)+(e.purpose?' · '+esc(e.purpose).slice(0,50):'')+' · '+esc(payerOf(e))+', '+(expSrc(e)==='bank'?'рахунок':'готівка'),+e.amount||0])
-    .concat(Object.values(S.svc).filter(j=>j.type==='pay'&&(j.date||'')>=B0+'-01').map(j=>[dd(j.date)+' · виплата Анатолію (готівка)',+j.amount||0]));
+;
   let prof={bank:0,cash:0},reimb={bank:0,cash:0},oth={bank:0,cash:0};const profM={};
   const acn={bank:'рахунок',cash:'готівка',vlad:'Влад',dan:'Даниїл',ext:'зовні'}, mvl=x=>dd(x.date)+' · '+acn[x.from]+' → '+acn[x.to]+(x.note?' · '+esc(x.note):'');
   const exK={bank:0,cash:0};
