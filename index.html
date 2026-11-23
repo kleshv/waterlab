@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261124u">
+<meta name="wl-build" content="20261124v">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261124u"></script>
+<script src="config.js?v=20261124v"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261124u"></script>
+<script src="shim.js?v=20261124v"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -870,8 +870,7 @@ function expTiles(m,c){const G={};for(const e of c.exps){if(e.cat==='Розви�
   const top=Object.entries(G).sort((a,b)=>b[1]-a[1]), keep=top.slice(0,5), rest=top.slice(5), oth=rest.reduce((a,[,v])=>a+v,0);
   const t=(l,v,act,id,sub='')=>`<button class="tile tapt" type="button" data-act="${act}" data-id="${esc(id)}"><div class="l">${esc(l)}</div><div class="v">${f0(v)}</div>${sub?`<div class="s">${sub}</div>`:''}</button>`;
   const dev=devRows().filter(r=>(r.d||'').slice(0,7)===m).reduce((a,r)=>a+r.a,0);
-  return fixed.map(([l,v,k])=>t(l+' →',v,'goTab',k)).join('')+keep.map(([g,v])=>t(g,v,'expGrpSheet',m+'|'+g)).join('')+(oth>0.5?t('Інше',oth,'expGrpSheet',m+'|__rest|'+rest.map(([g])=>g).join('~'),rest.length+' статей'):'')+
-    (dev>0.5?`<button class="tile tapt main" type="button" data-act="expGrpSheet" data-id="${m}|__dev"><div class="l">Розвиток</div><div class="v">${f0(dev)}</div><div class="s">інвестиції · окремо від операційних</div></button>`:'')}
+  return fixed.map(([l,v,k])=>t(l+' →',v,'goTab',k)).join('')+keep.map(([g,v])=>t(g,v,'expGrpSheet',m+'|'+g)).join('')+(oth>0.5?t('Інше',oth,'expGrpSheet',m+'|__rest|'+rest.map(([g])=>g).join('~'),rest.length+' статей'):'')}
 function ddsHtml(m){if(role!=='owner'||!m)return '';
   const st=balState(), rb=(st.bank||[]).find(r=>r.m===m), rc=(st.cash||[]).find(r=>r.m===m), md=S.months[m]||{}, inM=d=>(d||'').slice(0,7)===m, D={};balD=D;balT={};
   const A=['bank','cash','vlad','dan'], Z=()=>({bank:0,cash:0,vlad:0,dan:0}), R=[], AN={bank:'ФОП',cash:'каса',vlad:'Влад',dan:'Даниїл',ext:'зовні'};
