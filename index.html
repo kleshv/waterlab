@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261124p">
+<meta name="wl-build" content="20261124q">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261124p"></script>
+<script src="config.js?v=20261124q"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261124p"></script>
+<script src="shim.js?v=20261124q"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2203,8 +2203,10 @@ function flowRows(m){
   const feeOps=bo.filter(o=>o.amt<0&&BANK_FEE_RE.test(o.name+' '+o.purp)&&!/КЛЕЩИНСЬК/i.test(o.name));
   const dd=(a,b)=>Math.abs((new Date(a)-new Date(b))/864e5);
   const linkOf=ref=>{const [c,id]=String(ref||'').split('/');return ((S[c]||{})[id]||{}).bankop||null};
+  const opRow={};
   for(const b of base.filter(x=>!['card','acqfee'].includes(x.kind))){
-    const lk=linkOf(b.ref);if(lk){const o=bo.find(o=>o.id===lk&&!o.used);if(o){o.used=true;rows.push({date:o.date,label:b.label,base:b.amt,bank:+o.amt,st:Math.abs(+o.amt-b.amt)<0.011?'ok':'diff',note:(o.date!==b.date?'у базі '+dmy(b.date)+' · ':'')+'пов\'язано вручну'+(Math.abs(+o.amt-b.amt)<0.011?'':' · різниця '+nf2.format(+o.amt-b.amt)),ref:b.ref});continue}}
+    const lk=linkOf(b.ref);if(lk&&opRow[lk]){const r0=opRow[lk];r0.base=Math.round((r0.base+b.amt)*100)/100;r0.label+=' + '+b.label;r0.st=Math.abs(r0.bank-r0.base)<0.011?'ok':'diff';continue}
+    if(lk){const o=bo.find(o=>o.id===lk&&!o.used);if(o){o.used=true;const r1={date:o.date,label:b.label,base:b.amt,bank:+o.amt,st:Math.abs(+o.amt-b.amt)<0.011?'ok':'diff',note:(o.date!==b.date?'у базі '+dmy(b.date)+' · ':'')+'пов\'язано вручну',ref:b.ref};opRow[lk]=r1;rows.push(r1);continue}}
     let best=null;for(const o of bo)if(!o.used&&(b.kind==='mov'||!/КЛЕЩИНСЬК/i.test(o.name))&&Math.abs(+o.amt-b.amt)<0.011&&dd(o.date,b.date)<=7&&(!best||dd(o.date,b.date)<dd(best.date,b.date)))best=o;
     if(best){best.used=true;rows.push({date:best.date,label:b.label,base:b.amt,bank:+best.amt,st:'ok',note:best.date!==b.date?'у базі '+dmy(b.date):'',ref:b.ref})}
     else if(b.kind==='fee'){const fs=feeOps.filter(o=>!o.used),sum=Math.round(fs.reduce((s,o)=>s+(+o.amt),0)*100)/100;
