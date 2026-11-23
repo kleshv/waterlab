@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261125n">
+<meta name="wl-build" content="20261125p">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261125n"></script>
+<script src="config.js?v=20261125p"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261125n"></script>
+<script src="shim.js?v=20261125p"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1311,6 +1311,9 @@ function homeTodo(m){
   return {rent,noRev,noUtil,rec,noMoney,pm};
 }
 const pct=(a,b)=>b?(a/b*100).toFixed(1).replace('.',',')+'%':'—';
+function homeBridge(m){if(role!=='owner'||isDan()||m!==cur||!S.meta.settings||!balStart()||m<balStart())return '';
+  try{moneyCard()}catch(e){return ''}const B=window._bridge;if(!B)return '';
+  return `<p class="note click" data-act="goTab" data-id="rep:bal" style="margin:8px 0 0">Вільні до виплати <b>${f0(B.free)}</b> · з них невиплачений прибуток за ${MN[+B.m.slice(5)-1]} <b>${f0(B.left)}</b> · решта ${f0(B.free-B.left)}${Math.abs(B.rest)>1?' · <span class="neg">є нерозпізнана різниця</span>':''} <span class="lnk">чому →</span></p>`}
 function viewHome(m){
   const c=calc(m), mt=monthTable(c), md=S.months[m]||{}, ed=canWrite&&!md.closed;
   let h=bkDue()?`<section class="card bkdue"><div class="shead"><div><b>Пора зробити резервну копію</b><div class="note">${bkLast()?'Остання — '+dmy(bkLast().date)+'. ':''}${GD_CID()?'Раз на тиждень — на Google Диск.':'Раз на тиждень.'}</div></div><button class="btn sm pri" data-act="backupJson" type="button" id="bkBtn2">${GD_CID()?'Зберегти в Google Диск':'Зберегти копію'}</button></div></section>`:'';
@@ -1321,6 +1324,7 @@ function viewHome(m){
     <div class="tile"><div class="l">Прибуток, %</div><div class="v ${sgn(mt.op)}">${pct(mt.op,mt.T.rv)}</div><div class="s">до розподілу ${pct(mt.net,mt.T.rv)}</div></div>
     <div class="tile main"><div class="l">До розподілу</div><div class="v">${f0(mt.net)}</div><div class="s">по ${f0(mt.net/2)} кожному</div></div>
   </div>
+  ${homeBridge(m)}
   ${cmpHtml(m)}
   ${ed?`<div class="bigacts one"><button class="btn pri main" data-act="addExp" type="button">+ Витрата</button></div>`:''}
   </section>`;
@@ -2466,6 +2470,22 @@ function moneyCard(){
   {const W=JA.filter(j=>j.type!=='pay'&&j.st!=='new'), P=JA.filter(j=>j.type==='pay');D.ana=[['Роботи підтверджено ('+W.length+')',W.reduce((a,j)=>a+(+j.amount||0),0)],['Виплачено ('+P.length+')',-P.reduce((a,j)=>a+(+j.amount||0),0)]]}
   const danDev=danDevOwed(), obl=ana+unpaid+vOwe+dOwe+danDev;
   {const DP=invList().filter(i=>i.holder==='Даниїл'), inn=DP.reduce((a,i)=>a+(+i.hrn||0),0);D.dev=DP.map(i=>['Внесок '+esc(i.investor||'')+' '+dd(i.date)+' · передано Даниїлу',-(+i.hrn||0)]).concat([['Витрачено Даниїлом на розвиток',inn+danDev]])} window._money=money;
+  // міст: прибуток до розподілу (Головна) → вільні гроші
+  const NM=ms.map(m=>{const c=calc(m);return {m,c,mt:monthTable(c)}}), NET=NM.reduce((a,x)=>a+x.mt.net,0), PP=-(prof.bank+prof.cash), O=(+op.bank||0)+(+op.cash||0);
+  const Racc=NM.reduce((a,x)=>a+x.c.R,0), RUacc=NM.reduce((a,x)=>a+x.c.rent+x.c.water+x.c.elec,0), Eacc=NM.reduce((a,x)=>a+x.c.toir+x.c.fa+x.c.capex,0);
+  const TR=reimb.bank+oth.bank+reimb.cash+oth.cash, dF=(dB||0)+(dC||0);
+  const gap=(revB+tail-notYet+revC-Racc)+(Eacc-expB2-expC2)+(RUacc-rent-util)+TR+dF;
+  const free=money-obl, rest=Math.round((free-(O+NET-PP+gap-obl))*100)/100;
+  for(const x of NM)D['net'+x.m]=[['Виручка по точках',x.c.R],['− Оренда',-x.c.rent],['− Комуналка',-(x.c.water+x.c.elec)],['− Операційні витрати',-(x.c.toir+x.c.fa)]].concat(x.c.capex?[['− Розвиток з доходу',-x.c.capex]]:[]).concat(Math.abs(x.mt.net-x.c.net)>0.01?[['округлення',x.mt.net-x.c.net]]:[]);
+  {const G=[];if(tail)G.push(['Картка за '+dd(tailD)+' прийшла на рахунок у '+MN[+B0.slice(5)-1],tail]);if(notYet)G.push(['Картка після виписки ('+dd(ls&&ls.to)+') ще не на рахунку',-notYet]);
+   const rd=revB+revC-Racc;if(Math.abs(rd)>0.5)G.push(['Гроші за місяць (рахунок + готівка) мінус виручка по точках',rd]);
+   for(const e of Object.values(S.exp))if(e.month>=B0&&!['bank','cash'].includes(expSrc(e)))G.push([dd(e.date)+' · '+esc(e.article)+' · '+esc(payerOf(e))+(expSrc(e)==='card'?', картка':', ще не оплачено')+' — у витратах, з рахунку/готівки не йшло',+e.amount||0]);
+   if(exK.bank+exK.cash)G.push(['Компенсовано витрати з карток (з рахунку/готівки)',-(exK.bank+exK.cash)]);
+   if(RUacc)G.push(['Оренда й комуналка нараховані в прибутку',RUacc]);if(rent+util)G.push(['Оренда й комуналка сплачені',-(rent+util)]);
+   if(Math.abs(TR)>0.5)G.push(['Перекази й компенсації (див. «± Перекази»)',TR]);if(Math.abs(dF)>0.5)G.push(['Розбіжність з випискою / фактом готівки',dF]);
+   const gs=G.reduce((a,[,v])=>a+v,0);if(Math.abs(gap-gs)>0.5)G.push(['Інше',gap-gs]);D.gap=G}
+  D.obl=[['Владу — витрати з його картки',vOwe],['Даниїлу — витрати з його картки',dOwe],['Анатолію за роботи',ana],['Оренда й комуналка — не сплачено',unpaid],['Даниїлу — розвиток без внеску',danDev]].filter(([,v])=>v>0.5).map(([t,v])=>[t,-v]);
+  window._bridge={free,net:NET,paid:PP,left:NM.reduce((a,x)=>a+x.mt.net+((profM[x.m]||{}).bank||0)+((profM[x.m]||{}).cash||0),0),rest,m:ms[ms.length-1]};
   const thru=ms.map(m=>(S.months[m]||{}).gwThru).filter(Boolean).pop();
   const kv2=(a,b,c='',key='')=>{const has=key&&D[key]&&D[key].length;if(has)balT[key]=a.replace(/<[^>]+>/g,'').replace(/·.*$/,'').replace(/^[+−±=\s]+/,'').trim();
     return `<div class="kv ${c}${has?' click':''}" ${has?`data-act="balTog" data-id="${key}"`:''}><span>${a}</span><b class="${has?'lnk':''}">${b}</b></div>`};
@@ -2495,7 +2515,14 @@ function moneyCard(){
   ${bFact!=null?`<p class="note" style="margin:4px 0 0">Рахунок за випискою на ${dmy(ls.to)}: <b>${f0(bFact)}</b>${dB&&Math.abs(dB)>1?` · розбіжність ${f0(dB)} — див. «Рух по рахунку»`:' ✓'}</p>`:''}`})()}
   <div class="glabel" style="margin-top:14px">Кому ми винні</div>
    ${vOwe>0.5?kv2('Владу — витрати з його картки',f0(vOwe),'','oV'):''}${dOwe>0.5?kv2('Даниїлу — витрати з його картки',f0(dOwe),'','oD'):''}${ana>0.5?kv2('Анатолію за роботи',f0(ana),'','ana'):''}${unpaid>0.5?kv2('Оренда й комуналка — не сплачено',f0(unpaid),'','unp'):''}${danDev>0.5?kv2('Даниїлу — розвиток без внеску',f0(danDev),'','dev'):''}${kv2('= Разом боргів',f0(obl),'final')}
-   ${kv2('Вільні до виплати',f0(money-obl),'final')}</section>`;
+  <div class="glabel" style="margin-top:14px">Вільні гроші й прибуток <span class="note">· як пов'язано з Головною</span></div>
+   ${kv2('Залишок на '+balStartTxt(),f0(O))}
+   ${NM.map(x=>kv2('+ Прибуток до розподілу за '+MN[+x.m.slice(5)-1]+' <span class="note">· Головна</span>',f0(x.mt.net),'','net'+x.m)).join('')}
+   ${PP?kv2('− Виплачено прибутку',f0(-PP),'','pay'):''}
+   ${Math.abs(gap)>0.5?kv2('± Нараховано ≠ оплачено',f0(gap),'','gap'):''}
+   ${obl>0.5?kv2('− Борги',f0(-obl),'','obl'):''}
+   ${Math.abs(rest)>1?kv2('<span class="neg">± Нерозпізнано — щось внесено не так</span>',f0(rest)):''}
+   ${kv2('= Вільні до виплати'+(Math.abs(rest)<=1?' <span class="note">✓ зійшлося</span>':''),f0(free),'final')}</section>`;
 }
 function profBlock(ms,profM,B0){
   const pm=prevMonthOf(B0), list=(pm?[pm]:[]).concat(ms), mLow=m=>MN[+m.slice(5)-1];
