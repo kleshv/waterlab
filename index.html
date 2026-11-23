@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261124d">
+<meta name="wl-build" content="20261124e">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261124d"></script>
+<script src="config.js?v=20261124e"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261124d"></script>
+<script src="shim.js?v=20261124e"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -912,7 +912,7 @@ function viewSettle(){
     if(cut<0&&Math.abs(s0.opening)>0.5)row('Початковий залишок',f0(-s0.opening));
     for(const it of L.slice(cut+1)){
       if(it.kind==='m')row('Розподіл 50/50 за '+mLabel(it.key).toLowerCase()+' · '+(it.amount>=0?'належить Даниїлу':'належить Владу'),(it.amount>=0?'−':'')+f0(Math.abs(it.amount)),'note');
-      else R.push(`<span class="inrow ${canWrite?'click':''}" data-act="${canWrite?'editPay':''}" data-id="${it.id}">${dmy(it.p.date).slice(0,5)} · переказ ${esc(it.p.from)} → ${it.p.from==='Влад'?'Даниїл':'Влад'}${it.p.note?' · '+esc(it.p.note):''}</span><span class="num inrow">${it.amount<0?'':'−'}${f0(Math.abs(it.amount))}</span>`)}
+      else R.push(`<span class="inrow ${canWrite?'click':''}" data-act="${canWrite?'editPay':''}" data-id="${it.id}">${dmy(it.p.date).slice(0,5)} · переказ ${esc(it.p.from)} → ${it.p.from==='Влад'?'Даниїл':'Влад'}${it.p.src==='bank'?' з ФОП':''}${it.p.note?' · '+esc(it.p.note):''}</span><span class="num inrow">${it.amount<0?'':'−'}${f0(Math.abs(it.amount))}</span>`)}
     row(debt>0.5?'Влад винен Даниїлу':'Отримав',f0(Math.abs(debt)));
     if(om){hd('Витрати · '+mLabel(om).toLowerCase());for(const e of DE)row((e.date?dmy(e.date).slice(0,5):'—')+' · '+esc(e.article)+(e.purpose?' · '+esc(e.purpose):''),f0(e.amount),'note');
       row('Витрати',f0(danExp));
@@ -1166,10 +1166,10 @@ function editExp(id){const e=S.exp[id];openSheet('Витрата',mLabel(e.month
 function payForm(p){
   const today=new Date().toISOString().slice(0,10);
   return fld('date','Дата',p.date||today,{type:'date'})+fld('amount','Сума, грн',p.amount??'')+
-    sel('from','Хто відправив',p.from||'Влад',[['Влад','Влад → Даниїл'],['Даниїл','Даниїл → Влад']],true)+fld('note','Коментар',p.note||'',{type:'text',full:true});
+    sel('from','Хто відправив',p.from||'Влад',[['Влад','Влад → Даниїл'],['Даниїл','Даниїл → Влад']],true)+sel('src','Звідки гроші',p.src||'own',[['own','Особисто'],['bank','З рахунку ФОП']],true)+fld('note','Коментар',p.note||'',{type:'text',full:true});
 }
 function savePay(id){return async fd=>{const a=parseNum(fd.amount);if(a===null||!a)return 'Вкажіть суму';if(!fd.date)return 'Вкажіть дату';
-  if(!await w(()=>db.doc('settle/'+id).set({date:fd.date,amount:a,from:fd.from,note:fd.note||''})))return 'Не збереглося';toast('Виплату збережено')}}
+  if(!await w(()=>db.doc('settle/'+id).set({date:fd.date,amount:a,from:fd.from,note:fd.note||'',...(fd.src==='bank'?{src:'bank'}:{})})))return 'Не збереглося';toast('Виплату збережено')}}
 function addPay(){openSheet('Переказ між партнерами','Враховується у розподілі прибутку 50/50',payForm({}),savePay(db.collection('settle').doc().id))}
 function editPay(id){openSheet('Переказ між партнерами','',payForm(S.settle[id]),savePay(id),async()=>{const ok=await w(()=>db.doc('settle/'+id).delete());return ok})}
 
@@ -2372,6 +2372,8 @@ function moneyCard(){
     if(p.utilPaidW&&(p.utilDateW||monthEnd(pm_))>=d0)addM(utilM,pm_,+p.utilPaidW);
     for(const x of utilX(p))if((x.d||monthEnd(pm_))>=d0)addM(utilM,pm_,+x.a)}
   const mLow=m=>MN[+m.slice(5)-1], byM=(o,lbl,tab)=>{const ks=Object.keys(o).sort();if(!ks.length)return kv(lbl+' <span class="note">· '+tab+'</span>',0,null);return ks.map(m=>kv(lbl+' за '+mLow(m)+' <span class="note">· '+tab+'</span>',-o[m],null)).join('')};
+  const fopT=Object.values(S.settle||{}).filter(q=>q.src==='bank'&&(q.date||'')>=B0+'-01').reduce((a,q)=>a+(q.from==='Даниїл'?-1:1)*(+q.amount||0),0);
+  oth.bank-=fopT;oth.cash+=fopT;
   const calcB=(+op.bank||0)+revB+tail-notYet-expB-rent-util+prof.bank+reimb.bank+oth.bank;
   const calcC=(+op.cash||0)+revC-expC+prof.cash+reimb.cash+oth.cash;
   const lc=lastR('cash'), factC=lc&&lc.fact!=null?lc.fact:null;
@@ -2398,7 +2400,7 @@ function moneyCard(){
    ${byM(utilM,'− Комуналка','Комуналка')}
    ${Object.keys(profM).sort().map(m=>kv('− Виплата прибутку за '+mLow(m)+' <span class="note">· Рух коштів</span>',profM[m].bank||null,profM[m].cash||null)).join('')}
    ${reimb.bank||reimb.cash?kv('− Компенсація витрат з особистої картки <span class="note">· Рух коштів</span>',reimb.bank||null,reimb.cash||null):''}
-   ${oth.bank||oth.cash?kv('± Інші перекази <span class="note">· Рух коштів</span>',oth.bank||null,oth.cash||null):''}
+   ${oth.bank||oth.cash?kv('± Перекази між рахунком і готівкою <span class="note">· Рух коштів, Взаєморозрахунки</span>',oth.bank||null,oth.cash||null):''}
    ${kv('= За базою',calcB,calcC,'final')}
    ${dB!=null||dC!=null?kv('Факт'+(bFact!=null?' (рахунок — виписка '+dmy(ls.to)+')':''),bFact!=null?bFact:calcB,factC!=null?factC:calcC):''}
    ${dB!=null||dC!=null?kv('Розбіжність з фактом',dB||0,dC||0,Math.abs(dB||0)+Math.abs(dC||0)>1?'neg':''):''}
