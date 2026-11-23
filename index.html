@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261123z">
+<meta name="wl-build" content="20261124a">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261123z"></script>
+<script src="config.js?v=20261124a"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261123z"></script>
+<script src="shim.js?v=20261124a"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -869,7 +869,7 @@ function viewExp(m){
 function setFilter(v){expFilter=v;render()}
 function devMonthHtml(m){
   if(role!=='owner')return '';
-  const pay=r=>{if(r.fund!=='inc')return r.who||'Влад';const e=r.exp&&S.exp[r.exp];return e?payerOf(e):'Влад'};
+  const pay=r=>{if(r.fund!=='inc')return r.payer||r.who||'Влад';const e=r.exp&&S.exp[r.exp];return e?payerOf(e):'Влад'};
   const R=devRows().filter(r=>(r.d||'').slice(0,7)===m&&(expFilter==='all'||pay(r)===expFilter)).sort((a,b)=>(b.d||'').localeCompare(a.d||'')||b.a-a.a);
   const fk=r=>r.fund==='inc'?'з доходу':(r.who||'Влад');
   const locN=r=>{const k=Object.keys(r.loc||{});return k.length===1?ilName(k[0]):k.length?k.length+' точки':''};
@@ -1954,7 +1954,7 @@ const ART2T={'Обладнання':'Автомати','Нова точка / б
 const HOWL={'адреса':'за адресою','період':'за періодом будівництва','партія':'партія автоматів, порівну','порівну':'порівну між точками','загальне':'загальне','без розшифровки':'без розшифровки','акумулятори на 5 точок':'порівну на 5 точок','6 автоматів партії 29.07.25':'порівну на 6 автоматів'};
 let ilSel=null, ilT=null; const EST=['період','порівну','загальне','без розшифровки'];
 function devRows(){const L=invLoc(), R=[], used=new Set();
-  for(const [id,x] of Object.entries(S.devx||{})){const iv=x.inv&&(S.inv||{})[x.inv];R.push({id,...x,fund:x.fund||'inv',who:(iv&&iv.investor)||x.who||'Влад'});if(x.exp)used.add(x.exp)}
+  for(const [id,x] of Object.entries(S.devx||{})){const iv=x.inv&&(S.inv||{})[x.inv];R.push({id,...x,fund:x.fund||'inv',payer:x.who||(iv&&iv.investor)||'Влад',who:(iv&&iv.investor)||x.who||'Влад'});if(x.exp)used.add(x.exp)}
   for(const [eid,e] of Object.entries(S.exp)){if(e.credit||used.has(eid))continue;if(e.cat!=='Розвиток'&&!ART2T[e.article])continue;
     const al=(L.incAlloc||{})[eid];let loc;if(al){const t={};for(const [pid,o] of Object.entries(al))t[pid]=Object.values(o).reduce((a,v)=>a+(+v||0),0);const sm=Object.values(t).reduce((a,v)=>a+v,0)||1;loc=Object.fromEntries(Object.entries(t).map(([k,v])=>[k,v/sm]))}
     else loc={[e.point||'gen']:1};
