@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261124n">
+<meta name="wl-build" content="20261124o">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261124n"></script>
+<script src="config.js?v=20261124o"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261124n"></script>
+<script src="shim.js?v=20261124o"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -2721,9 +2721,12 @@ function saveRadj(id,base){return async fd=>{const n=parseNum(String(fd.amount||
   const doc={...base,date:fd.date,amount:(fd.dir==='minus'?-1:1)*n,kind:fd.kind||'all',note:fd.note||'',by:me||''};
   if(!await w(()=>db.doc('radj/'+id).set(doc)))return 'Не збереглося';toast('Збережено')}}
 function addReconPay(){if(!reconPid)return;const p=S.points[reconPid]||{};const ms=monthsList().filter(m=>S.pm[m+'_'+reconPid]).reverse();
-  openSheet('Нова оплата',p.name||reconPid,sel('kind','Що',reconKind==='rent'?'rent':'util',[['util','Комуналка'],['rent','Оренда']],true)+sel('m','За місяць',ms[1]||ms[0]||cur,ms.map(m=>[m,mLabel(m)]),true)+
+  openSheet('Нова оплата',p.name||reconPid,sel('kind','Що',reconKind==='rent'?'rent':'util',[['util','Комуналка'],['rent','Оренда'],['other','Інше']],true)+sel('m','За місяць',ms[1]||ms[0]||cur,ms.map(m=>[m,mLabel(m)]),true)+
     fld('amount','Сума, грн','')+fld('date','Дата оплати',todayISO(),{type:'date'})+fld('cp','Контрагент',p.payee||'',{type:'text',full:true})+fld('to','Призначення','',{type:'text',full:true}),
     async fd=>{const a=parseNum(fd.amount);if(a===null||a<=0)return 'Вкажіть суму';const m=fd.m, py=S.pay[m+'_'+reconPid]||{};
+      if(fd.kind==='other'){if(!String(fd.to||'').trim())return 'Напишіть призначення';
+        const doc={date:fd.date||todayISO(),amount:a,article:'Інше',point:reconPid,purpose:String(fd.to).trim(),note:fd.cp&&fd.cp!==(p.payee||'')?'контрагент: '+fd.cp:'',cp:reconPid+'|'+(reconCp==='all'?'main':reconCp),billNo:'',billSum:null,status:'wait',by:me||'',at:new Date().toISOString()};
+        if(!await w(()=>db.doc('expreq/'+db.collection('expreq').doc().id).set(doc)))return 'Не збереглося';render();toast('Оплату додано · піде у витрати після підтвердження');return}
       if(fd.kind==='rent'){if(py.rentPaid!=null)return 'Оплата оренди за '+mLabel(m).toLowerCase()+' вже є ('+f0(py.rentPaid)+'). Відкрийте її в таблиці.';
         if(!await savePayDoc(m,reconPid,{rentPaid:a,rentDate:fd.date||''}))return 'Не збереглося'}
       else{const it={a,d:fd.date||'',cp:fd.cp||'',to:fd.to||''};
@@ -2769,7 +2772,7 @@ function infoSheet(title,sub,html,onEdit,onDel){
 function reconInfo(i){
   const r=reconRows[+i]; if(!r) return;
   if(r.k==='a'){editRadj(r.aid);return}
-  if(r.k==='q'){const q=S.expreq[r.qid]||{},kv=(k,v)=>`<div class="kv"><span>${k}</span><b>${v}</b></div>`;infoSheet(r.doc,(S.points[r.pid]||{}).name||'',kv('Сума',f0(q.amount)+' грн')+kv('Дата',dmy(q.date))+(q.billNo||q.billSum?kv('Рахунок / акт',(q.billNo?'№'+esc(q.billNo)+' · ':'')+f0(q.billSum||0)+' грн'):'')+(q.note?kv('Коментар',esc(q.note)):'')+kv('Статус',REQ_ST[q.status]||''));return}
+  if(r.k==='q'){const q=S.expreq[r.qid]||{},kv=(k,v)=>`<div class="kv"><span>${k}</span><b>${v}</b></div>`;infoSheet(r.doc,(S.points[r.pid]||{}).name||'',kv('Сума',f0(q.amount)+' грн')+kv('Дата',dmy(q.date))+(q.billNo||q.billSum?kv('Рахунок / акт',(q.billNo?'№'+esc(q.billNo)+' · ':'')+f0(q.billSum||0)+' грн'):'')+(q.note?kv('Коментар',esc(q.note)):'')+kv('Статус',REQ_ST[q.status]||''),canWrite&&q.status!=='ok'?()=>editReq(r.qid):null,canWrite?async()=>{const q2=S.expreq[r.qid]||{};if(q2.status==='ok'&&q2.expId&&role==='owner'&&S.exp[q2.expId])await w(()=>db.doc('exp/'+q2.expId).delete());return await w(()=>db.doc('expreq/'+r.qid).delete())}:null);return}
   const p=S.points[r.pid]||{}, x=payRow(r.m,r.pid), py=x.py, u=x.u, mt=mLabel(r.m).toLowerCase();
   const n=v=>v==null||v===''?'—':nf1.format(+v), tf=v=>v==null||v===''?'—':String(+v).replace('.',',');
   const kv=(k,v)=>`<div class="kv"><span>${k}</span><b>${v}</b></div>`;
