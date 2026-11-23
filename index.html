@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261124h">
+<meta name="wl-build" content="20261124i">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,9 +292,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261124h"></script>
+<script src="config.js?v=20261124i"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261124h"></script>
+<script src="shim.js?v=20261124i"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
@@ -1103,7 +1103,8 @@ async function syncBankFee(m,bank){
 function expForm(e){
   const payer=e.payer||ls.get('wl_payer')||'Даниїл';
   const chip=(a,on)=>`<label class="chipb"><input type="radio" name="article" value="${esc(a)}" ${on?'checked':''}><span>${esc(a)}</span></label>`;
-  let arts=ARTS.map(g=>`<div class="full"><div class="glabel">${g.g}</div><div class="chips">${g.items.filter(a=>!DEV_OLD.includes(a)||e.article===a).map(a=>chip(a,e.article===a)).join('')}</div></div>`).join('');
+  let arts=ARTS.map(g=>{const ch=`<div class="chips">${g.items.filter(a=>!DEV_OLD.includes(a)||e.article===a).map(a=>chip(a,e.article===a)).join('')}</div>`;
+    return g.cat==='Розвиток'?`<details class="full devgrp" ${g.items.includes(e.article)?'open':''}><summary class="glabel" style="cursor:pointer">${g.g}</summary>${ch}</details>`:`<div class="full"><div class="glabel">${g.g}</div>${ch}</div>`}).join('');
   if(e.article&&!artCat(e.article)) arts=`<div class="full"><div class="glabel">Поточна стаття</div><div class="chips">${chip(e.article,true)}</div></div>`+arts;
   const popts=[['','Уся мережа']].concat(pointsList().map(p=>[p.id,p.name]));
   return `<div class="full"><div class="glabel">Хто платив</div><div class="seg"${payer==='Сервіс'?' style="grid-template-columns:1fr 1fr 1fr"':''}>${['Даниїл','Влад'].concat(payer==='Сервіс'?['Сервіс']:[]).map(p=>`<label class="segb"><input type="radio" name="payer" value="${p}" ${p===payerOf({payer})?'checked':''}><span>${p}</span></label>`).join('')}</div></div>`+
@@ -1994,13 +1995,15 @@ const DEVA=[{g:'Обладнання',items:[['Автомати','Автомат
   {g:'Підключення',items:[['Вода й труби','Вода, труби, підключення'],['Установка автомата','Оздоблення й будроботи'],['Електрика й освітлення','Електрика й освітлення'],['Бурення, аналіз води','Вода, труби, підключення']]},
   {g:'Реклама',items:[['Вивіски, банери, козирки','Реклама й вивіски'],['Дизайн і поліграфія','Реклама й вивіски']]},
   {g:'Інше',items:[['Доставка й пальне','Доставка й транспорт'],['Інструмент і витратні','Інструмент і витратні'],['Оренда до відкриття','Інше'],['Інше','Інше']]}];
-const DEVA_T=Object.fromEntries(DEVA.flatMap(g=>g.items));
+const DEV9=ARTS.find(g=>g.cat==='Розвиток').items.filter(a=>!DEV_OLD.includes(a));
+const DEVA_T={...Object.fromEntries(DEVA.flatMap(g=>g.items)),...Object.fromEntries(DEV9.map(a=>[a,ART2T[a]]))};
 function devxForm(x){const pts=[...pointsList().map(p=>[p.id,p.name]),...Object.entries(invLoc().pts||{}).filter(([k])=>!S.points[k]).map(([k,o])=>[k,o.name||k]),['gen','Загальне, не по точках']];
   const e=x.exp?S.exp[x.exp]:null, payer=x.fund==='inc'?((e&&e.payer)==='Влад'?'Влад':'Даниїл'):(x.who||ls.get('wl_payer')||'Даниїл'), fund=x.fund==='inc'?'inc':(x.id||x.a?'inv':'inc');
   const seg=(name,val,opts)=>`<div class="seg" style="grid-template-columns:repeat(${opts.length},minmax(0,1fr))">${opts.map(([k,l])=>`<label class="segb"><input type="radio" name="${name}" value="${k}" ${k===val?'checked':''}><span>${l}</span></label>`).join('')}</div>`;
   const art=x.art||'', chip=(a,on)=>`<label class="chipb"><input type="radio" name="art" value="${esc(a)}" ${on?'checked':''}><span>${esc(a)}</span></label>`;
-  let arts=DEVA.map(g=>`<div class="full"><div class="glabel">${g.g}</div><div class="chips">${g.items.map(([a])=>chip(a,art===a)).join('')}</div></div>`).join('');
-  if(!art&&x.typ)arts=`<div class="full"><div class="glabel">Поточна стаття</div><div class="chips">${chip(x.typ,true)}</div></div>`+arts;
+  let arts=`<div class="full"><div class="glabel">Стаття</div><div class="chips">${DEV9.map(a=>chip(a,art===a)).join('')}</div></div>`;
+  if(art&&!DEV9.includes(art))arts=`<div class="full"><div class="glabel">Поточна стаття</div><div class="chips">${chip(art,true)}</div></div>`+arts;
+  else if(!art&&x.typ)arts=`<div class="full"><div class="glabel">Поточна стаття</div><div class="chips">${chip(x.typ,true)}</div></div>`+arts;
   return `<div class="full"><div class="glabel">Хто платив</div>${seg('payer',payer,[['Даниїл','Даниїл'],['Влад','Влад']])}</div>`+
     `<div class="full"><div class="glabel">Звідки оплачено</div>${seg('src',src2(x.paidFrom||(e&&e.paidFrom)||(payer==='Влад'?'bank':'cash')),Object.entries(SRC2))}</div>`+
     `<input type="hidden" name="fund" value="${x.fund==='inc'?'inc':'inv'}">`+
