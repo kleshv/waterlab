@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261125w">
+<meta name="wl-build" content="20261125x">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -293,9 +293,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261125w"></script>
+<script src="config.js?v=20261125x"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261125w"></script>
+<script src="shim.js?v=20261125x"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx','mread'];
@@ -1313,6 +1313,8 @@ function mrPrevUse(pid,T,k){const u=S.util[mPrev(T)+'_'+pid]||{}, u2=S.util[mPre
 function mrCrm(pid,date){let best=null,bd=1e9;const t=new Date(date).getTime();
   for(const x of Object.values(S.meter||{}))if(x.point===pid&&x.date){const d=Math.abs(new Date(x.date).getTime()-t)/864e5;if(d<=3&&d<bd){bd=d;best=x}}return best}
 function mrCrmUse(pid,T,k){const a=mrCrm(pid,mPrev(T)+'-01'), b=mrCrm(pid,T+'-01');if(!a||!b||a[k]==null||b[k]==null)return null;return k==='w'?(b.w-a.w)/1000:(b.e-a.e)}
+const MRTYP={own:'Наш, в автоматі',ext:'Сторонній, будинку'};
+const mrTyp=(pid,k)=>(S.points[pid]||{})[k==='w'?'mtrW':'mtrE']||'';
 const mrChg=(r,k)=>!!(r&&(r[k+'Chg']||r.chg));
 const mrNum=v=>v==null||v===''?'—':nf1.format(+v);
 function viewMeters(){
@@ -1320,16 +1322,17 @@ function viewMeters(){
   const L=pts.map(p=>({p,r:S.mread[T+'_'+p.id]||null})), done=L.filter(x=>x.r&&x.r.w!=null&&x.r.e!=null).length, nw=L.filter(x=>x.r&&x.r.st==='new').length;
   const per=[...new Set([mPrev(mrDefault()),mrDefault(),T])].sort();
   const cam='<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;opacity:.7" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+  const tg=(pid,k)=>{const t=mrTyp(pid,k);return t?` <i style="opacity:.65">${t==='own'?'наш':'сторонній'}</i>`:''};
   const cell=(r,k)=>r&&r[k]!=null?`<b>${mrNum(r[k])}</b>${mrChg(r,k)?' <i style="opacity:.65">новий</i>':''}${r[k+'Ph']?' '+cam:' <i style="opacity:.65">'+(r.phDel?'фото видалено':'без фото')+'</i>'}`:'—';
   const st=r=>!r?'<span class="pill open">не здано</span>':r.st==='ok'?'<span class="pill closed">✓ у комуналці</span>':r.st==='conf'?'<span class="pill neg">розбіжність</span>':(r.w==null||r.e==null)?'<span class="pill open">частково</span>':'<span class="pill">нове</span>';
   const li=L.map(({p,r})=>{let sub='';
-    if(r){const bits=[];for(const k of ['w','e']){if(r[k]==null||mrChg(r,k))continue;const pv=mrPrev(p.id,T,k);if(pv==null)continue;const u=+r[k]-pv, c=mgr?mrCrmUse(p.id,T,k):null, un=k==='w'?'м³':'кВт·год';
+    if(r){const bits=[];for(const k of ['w','e']){if(r[k]==null||mrChg(r,k))continue;const pv=mrPrev(p.id,T,k);if(pv==null)continue;const u=+r[k]-pv, c=mgr&&mrTyp(p.id,k)!=='ext'?mrCrmUse(p.id,T,k):null, un=k==='w'?'м³':'кВт·год';
         bits.push((k==='w'?'вода':'світло')+' +'+nf1.format(Math.round(u*100)/100)+' '+un+(c!=null?' (CRM '+nf1.format(Math.round(c*10)/10)+')':''))}
       if(bits.length)sub+='за місяць: '+bits.join(' · ');if(r.conf)sub+=(sub?' · ':'')+'<span class="neg">'+esc(r.conf)+'</span>';if(r.date||r.by)sub+=(sub?' · ':'')+(r.date?'знято '+dmy(r.date).slice(0,5):'')+(r.by?' · '+esc(r.by):'')}
     if(r&&r.sent)sub+=(sub?' · ':'')+'передано орендодавцю '+dmy(r.sent.at.slice(0,10));
-    return `<li class="click" data-act="mrEdit" data-id="${p.id}"><span class="tx">${esc(p.name)} ${st(r)}<span class="note">вода ${cell(r,'w')} · світло ${cell(r,'e')}${sub?'<br>'+sub:''}</span></span>${mgr&&r?`<button type="button" class="btn sm" data-act="mrSend" data-id="${p.id}">Передати</button>`:''}<span class="lnk">›</span></li>`}).join('');
+    return `<li class="click" data-act="mrEdit" data-id="${p.id}"><span class="tx">${esc(p.name)} ${st(r)}<span class="note">вода${tg(p.id,'w')} ${cell(r,'w')} · світло${tg(p.id,'e')} ${cell(r,'e')}${sub?'<br>'+sub:''}</span></span>${mgr&&r?`<button type="button" class="btn sm" data-act="mrSend" data-id="${p.id}">Передати</button>`:''}<span class="lnk">›</span></li>`}).join('');
   return `<section class="card"><div class="shead"><h2>Показники лічильників</h2><select id="mrSel" aria-label="Показники на">${per.map(m=>`<option value="${m}" ${m===T?'selected':''}>на ${d1(m)}</option>`).join('')}</select></div>
-  <p class="note" style="margin:0 0 10px">Здано ${done} з ${pts.length}. Натисніть точку → фото лічильника і цифра. Показники на ${d1(T)} — це кінець ${mGen(P)}.</p>
+  <p class="note" style="margin:0 0 10px">Здано ${done} з ${pts.length}.${mgr&&pts.some(p=>!mrTyp(p.id,'w')||!mrTyp(p.id,'e'))?' Тип лічильника (наш / сторонній) не вказано: '+pts.filter(p=>!mrTyp(p.id,'w')||!mrTyp(p.id,'e')).length+' точок — позначте у формі точки.':''} Натисніть точку → фото лічильника і цифра. Показники на ${d1(T)} — це кінець ${mGen(P)}.</p>
   ${mgr&&nw?`<div class="bigacts one" style="margin:0 0 10px"><button class="btn pri main" type="button" data-act="mrApply">Перенести в «Комуналку» за ${MN[+P.slice(5)-1]} · ${nw}</button></div>`:''}
   <ul class="todo">${li||'<li><span class="tx">Немає точок</span></li>'}</ul></section>`}
 async function mrHydrate(){for(const im of document.querySelectorAll('img[data-ph]:not([src])')){try{im.src=await window.wlStore.url(im.dataset.ph)}catch(_){im.alt='фото не відкрилось'}}}
@@ -1337,6 +1340,7 @@ async function mrShrink(f){try{const bm=await createImageBitmap(f);const k=Math.
 function mrEdit(pid){const T=mrT||mrDefault(), p=S.points[pid]||{}, r=S.mread[T+'_'+pid]||{};
   const part=(k,lbl,un)=>{const pv=mrPrev(pid,T,k);return `<div class="full" style="border-top:1px solid var(--line,#e3e8ef);padding-top:8px"><div class="glabel">${lbl}${pv!=null?` <span class="note">· минулий показник ${mrNum(pv)}</span>`:''}</div>
     ${r[k+'Ph']?`<img data-ph="${esc(r[k+'Ph'])}" alt="" style="max-width:100%;max-height:220px;border-radius:8px;display:block;margin:6px 0">`:''}
+    ${mrMgr()?`<div class="seg" style="margin:4px 0">${Object.entries(MRTYP).map(([v,l])=>`<label class="segb"><input type="radio" name="${k}Typ" value="${v}" ${mrTyp(pid,k)===v?'checked':''}><span>${l}</span></label>`).join('')}</div>`:(mrTyp(pid,k)?`<div class="note">Лічильник: ${MRTYP[mrTyp(pid,k)].toLowerCase()}</div>`:'')}
     <div class="full mrph" style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0">
       <label class="btn sm" style="position:relative;overflow:hidden">📷 Сфотографувати<input type="file" name="${k}F" accept="image/*" capture="environment" data-mrk="${k}" style="position:absolute;inset:0;opacity:0"></label>
       <label class="btn sm" style="position:relative;overflow:hidden">🖼 З галереї телефону<input type="file" name="${k}G" accept="image/*" data-mrk="${k}" style="position:absolute;inset:0;opacity:0"></label>
@@ -1350,7 +1354,8 @@ function mrEdit(pid){const T=mrT||mrDefault(), p=S.points[pid]||{}, r=S.mread[T+
       const pick=k=>[fd[k+'F'],fd[k+'G']].find(f=>f&&f.size)||null, fW=pick('w'), fE=pick('e');
       if(!fd.date||fd.date>todayISO())return 'Вкажіть дату зняття (не пізніше сьогодні).';
       if(Math.abs(new Date(fd.date)-new Date(T+'-01'))>12*864e5)return 'Дата '+dmy(fd.date)+' не схожа на показники на '+d1(T)+'. Виправте дату або виберіть інший період угорі сторінки.';
-      if(v.w==null&&v.e==null&&!fW&&!fE)return 'Вкажіть показник хоча б одного лічильника.';
+      const saveTyp=async()=>{if(!mrMgr())return;const pt=S.points[pid]||{}, nw={mtrW:fd.wTyp||pt.mtrW||'',mtrE:fd.eTyp||pt.mtrE||''};if(nw.mtrW!==(pt.mtrW||'')||nw.mtrE!==(pt.mtrE||''))await w(()=>db.doc('points/'+pid).set({...pt,...nw}))};
+      if(v.w==null&&v.e==null&&!fW&&!fE&&!(r.w!=null||r.e!=null)){if(mrMgr()&&(fd.wTyp||fd.eTyp)){await saveTyp();toast('Тип лічильника збережено');return}return 'Вкажіть показник хоча б одного лічильника.'}
       if(fW&&v.w==null)return 'Впишіть показник води з фото.';if(fE&&v.e==null)return 'Впишіть показник світла з фото.';
       for(const k of ['w','e']){if(v[k]==null)continue;const pv=mrPrev(pid,T,k), nm=k==='w'?'Вода':'Світло';
         if(pv!=null&&v[k]<pv&&!fd[k+'Chg'])return `${nm}: ${mrNum(v[k])} менше за минулий показник ${mrNum(pv)}. Перевірте цифру або позначте «Новий лічильник».`;
@@ -1361,7 +1366,8 @@ function mrEdit(pid){const T=mrT||mrDefault(), p=S.points[pid]||{}, r=S.mread[T+
       try{if(fW)wPh=await up(fW,'w');if(fE)ePh=await up(fE,'e')}catch(e){return 'Фото не завантажилось: '+(e.message||e)+'. Спробуйте ще раз.'}
       const w2=v.w??(r.w??null), e2=v.e??(r.e??null), same=w2===r.w&&e2===r.e&&!fW&&!fE;
       const r0={...r};delete r0.chg;const doc={...r0,month:T,point:pid,date:fd.date,w:w2,e:e2,wPh,ePh,wChg:!!fd.wChg,eChg:!!fd.eChg,note:fd.note||'',by:window.WL_NAME||me||'',at:new Date().toISOString().slice(0,16),st:same&&r.st&&mrChg(r,'w')===!!fd.wChg&&mrChg(r,'e')===!!fd.eChg?r.st:'new'};if(!same)delete doc.conf;
-      if(!await w(()=>db.doc('mread/'+T+'_'+pid).set(doc)))return 'Не збереглося.';toast('Показники збережено')});
+      if(!await w(()=>db.doc('mread/'+T+'_'+pid).set(doc)))return 'Не збереглося.';
+      await saveTyp();toast('Показники збережено')});
   setTimeout(mrHydrate,0);
   let dTouched=!!r.date;const di=$('#f_date');if(di)di.addEventListener('input',()=>dTouched=true);
   document.querySelectorAll('#sf input[data-mrk]').forEach(inp=>inp.addEventListener('change',()=>{const k=inp.dataset.mrk, f=inp.files&&inp.files[0];if(!f)return;
