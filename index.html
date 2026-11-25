@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261125s">
+<meta name="wl-build" content="20261125u">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -293,9 +293,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261125s"></script>
+<script src="config.js?v=20261125u"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261125s"></script>
+<script src="shim.js?v=20261125u"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx','mread'];
@@ -1324,7 +1324,7 @@ function viewMeters(){
   const li=L.map(({p,r})=>{let sub='';
     if(r){const bits=[];for(const k of ['w','e']){if(r[k]==null)continue;const pv=mrPrev(p.id,T,k);if(pv==null)continue;const u=+r[k]-pv, c=mgr?mrCrmUse(p.id,T,k):null, un=k==='w'?'м³':'кВт·год';
         bits.push((k==='w'?'вода':'світло')+' +'+nf1.format(Math.round(u*100)/100)+' '+un+(c!=null?' (CRM '+nf1.format(Math.round(c*10)/10)+')':''))}
-      if(bits.length)sub+='за місяць: '+bits.join(' · ');if(r.conf)sub+=(sub?' · ':'')+'<span class="neg">'+esc(r.conf)+'</span>';if(r.by)sub+=(sub?' · ':'')+esc(r.by)+(r.date?' '+dmy(r.date).slice(0,5):'')}
+      if(bits.length)sub+='за місяць: '+bits.join(' · ');if(r.conf)sub+=(sub?' · ':'')+'<span class="neg">'+esc(r.conf)+'</span>';if(r.date||r.by)sub+=(sub?' · ':'')+(r.date?'знято '+dmy(r.date).slice(0,5):'')+(r.by?' · '+esc(r.by):'')}
     return `<li class="click" data-act="mrEdit" data-id="${p.id}"><span class="tx">${esc(p.name)} ${st(r)}<span class="note">вода ${cell(r,'w')} · світло ${cell(r,'e')}${sub?'<br>'+sub:''}</span></span><span class="lnk">›</span></li>`}).join('');
   return `<section class="card"><div class="shead"><h2>Показники лічильників</h2><select id="mrSel" aria-label="Показники на">${per.map(m=>`<option value="${m}" ${m===T?'selected':''}>на ${d1(m)}</option>`).join('')}</select></div>
   <p class="note" style="margin:0 0 10px">Здано ${done} з ${pts.length}. Натисніть точку → фото лічильника і цифра. Показники на ${d1(T)} — це кінець ${mGen(P)}.</p>
@@ -1335,12 +1335,18 @@ async function mrShrink(f){try{const bm=await createImageBitmap(f);const k=Math.
 function mrEdit(pid){const T=mrT||mrDefault(), p=S.points[pid]||{}, r=S.mread[T+'_'+pid]||{};
   const part=(k,lbl,un)=>{const pv=mrPrev(pid,T,k);return `<div class="full" style="border-top:1px solid var(--line,#e3e8ef);padding-top:8px"><div class="glabel">${lbl}${pv!=null?` <span class="note">· минулий показник ${mrNum(pv)}</span>`:''}</div>
     ${r[k+'Ph']?`<img data-ph="${esc(r[k+'Ph'])}" alt="" style="max-width:100%;max-height:220px;border-radius:8px;display:block;margin:6px 0">`:''}
-    <label class="full">${r[k+'Ph']?'Замінити фото':'Фото лічильника'}<input type="file" name="${k}F" accept="image/*" capture="environment"></label>
+    <div class="full mrph" style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0">
+      <label class="btn sm" style="position:relative;overflow:hidden">📷 Сфотографувати<input type="file" name="${k}F" accept="image/*" capture="environment" data-mrk="${k}" style="position:absolute;inset:0;opacity:0"></label>
+      <label class="btn sm" style="position:relative;overflow:hidden">🖼 З галереї телефону<input type="file" name="${k}G" accept="image/*" data-mrk="${k}" style="position:absolute;inset:0;opacity:0"></label>
+      <span class="note" id="mrn_${k}">${r[k+'Ph']?'є фото — нове його замінить':''}</span></div>
+    <img id="mrp_${k}" alt="" hidden style="max-width:100%;max-height:220px;border-radius:8px;display:block;margin:6px 0">
     ${fld(k,'Показник, '+un,r[k]==null?'':String(r[k]).replace('.',','))}</div>`};
   openSheet(p.name||pid,'Показники на '+d1(T)+'. Можна здати лише воду або лише світло.',
-    part('w','Вода','м³')+part('e','Світло','кВт·год')+`<label class="chk full"><input type="checkbox" name="chg" ${r.chg?'checked':''}> Лічильник замінили (показник почався заново)</label>`+fld('note','Коментар',r.note||'',{type:'text',full:true}),
+    fld('date','Дата фактичного зняття',r.date||todayISO(),{type:'date',full:true})+part('w','Вода','м³')+part('e','Світло','кВт·год')+`<label class="chk full"><input type="checkbox" name="chg" ${r.chg?'checked':''}> Лічильник замінили (показник почався заново)</label>`+fld('note','Коментар',r.note||'',{type:'text',full:true}),
     async fd=>{const v={};for(const k of ['w','e']){const s=String(fd[k]??'').trim();if(s===''){v[k]=null;continue}const n=parseNum(s);if(n===null||n<0)return 'Не зрозумів показник '+(k==='w'?'води':'світла')+'.';v[k]=n}
-      const fW=fd.wF&&fd.wF.size?fd.wF:null, fE=fd.eF&&fd.eF.size?fd.eF:null;
+      const pick=k=>[fd[k+'F'],fd[k+'G']].find(f=>f&&f.size)||null, fW=pick('w'), fE=pick('e');
+      if(!fd.date||fd.date>todayISO())return 'Вкажіть дату зняття (не пізніше сьогодні).';
+      if(Math.abs(new Date(fd.date)-new Date(T+'-01'))>12*864e5)return 'Дата '+dmy(fd.date)+' не схожа на показники на '+d1(T)+'. Виправте дату або виберіть інший період угорі сторінки.';
       if(v.w==null&&v.e==null&&!fW&&!fE)return 'Вкажіть показник хоча б одного лічильника.';
       if(fW&&v.w==null)return 'Впишіть показник води з фото.';if(fE&&v.e==null)return 'Впишіть показник світла з фото.';
       for(const k of ['w','e']){if(v[k]==null)continue;const pv=mrPrev(pid,T,k), nm=k==='w'?'Вода':'Світло';
@@ -1350,10 +1356,15 @@ function mrEdit(pid){const T=mrT||mrDefault(), p=S.points[pid]||{}, r=S.mread[T+
       const sb=$('#saveBtn');const up=async(f,k)=>{if(sb)sb.textContent='Завантажую фото…';const b=await mrShrink(f);return await window.wlStore.up(T+'/'+pid+'/'+k+'_'+Date.now().toString(36)+'.jpg',b)};
       let wPh=r.wPh||null,ePh=r.ePh||null;
       try{if(fW)wPh=await up(fW,'w');if(fE)ePh=await up(fE,'e')}catch(e){return 'Фото не завантажилось: '+(e.message||e)+'. Спробуйте ще раз.'}
-      const w2=v.w??(r.w??null), e2=v.e??(r.e??null), same=w2===r.w&&e2===r.e;
-      const doc={...r,month:T,point:pid,date:todayISO(),w:w2,e:e2,wPh,ePh,chg:!!fd.chg,note:fd.note||'',by:window.WL_NAME||me||'',at:new Date().toISOString().slice(0,16),st:same&&r.st?r.st:'new'};if(!same)delete doc.conf;
+      const w2=v.w??(r.w??null), e2=v.e??(r.e??null), same=w2===r.w&&e2===r.e&&!fW&&!fE;
+      const doc={...r,month:T,point:pid,date:fd.date,w:w2,e:e2,wPh,ePh,chg:!!fd.chg,note:fd.note||'',by:window.WL_NAME||me||'',at:new Date().toISOString().slice(0,16),st:same&&r.st?r.st:'new'};if(!same)delete doc.conf;
       if(!await w(()=>db.doc('mread/'+T+'_'+pid).set(doc)))return 'Не збереглося.';toast('Показники збережено')});
-  setTimeout(mrHydrate,0)}
+  setTimeout(mrHydrate,0);
+  let dTouched=!!r.date;const di=$('#f_date');if(di)di.addEventListener('input',()=>dTouched=true);
+  document.querySelectorAll('#sf input[data-mrk]').forEach(inp=>inp.addEventListener('change',()=>{const k=inp.dataset.mrk, f=inp.files&&inp.files[0];if(!f)return;
+    document.querySelectorAll('#sf input[data-mrk="'+k+'"]').forEach(o=>{if(o!==inp)o.value=''});
+    const im=$('#mrp_'+k);im.src=URL.createObjectURL(f);im.hidden=false;$('#mrn_'+k).textContent=f.name?'вибрано: '+f.name:'вибрано фото';
+    if(!dTouched&&f.lastModified&&di){const d=new Date(f.lastModified), iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(iso<=todayISO())di.value=iso}}))}
 function mrPhoto(path){infoSheet('Фото лічильника','',`<img data-ph="${esc(path)}" alt="" style="width:100%;border-radius:8px">`);setTimeout(mrHydrate,0)}
 async function mrApply(){const T=mrT||mrDefault(), P=mPrev(T);if(!mrMgr())return;
   if(isClosed(P)){toast(mLabel(P)+' закрито — показники не переносяться');return}
