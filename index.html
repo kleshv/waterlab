@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261125u">
+<meta name="wl-build" content="20261125v">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -293,9 +293,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261125u"></script>
+<script src="config.js?v=20261125v"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261125u"></script>
+<script src="shim.js?v=20261125v"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx','mread'];
@@ -1325,7 +1325,8 @@ function viewMeters(){
     if(r){const bits=[];for(const k of ['w','e']){if(r[k]==null)continue;const pv=mrPrev(p.id,T,k);if(pv==null)continue;const u=+r[k]-pv, c=mgr?mrCrmUse(p.id,T,k):null, un=k==='w'?'м³':'кВт·год';
         bits.push((k==='w'?'вода':'світло')+' +'+nf1.format(Math.round(u*100)/100)+' '+un+(c!=null?' (CRM '+nf1.format(Math.round(c*10)/10)+')':''))}
       if(bits.length)sub+='за місяць: '+bits.join(' · ');if(r.conf)sub+=(sub?' · ':'')+'<span class="neg">'+esc(r.conf)+'</span>';if(r.date||r.by)sub+=(sub?' · ':'')+(r.date?'знято '+dmy(r.date).slice(0,5):'')+(r.by?' · '+esc(r.by):'')}
-    return `<li class="click" data-act="mrEdit" data-id="${p.id}"><span class="tx">${esc(p.name)} ${st(r)}<span class="note">вода ${cell(r,'w')} · світло ${cell(r,'e')}${sub?'<br>'+sub:''}</span></span><span class="lnk">›</span></li>`}).join('');
+    if(r&&r.sent)sub+=(sub?' · ':'')+'передано орендодавцю '+dmy(r.sent.at.slice(0,10));
+    return `<li class="click" data-act="mrEdit" data-id="${p.id}"><span class="tx">${esc(p.name)} ${st(r)}<span class="note">вода ${cell(r,'w')} · світло ${cell(r,'e')}${sub?'<br>'+sub:''}</span></span>${mgr&&r?`<button type="button" class="btn sm" data-act="mrSend" data-id="${p.id}">Передати</button>`:''}<span class="lnk">›</span></li>`}).join('');
   return `<section class="card"><div class="shead"><h2>Показники лічильників</h2><select id="mrSel" aria-label="Показники на">${per.map(m=>`<option value="${m}" ${m===T?'selected':''}>на ${d1(m)}</option>`).join('')}</select></div>
   <p class="note" style="margin:0 0 10px">Здано ${done} з ${pts.length}. Натисніть точку → фото лічильника і цифра. Показники на ${d1(T)} — це кінець ${mGen(P)}.</p>
   ${mgr&&nw?`<div class="bigacts one" style="margin:0 0 10px"><button class="btn pri main" type="button" data-act="mrApply">Перенести в «Комуналку» за ${MN[+P.slice(5)-1]} · ${nw}</button></div>`:''}
@@ -1365,6 +1366,35 @@ function mrEdit(pid){const T=mrT||mrDefault(), p=S.points[pid]||{}, r=S.mread[T+
     document.querySelectorAll('#sf input[data-mrk="'+k+'"]').forEach(o=>{if(o!==inp)o.value=''});
     const im=$('#mrp_'+k);im.src=URL.createObjectURL(f);im.hidden=false;$('#mrn_'+k).textContent=f.name?'вибрано: '+f.name:'вибрано фото';
     if(!dTouched&&f.lastModified&&di){const d=new Date(f.lastModified), iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(iso<=todayISO())di.value=iso}}))}
+/* передача показників бухгалтеру орендодавця: текст + фото через «Поділитися» / email */
+function mrText(pid,T){const p=S.points[pid]||{}, r=S.mread[T+'_'+pid]||{}, L=['Передача показників лічильників',"Об'єкт: "+(p.name||pid),'Дата зняття: '+dmy(r.date||todayISO())];
+  for(const [k,nm,un] of [['w','Вода','м³'],['e','Електроенергія','кВт·год']]){if(r[k]==null)continue;const pv=mrPrev(pid,T,k);
+    L.push(nm+': '+mrNum(r[k])+' '+un+(pv!=null&&!r.chg?' (попередній '+mrNum(pv)+', спожито '+nf1.format(Math.round((r[k]-pv)*100)/100)+' '+un+')':''))}
+  if(r.wPh||r.ePh)L.push('Фото лічильників додаю.');L.push('','WaterLab');return L.join('\n')}
+async function mrSend(pid){const T=mrT||mrDefault(), p=S.points[pid]||{}, r=S.mread[T+'_'+pid];if(!r){toast('Спершу внесіть показники');return}
+  const txt=mrText(pid,T), to=p.mrTo||'', em=(to.match(/[^\s,;]+@[^\s,;]+/)||[])[0]||'';
+  const subj='Показники лічильників · '+(p.name||pid)+' · '+dmy(r.date||'');
+  infoSheet('Передати показники','Бухгалтеру орендодавця: '+(p.name||pid),
+    `<label class="full" style="display:block;margin-bottom:8px">Кому (email або телефон)<input id="mrTo" value="${esc(to)}" placeholder="buh@example.com або +380…" style="width:100%"></label>
+     <textarea id="mrTxt" rows="9" style="width:100%;font:inherit;font-size:13px">${esc(txt)}</textarea>
+     <div class="note" id="mrPhN">${r.wPh||r.ePh?'Готую фото…':'Без фото'}</div>
+     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+       <button type="button" class="btn pri" id="mrShare">Надіслати… (Viber, Telegram, пошта)</button>
+       <button type="button" class="btn" id="mrMail">Email</button>
+       <button type="button" class="btn" id="mrCopy">Копіювати текст</button></div>
+     ${r.sent?`<p class="note" style="margin-top:8px">Уже надсилали: ${dmy(r.sent.at.slice(0,10))}${r.sent.to?' · '+esc(r.sent.to):''}${r.sent.by?' · '+esc(r.sent.by):''}</p>`:''}`);
+  const files=[];
+  (async()=>{for(const [k,nm] of [['w','voda'],['e','svitlo']]){const ph=r[k+'Ph'];if(!ph)continue;try{const u=await window.wlStore.url(ph), b=await (await fetch(u)).blob();files.push(new File([b],nm+'_'+(p.name||pid).replace(/[^\wА-Яа-яІіЇїЄєҐґ]+/g,'_')+'.jpg',{type:b.type||'image/jpeg'}))}catch(_){}}
+    const n=$('#mrPhN');if(n)n.textContent=files.length?'Фото готові: '+files.length:(r.wPh||r.ePh?'Фото не вдалося підготувати — надішліть текст':'Без фото')})();
+  const mark=async how=>{const t=($('#mrTo')||{}).value||'';if(t!==to&&mrMgr())await w(()=>db.doc('points/'+pid).set({...S.points[pid],mrTo:t.trim()}));
+    const cur_=S.mread[T+'_'+pid];if(cur_)await w(()=>db.doc('mread/'+T+'_'+pid).set({...cur_,sent:{at:new Date().toISOString().slice(0,16),to:t.trim(),by:window.WL_NAME||'',how}}))};
+  $('#mrShare').onclick=async()=>{const text=$('#mrTxt').value, d={title:subj,text};
+    if(files.length&&navigator.canShare&&navigator.canShare({files}))d.files=files;
+    if(!navigator.share){toast('Тут немає «Поділитися» — скористайтесь Email або Копіювати');return}
+    try{await navigator.share(d);await mark('share');toast('Надіслано')}catch(e){if(e&&e.name!=='AbortError')toast('Не вдалося: '+e.message)}};
+  $('#mrMail').onclick=async()=>{const t=$('#mrTo').value, e=(t.match(/[^\s,;]+@[^\s,;]+/)||[])[0]||em;
+    location.href='mailto:'+encodeURIComponent(e)+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent($('#mrTxt').value+(files.length?'\n\n(фото — окремо, вкладенням)':''));await mark('email')};
+  $('#mrCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('#mrTxt').value);toast('Скопійовано')}catch(_){toast('Не вдалося скопіювати')}}}
 function mrPhoto(path){infoSheet('Фото лічильника','',`<img data-ph="${esc(path)}" alt="" style="width:100%;border-radius:8px">`);setTimeout(mrHydrate,0)}
 async function mrApply(){const T=mrT||mrDefault(), P=mPrev(T);if(!mrMgr())return;
   if(isClosed(P)){toast(mLabel(P)+' закрито — показники не переносяться');return}
@@ -3115,7 +3145,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({mrEdit,mrPhoto,mrApply,goMeters:v=>{mrT=v;tab='meters';render();window.scrollTo(0,0)},setFlowAcc,flowCards,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilCMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,toggleGap,invPick,toggleDD,setSetOpen,balTog,expGrpSheet,ilPick,ilType,editDevx,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,utilFromBank,pmInfo,centralInfo,capexInfo,addRadj,addReconPay,addReconBill,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({mrEdit,mrPhoto,mrApply,mrSend,goMeters:v=>{mrT=v;tab='meters';render();window.scrollTo(0,0)},setFlowAcc,flowCards,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilCMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,toggleGap,invPick,toggleDD,setSetOpen,balTog,expGrpSheet,ilPick,ilType,editDevx,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,utilFromBank,pmInfo,centralInfo,capexInfo,addRadj,addReconPay,addReconBill,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
