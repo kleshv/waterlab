@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261125p">
+<meta name="wl-build" content="20261125r">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>WaterLab · Кабінет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -282,6 +282,7 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
       <button class="tab" role="tab" data-tab="recon" aria-selected="false" type="button">Звірки</button>
       <button class="tab" role="tab" data-tab="points" aria-selected="false" type="button">Точки</button>
       <button class="tab" role="tab" data-tab="svc" aria-selected="false" type="button">Регламент</button>
+      <button class="tab" role="tab" data-tab="meters" aria-selected="false" type="button">Показники</button>
       <button class="tab" role="tab" data-tab="inv" aria-selected="false" type="button">Інвестиції</button>
     </div>
   </div>
@@ -292,12 +293,12 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261125p"></script>
+<script src="config.js?v=20261125r"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261125p"></script>
+<script src="shim.js?v=20261125r"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
-const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx'];
+const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx','mread'];
 const ARTS=[
  {g:'Обслуговування мережі',cat:'ТОіР',items:['Сервіс і заміна фільтрів','Фільтри та мембрани','Ремонт і запчастини','Електрика та монтаж','Інкасація','Пальне','Зв’язок, SIM, CRM','Клінінг','Доставка','Інше']},
  {g:'Податки і банк',cat:'ФА',items:['Єдиний податок','Військовий збір','Банк і РКО','Банк 1,3% еквайринг','Checkbox','Бухгалтер / юрист']},
@@ -306,10 +307,10 @@ const DEV_OLD=['Нова точка / будівництво','Обладнан�
 const REC=new Set(['Єдиний податок','Військовий збір','Банк і РКО','Checkbox','Бухгалтер / юрист']);
 const CATL={'ТОіР':'обслуговування','ФА':'податки і банк','Розвиток':'капвкладення'};
 const artCat=a=>{for(const g of ARTS) if(g.items.includes(a)) return g.cat; return null};
-const S={points:{},months:{},pm:{},exp:{},settle:{},meta:{},util:{},pay:{},tariffs:{},inv:{},bal:{},mov:{},radj:{},expreq:{},svc:{},sales:{},meter:{},gwday:{}};
+const S={points:{},months:{},pm:{},exp:{},settle:{},meta:{},util:{},pay:{},tariffs:{},inv:{},bal:{},mov:{},radj:{},expreq:{},svc:{},sales:{},meter:{},gwday:{},mread:{}};
 let me=null, userApi=null; const names={};
 const loaded=new Set();
-let role='owner'; const ACCT_TABS=['util','rent','recon','points','myexp'];
+let role='owner'; const ACCT_TABS=['util','rent','recon','points','myexp','meters'];
 const isDan=()=>window.WL_NAME==='Даниїл'; let danOrdered=false;
 let repSub='fin', invSub='dep', expSub='list';
 let db=null, canWrite=true, tab='home', cur=null, stale=false, fatal='', expFilter='all', utilPoint='';
@@ -417,12 +418,12 @@ function render(){
   sel.disabled=ysel.disabled=!ms.length;
   const acct=role==='accountant', dan=isDan(), tech=role==='tech';
   if(acct&&!ACCT_TABS.includes(tab)) tab='util';
-  if(tech) tab='svc';
+  if(tech&&tab!=='meters') tab='svc';
   if(dan&&tab==='home') tab='exp';
   if(dan&&repSub==='bal') repSub='fin';
   if(dan&&!danOrdered){const e=document.querySelector('.tab[data-tab=exp]'),r=document.querySelector('.tab[data-tab=reports]');if(e&&r)r.before(e);danOrdered=true}
   $('#newMonthBtn').hidden=acct||tech||!canWrite||!Object.keys(S.points).length;
-  document.querySelectorAll('.tab').forEach(t=>{t.hidden=(tech&&t.dataset.tab!=='svc')||(acct&&!ACCT_TABS.includes(t.dataset.tab))||(!acct&&t.dataset.tab==='myexp')||(dan&&t.dataset.tab==='home');t.setAttribute('aria-selected',t.dataset.tab===tab)});
+  document.querySelectorAll('.tab').forEach(t=>{t.hidden=(tech&&!['svc','meters'].includes(t.dataset.tab))||(acct&&!ACCT_TABS.includes(t.dataset.tab))||(!acct&&t.dataset.tab==='myexp')||(dan&&t.dataset.tab==='home');t.setAttribute('aria-selected',t.dataset.tab===tab)});
   const main=$('#main');
   if(fatal){main.innerHTML=`<div class="banner warn">${esc(fatal)}</div>`;return}
   if(loaded.size<COLS.length){main.innerHTML=`<section class="card"><h2>Завантаження</h2><p class="note">${stale?'База поки не відповідає. Дані з’являться, щойно з’єднання відновиться.':'Завантаження…'}</p></section>`;return}
@@ -435,7 +436,8 @@ function render(){
   if(tab==='reports'){h+=`<div class="seg2 rep" role="tablist">${[['fin','Фінрез по точках'],['trend','Динаміка'],['price','Ціни'],['bal','Баланс']].filter(([k])=>!(isDan()&&k==='bal')).map(([k,l])=>`<button type="button" class="${repSub===k?'on':''}" data-act="setRep" data-id="${k}">${l}</button>`).join('')}</div>`;
     if(repSub==='fin') h+=cur?viewMonth(cur):noMonth; if(repSub==='trend') h+=viewTrend(); if(repSub==='price') h+=viewPrices(); if(repSub==='bal') h+=viewBal();}
   if(tab==='exp'){h+=`<div class="seg2 rep" role="tablist">${[['list','Витрати'],['settle','Взаєморозрахунки']].map(([k,l])=>`<button type="button" class="${expSub===k?'on':''}" data-act="setExpSub" data-id="${k}">${l}</button>`).join('')}</div>`;h+=expSub==='settle'?viewSettle():(cur?viewExp(cur):'');}
-  if(tab==='util') h+=cur?viewUtil(cur):'';
+  if(tab==='util') h+=cur?mrBanner(cur)+viewUtil(cur):'';
+  if(tab==='meters'){h+=viewMeters();setTimeout(mrHydrate,0)}
   if(tab==='rent') h+=cur?viewRent(cur):'';
   if(tab==='inv'){h+=`<div class="seg2 rep" role="tablist">${[['dep','Внески'],['loc','Куди вкладено'],['pct','Відсотки']].map(([k,l])=>`<button type="button" class="${invSub===k?'on':''}" data-act="setInv" data-id="${k}">${l}</button>`).join('')}</div>`;h+=invSub==='pct'?viewInvPct():invSub==='loc'?viewInvLoc():viewInv();}
   if(tab==='myexp') h+=viewMyExp();
@@ -1294,6 +1296,82 @@ function setInv(v){invSub=['pct','loc'].includes(v)?v:'dep';render()}
 function setRep(v){if(v==='settle'){tab='exp';expSub='settle';render();return}repSub=['fin','trend','price','bal'].includes(v)?v:'fin';render()}
 function setExpSub(v){expSub=v==='settle'?'settle':'list';render()}
 function goTab(v){if(v==='rep:settle'){tab='exp';expSub='settle'}else if(v==='svc:job'){tab='svc';svcSub='job'}else if(v==='inv:loc'){tab='inv';invSub='loc'}else if(v.startsWith('rep:')){tab='reports';repSub=v.slice(4)}else tab=v;render();window.scrollTo(0,0)}
+/* ---------- Показники лічильників з фото (усі логіни) ---------- */
+let mrT=null; const mrWarn={};
+const mPrev=m=>{let[y,mm]=m.split('-').map(Number);mm--;if(mm<1){mm=12;y--}return y+'-'+String(mm).padStart(2,'0')};
+const mrDefault=()=>{const t=todayISO();return +t.slice(8)<=15?t.slice(0,7):nextMonth(t.slice(0,7))};
+const mrMgr=()=>role==='owner'||role==='accountant';
+function mrPts(T){const P=mPrev(T), ids=new Set();
+  for(const u of Object.values(S.util))if(u.month===P||u.month===mPrev(P))ids.add(u.point);
+  for(const r of Object.values(S.pm))if(r.month===P)ids.add(r.point);
+  return pointsList().filter(p=>p.id!=='p00'&&p.active!==false&&(!ids.size||ids.has(p.id)))}
+/* показник на 01.P (попередній) — для перевірки */
+function mrPrev(pid,T,k){const P=mPrev(T), u=S.util[P+'_'+pid]||{}, u2=S.util[mPrev(P)+'_'+pid]||{}, r=S.mread[P+'_'+pid]||{};
+  const v=u[k+'0']??u2[k+'1']??r[k];return v==null?null:+v}
+function mrPrevUse(pid,T,k){const u=S.util[mPrev(T)+'_'+pid]||{}, u2=S.util[mPrev(mPrev(T))+'_'+pid]||{};const x=u[k+'Use']??u2[k+'Use'];return x==null?null:+x}
+function mrCrm(pid,date){let best=null,bd=1e9;const t=new Date(date).getTime();
+  for(const x of Object.values(S.meter||{}))if(x.point===pid&&x.date){const d=Math.abs(new Date(x.date).getTime()-t)/864e5;if(d<=3&&d<bd){bd=d;best=x}}return best}
+function mrCrmUse(pid,T,k){const a=mrCrm(pid,mPrev(T)+'-01'), b=mrCrm(pid,T+'-01');if(!a||!b||a[k]==null||b[k]==null)return null;return k==='w'?(b.w-a.w)/1000:(b.e-a.e)}
+const mrNum=v=>v==null||v===''?'—':nf1.format(+v);
+function viewMeters(){
+  const T=mrT||(mrT=mrDefault()), P=mPrev(T), pts=mrPts(T), mgr=mrMgr();
+  const L=pts.map(p=>({p,r:S.mread[T+'_'+p.id]||null})), done=L.filter(x=>x.r&&x.r.w!=null&&x.r.e!=null).length, nw=L.filter(x=>x.r&&x.r.st==='new').length;
+  const per=[...new Set([mPrev(mrDefault()),mrDefault(),T])].sort();
+  const cam='<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;opacity:.7" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+  const cell=(r,k)=>r&&r[k]!=null?`<b>${mrNum(r[k])}</b>${r[k+'Ph']?' '+cam:' <i style="opacity:.65">без фото</i>'}`:'—';
+  const st=r=>!r?'<span class="pill open">не здано</span>':r.st==='ok'?'<span class="pill closed">✓ у комуналці</span>':r.st==='conf'?'<span class="pill neg">розбіжність</span>':(r.w==null||r.e==null)?'<span class="pill open">частково</span>':'<span class="pill">нове</span>';
+  const li=L.map(({p,r})=>{let sub='';
+    if(r){const bits=[];for(const k of ['w','e']){if(r[k]==null)continue;const pv=mrPrev(p.id,T,k);if(pv==null)continue;const u=+r[k]-pv, c=mgr?mrCrmUse(p.id,T,k):null, un=k==='w'?'м³':'кВт·год';
+        bits.push((k==='w'?'вода':'світло')+' +'+nf1.format(Math.round(u*100)/100)+' '+un+(c!=null?' (CRM '+nf1.format(Math.round(c*10)/10)+')':''))}
+      if(bits.length)sub+='за місяць: '+bits.join(' · ');if(r.conf)sub+=(sub?' · ':'')+'<span class="neg">'+esc(r.conf)+'</span>';if(r.by)sub+=(sub?' · ':'')+esc(r.by)+(r.date?' '+dmy(r.date).slice(0,5):'')}
+    return `<li class="click" data-act="mrEdit" data-id="${p.id}"><span class="tx">${esc(p.name)} ${st(r)}<span class="note">вода ${cell(r,'w')} · світло ${cell(r,'e')}${sub?'<br>'+sub:''}</span></span><span class="lnk">›</span></li>`}).join('');
+  return `<section class="card"><div class="shead"><h2>Показники лічильників</h2><select id="mrSel" aria-label="Показники на">${per.map(m=>`<option value="${m}" ${m===T?'selected':''}>на ${d1(m)}</option>`).join('')}</select></div>
+  <p class="note" style="margin:0 0 10px">Здано ${done} з ${pts.length}. Натисніть точку → фото лічильника і цифра. Показники на ${d1(T)} — це кінець ${mGen(P)}.</p>
+  ${mgr&&nw?`<div class="bigacts one" style="margin:0 0 10px"><button class="btn pri main" type="button" data-act="mrApply">Перенести в «Комуналку» за ${MN[+P.slice(5)-1]} · ${nw}</button></div>`:''}
+  <ul class="todo">${li||'<li><span class="tx">Немає точок</span></li>'}</ul></section>`}
+async function mrHydrate(){for(const im of document.querySelectorAll('img[data-ph]:not([src])')){try{im.src=await window.wlStore.url(im.dataset.ph)}catch(_){im.alt='фото не відкрилось'}}}
+async function mrShrink(f){try{const bm=await createImageBitmap(f);const k=Math.min(1,1600/Math.max(bm.width,bm.height));const c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext('2d').drawImage(bm,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(b=>r(b||f),'image/jpeg',0.82))}catch(_){return f}}
+function mrEdit(pid){const T=mrT||mrDefault(), p=S.points[pid]||{}, r=S.mread[T+'_'+pid]||{};
+  const part=(k,lbl,un)=>{const pv=mrPrev(pid,T,k);return `<div class="full" style="border-top:1px solid var(--line,#e3e8ef);padding-top:8px"><div class="glabel">${lbl}${pv!=null?` <span class="note">· минулий показник ${mrNum(pv)}</span>`:''}</div>
+    ${r[k+'Ph']?`<img data-ph="${esc(r[k+'Ph'])}" alt="" style="max-width:100%;max-height:220px;border-radius:8px;display:block;margin:6px 0">`:''}
+    <label class="full">${r[k+'Ph']?'Замінити фото':'Фото лічильника'}<input type="file" name="${k}F" accept="image/*" capture="environment"></label>
+    ${fld(k,'Показник, '+un,r[k]==null?'':String(r[k]).replace('.',','))}</div>`};
+  openSheet(p.name||pid,'Показники на '+d1(T)+'. Можна здати лише воду або лише світло.',
+    part('w','Вода','м³')+part('e','Світло','кВт·год')+`<label class="chk full"><input type="checkbox" name="chg" ${r.chg?'checked':''}> Лічильник замінили (показник почався заново)</label>`+fld('note','Коментар',r.note||'',{type:'text',full:true}),
+    async fd=>{const v={};for(const k of ['w','e']){const s=String(fd[k]??'').trim();if(s===''){v[k]=null;continue}const n=parseNum(s);if(n===null||n<0)return 'Не зрозумів показник '+(k==='w'?'води':'світла')+'.';v[k]=n}
+      const fW=fd.wF&&fd.wF.size?fd.wF:null, fE=fd.eF&&fd.eF.size?fd.eF:null;
+      if(v.w==null&&v.e==null&&!fW&&!fE)return 'Вкажіть показник хоча б одного лічильника.';
+      if(fW&&v.w==null)return 'Впишіть показник води з фото.';if(fE&&v.e==null)return 'Впишіть показник світла з фото.';
+      for(const k of ['w','e']){if(v[k]==null)continue;const pv=mrPrev(pid,T,k), nm=k==='w'?'Вода':'Світло';
+        if(pv!=null&&v[k]<pv&&!fd.chg)return `${nm}: ${mrNum(v[k])} менше за минулий показник ${mrNum(pv)}. Перевірте цифру або позначте «Лічильник замінили».`;
+        const pu=mrPrevUse(pid,T,k), u=pv!=null?v[k]-pv:null, key=pid+k+v[k];
+        if(u!=null&&pu!=null&&pu>0&&u>Math.max(pu*3,pu+(k==='w'?10:300))&&!mrWarn[key]){mrWarn[key]=1;return `${nm}: розхід ${nf1.format(Math.round(u*100)/100)} — утричі більше, ніж минулого місяця (${nf1.format(pu)}). Якщо цифра правильна, натисніть «Зберегти» ще раз.`}}
+      const sb=$('#saveBtn');const up=async(f,k)=>{if(sb)sb.textContent='Завантажую фото…';const b=await mrShrink(f);return await window.wlStore.up(T+'/'+pid+'/'+k+'_'+Date.now().toString(36)+'.jpg',b)};
+      let wPh=r.wPh||null,ePh=r.ePh||null;
+      try{if(fW)wPh=await up(fW,'w');if(fE)ePh=await up(fE,'e')}catch(e){return 'Фото не завантажилось: '+(e.message||e)+'. Спробуйте ще раз.'}
+      const w2=v.w??(r.w??null), e2=v.e??(r.e??null), same=w2===r.w&&e2===r.e;
+      const doc={...r,month:T,point:pid,date:todayISO(),w:w2,e:e2,wPh,ePh,chg:!!fd.chg,note:fd.note||'',by:window.WL_NAME||me||'',at:new Date().toISOString().slice(0,16),st:same&&r.st?r.st:'new'};if(!same)delete doc.conf;
+      if(!await w(()=>db.doc('mread/'+T+'_'+pid).set(doc)))return 'Не збереглося.';toast('Показники збережено')});
+  setTimeout(mrHydrate,0)}
+function mrPhoto(path){infoSheet('Фото лічильника','',`<img data-ph="${esc(path)}" alt="" style="width:100%;border-radius:8px">`);setTimeout(mrHydrate,0)}
+async function mrApply(){const T=mrT||mrDefault(), P=mPrev(T);if(!mrMgr())return;
+  if(isClosed(P)){toast(mLabel(P)+' закрито — показники не переносяться');return}
+  const L=Object.entries(S.mread).filter(([,r])=>r.month===T&&r.st==='new');let ok=0,cf=0;
+  for(const [id,r] of L){const pid=r.point, u=S.util[P+'_'+pid]||{}, conf=[];
+    const doc={month:P,point:pid,paid:u.paid||0,paidDate:u.paidDate||'',note:u.note||'',noCharge:!!u.noCharge,w0:u.w0??null,w1:u.w1??null,wT:u.wT??null,wUse:u.wUse||0,wSum:u.wSum||0,e0:u.e0??null,e1:u.e1??null,eT:u.eT??null,eUse:u.eUse||0,eSum:u.eSum||0};
+    let ch=false;
+    for(const k of ['w','e']){const v=r[k];if(v==null)continue;const K1=k+'1', nm=k==='w'?'вода':'світло';
+      if(u[K1]!=null&&Math.abs(+u[K1]-v)>0.001){conf.push(nm+': у комуналці '+mrNum(u[K1])+', на фото '+mrNum(v));continue}
+      if(u[K1]!=null)continue;
+      if(r.chg){conf.push(nm+': лічильник замінено — порахуйте вручну');continue}
+      doc[K1]=v;ch=true;const a=doc[k+'0']??(utilPrev(pid,P)||{})[K1]??null, t=doc[k+'T']??tariffOf(pid,P)[k+'T']??null;doc[k+'0']=a;doc[k+'T']=t;
+      if(a!=null&&t!=null){const c=calcFrom(String(a),String(v),String(t));if(c&&c.use>=0){doc[k+'Use']=c.use;doc[k+'Sum']=c.sum}}}
+    if(ch&&!await saveUtilDoc(P,pid,doc))continue;
+    const nd={...r,st:conf.length?'conf':'ok'};if(conf.length)nd.conf=conf.join('; ');else delete nd.conf;
+    await w(()=>db.doc('mread/'+id).set(nd));conf.length?cf++:ok++}
+  toast('Перенесено: '+ok+(cf?' · розбіжностей: '+cf:''));render()}
+function mrBanner(m){if(!mrMgr()||!m)return '';const T=nextMonth(m), n=Object.values(S.mread).filter(r=>r.month===T&&r.st==='new').length;
+  return n?`<div class="banner">З фото: ${n} нових показників на ${d1(T)} <button class="btn sm" type="button" data-act="goMeters" data-id="${T}">Показники</button></div>`:''}
 function prevMonthOf(m){const ms=monthsList();const i=ms.indexOf(m);return i>0?ms[i-1]:null}
 function homeTodo(m){
   const rows=Object.values(S.pm).filter(r=>r.month===m);
@@ -3015,11 +3093,11 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;render();return}
   const a=e.target.closest('[data-act]');if(!a||!a.dataset.act)return;
   const id=a.dataset.id;
-  ({setFlowAcc,flowCards,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilCMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,toggleGap,invPick,toggleDD,setSetOpen,balTog,expGrpSheet,ilPick,ilType,editDevx,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,utilFromBank,pmInfo,centralInfo,capexInfo,addRadj,addReconPay,addReconBill,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
+  ({mrEdit,mrPhoto,mrApply,goMeters:v=>{mrT=v;tab='meters';render();window.scrollTo(0,0)},setFlowAcc,flowCards,flowOpen,flowAddFees,flowOwn,flowFind,flowLink,flowAddExp,flowAddMov,setUtilMode,setUtilCMode,setUtilHMode,taskArch:toggleTaskArch,backupJson,addMemSt,taskToggle,editTask,addTask:v=>{const [k,p]=String(v||'task').split('|');addTask(k,p)},setSvcSub,addJob,addJobPay,editJob,jobOk,editPM,addPM,editMoney,addExp,editExp,addPay,editPay,addPoint,editPoint,toggleClose,setFilter,editUtil,bulkUtil,editTariffs,exportXlsx,editTariffEntry,editRent,editBill,setRep,setExpSub,editPrice,setInv,payPct,editPctPay,goTab,selMonth,addRent,addAllRent,addRec,addAllRec,setRecon,reconXlsx,editInv,addInv,toggleGap,invPick,toggleDD,setSetOpen,balTog,expGrpSheet,ilPick,ilType,editDevx,reconInfo,balInfo,addMov,editMov,editBalOpen,crmApply,billOk,billGo,billAdj,utilFromBank,pmInfo,centralInfo,capexInfo,addRadj,addReconPay,addReconBill,addReq,editReq,reqOk,reqNo,utilInfo,billInfo,utilTot,svcPoint,addSvc,editSvc})[a.dataset.act]?.(id);
 });
 $('#monthSel').addEventListener('change',e=>{cur=e.target.value;render()});
 $('#yearSel').addEventListener('change',e=>{cur=pickInYear(e.target.value,cur);render()});
-document.addEventListener('change',e=>{if(e.target.id==='utilPointSel'){utilPoint=e.target.value;render()}});
+document.addEventListener('change',e=>{if(e.target.id==='utilPointSel'){utilPoint=e.target.value;render()}if(e.target.id==='mrSel'){mrT=e.target.value;render()}});
 $('#newMonthBtn').addEventListener('click',newMonth);
 
 /* ---------- boot ---------- */
