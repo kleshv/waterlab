@@ -118,6 +118,7 @@
   const urlCache={};
   window.wlStore={
     async up(path,blob){const {error}=await sb.storage.from('meters').upload(path,blob,{contentType:blob.type||'image/jpeg',upsert:false});if(error)throw error;return path},
+    async del(paths){if(!paths.length)return;const {error}=await sb.storage.from('meters').remove(paths);if(error)throw error},
     async url(path){const c=urlCache[path];if(c&&c.t>Date.now())return c.u;const {data,error}=await sb.storage.from('meters').createSignedUrl(path,3600);if(error)throw error;urlCache[path]={u:data.signedUrl,t:Date.now()+3000e3};return data.signedUrl}};
   window.claude={use:async n=>{await ready;return n==='db'?db:n==='user'?user:n==='downloads'?downloads:null}};
 
