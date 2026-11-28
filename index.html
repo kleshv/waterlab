@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261129f">
+<meta name="wl-build" content="20261129g">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}.mrbtn{display:flex;align-items:center;gap:14px;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:16px;cursor:pointer;text-align:left;font:inherit;color:#fff;background:linear-gradient(135deg,#2b6cb0,#3d8fd6);box-shadow:0 4px 14px rgba(43,108,176,.28)}
 .mrbtn:active{transform:scale(.99)}.mrico{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.18)}
 .mrtx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.mrtx b{font-size:16px;letter-spacing:.01em}.mrtx span{font-size:12.5px;opacity:.88}.mrar{font-size:26px;opacity:.8;line-height:1}
@@ -306,9 +306,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261129f"></script>
+<script src="config.js?v=20261129g"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261129f"></script>
+<script src="shim.js?v=20261129g"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx','mread'];
@@ -1124,11 +1124,12 @@ function viewTrend(){
   const tr2=(lab,x,cls='')=>`<tr class="${cls}"><td>${lab}</td><td class="num">${x.L?f0(x.L):'—'}</td><td class="num">${x.L?nf2.format(x.R/x.L):'—'}</td><td class="num">${x.L?nf2.format(x.opex/x.L):'—'}</td><td class="num">${x.gL?pc(x.mL,x.gL):'—'}</td></tr>`;
   const Z=()=>({L:0,R:0,opex:0,op:0,mL:0,gL:0});
   const byY={};for(const c of cs){const y=c.m.slice(0,4);const mn=trMin(c.m);(byY[y]=byY[y]||[]).push({...c._x,mL:mn.m,gL:mn.l})}
-  h+=`<section class="card"><h2>${Y} рік по місяцях</h2>${trChips()}<div class="tbl"><table class="pl ut yt yt2"><thead><tr><th>Міс.</th><th class="num">Виручка</th><th class="num">Витрати</th><th class="num">Прибуток</th><th class="num">%</th></tr></thead><tbody>`;
+  let hm=`<section class="card"><h2>${Y} рік по місяцях</h2><div class="tbl"><table class="pl ut yt yt2"><thead><tr><th>Міс.</th><th class="num">Виручка</th><th class="num">Витрати</th><th class="num">Прибуток</th><th class="num">%</th></tr></thead><tbody>`;
   const ys=Z();let t2='';
-  for(const x of (byY[Y]||[])){h+=tr(cap(mShort(x.m)),x);t2+=tr2(cap(mShort(x.m)),x);for(const k in ys)ys[k]+=x[k]||0}
-  h+=`</tbody><tfoot>${tr('Разом',ys,'final')}</tfoot></table></div><p class="note" style="margin:6px 0 0">Витрати — операційні (оренда, комуналка, сервіс, податки тощо), без розвитку.</p></section>`;
-  h+=`<section class="card"><h2>Літр · ${Y}</h2><div class="tbl"><table class="pl ut yt yt2"><thead><tr><th>Міс.</th><th class="num">Літри</th><th class="num">Ціна, ₴/л</th><th class="num">Собівартість, ₴/л</th><th class="num">Мінерал., %</th></tr></thead><tbody>${t2}</tbody><tfoot>${tr2('Разом',ys,'final')}</tfoot></table></div><p class="note" style="margin:6px 0 0">Собівартість — операційні витрати на 1 л. Мінералізована — частка літрів за даними Gwaters.</p></section>`;
+  for(const x of (byY[Y]||[])){hm+=tr(cap(mShort(x.m)),x);t2+=tr2(cap(mShort(x.m)),x);for(const k in ys)ys[k]+=x[k]||0}
+  hm+=`</tbody><tfoot>${tr('Разом',ys,'final')}</tfoot></table></div><p class="note" style="margin:6px 0 0">Витрати — операційні (оренда, комуналка, сервіс, податки тощо), без розвитку.</p></section>`;
+  h+=`<section class="card"><h2>Літр · ${Y}</h2>${trChips()}<div class="tbl"><table class="pl ut yt yt2"><thead><tr><th>Міс.</th><th class="num">Літри</th><th class="num">Ціна, ₴/л</th><th class="num">Собівартість, ₴/л</th><th class="num">Мінерал., %</th></tr></thead><tbody>${t2}</tbody><tfoot>${tr2('Разом',ys,'final')}</tfoot></table></div><p class="note" style="margin:6px 0 0">Собівартість — операційні витрати на 1 л. Мінералізована — частка літрів за даними Gwaters.</p></section>`;
+  h+=hm;
 
   return h;
 }
