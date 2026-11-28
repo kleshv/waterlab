@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261128w">
+<meta name="wl-build" content="20261128x">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}.mrbtn{display:flex;align-items:center;gap:14px;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:16px;cursor:pointer;text-align:left;font:inherit;color:#fff;background:linear-gradient(135deg,#2b6cb0,#3d8fd6);box-shadow:0 4px 14px rgba(43,108,176,.28)}
 .mrbtn:active{transform:scale(.99)}.mrico{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.18)}
 .mrtx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.mrtx b{font-size:16px;letter-spacing:.01em}.mrtx span{font-size:12.5px;opacity:.88}.mrar{font-size:26px;opacity:.8;line-height:1}
@@ -306,9 +306,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261128w"></script>
+<script src="config.js?v=20261128x"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261128w"></script>
+<script src="shim.js?v=20261128x"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx','mread'];
@@ -1471,26 +1471,64 @@ function mrEdit(pid){const T=mrT||mrDefault(), p=S.points[pid]||{}, r=S.mread[T+
   document.querySelectorAll('#sf input[data-mrk]').forEach(inp=>inp.addEventListener('change',()=>{const k=inp.dataset.mrk, f=inp.files&&inp.files[0];if(!f)return;
     const im=$('#mrp_'+k);im.src=URL.createObjectURL(f);im.hidden=false;const fi=$('#f_'+k);if(fi&&!fi.value)fi.focus();
     if(!dTouched&&f.lastModified&&di){const d=new Date(f.lastModified), iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(iso<=todayISO()){di.value=iso;$('#mrDt').textContent=dmy(iso)}}}))}
+/* PDF «Передача показників»: генерується на льоту (не зберігається в базі) — полотно A4 → JPEG → мінімальний PDF */
+function pdfFromJpeg(jpg,wPx,hPx){const enc=new TextEncoder(), parts=[], offs=[];let len=0;const push=x=>{const b=typeof x==='string'?enc.encode(x):x;parts.push(b);len+=b.length};
+  const W=595.28,H=841.89, obj=(n,body)=>{offs[n]=len;push(n+' 0 obj\n');if(typeof body==='function')body();else push(body);push('\nendobj\n')};
+  push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  obj(3,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+  obj(4,()=>{push(`<< /Type /XObject /Subtype /Image /Width ${wPx} /Height ${hPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`);push(jpg);push('\nendstream')});
+  const cs=`q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;obj(5,`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+  const xref=len;push(`xref\n0 6\n0000000000 65535 f \n`+[1,2,3,4,5].map(n=>String(offs[n]).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Blob(parts,{type:'application/pdf'})}
+async function mrPdf(pid,T){const p=S.points[pid]||{}, r=S.mread[T+'_'+pid]||{}, W=1240,H=1754, c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  const F=(sz,wt)=>`${wt||400} ${sz}px -apple-system,"Segoe UI",Roboto,Arial,sans-serif`, BL='#2b6cb0', TX='#1a202c', MU='#64748b', LN='#e2e8f0';
+  g.fillStyle='#fff';g.fillRect(0,0,W,H);
+  // лого
+  try{const sv=document.querySelector('.brand .logo');if(sv){const cl=sv.cloneNode(true);cl.setAttribute('xmlns','http://www.w3.org/2000/svg');cl.setAttribute('fill','#3d6fc9');cl.setAttribute('height','120');cl.removeAttribute('class');cl.querySelectorAll('.hole').forEach(x=>x.setAttribute('fill','#ffffff'));
+    const im=new Image();await new Promise((ok,no)=>{im.onload=ok;im.onerror=no;im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(cl.outerHTML)});const hh=110, ww=im.width*hh/im.height;g.drawImage(im,80,70,ww,hh)}}catch(_){g.fillStyle=BL;g.font=F(54,700);g.fillText('WaterLab',80,140)}
+  g.textAlign='right';g.fillStyle=TX;g.font=F(40,700);g.fillText('Передача показників',W-80,115);g.font=F(28);g.fillStyle=MU;g.fillText('лічильників · '+dmy(todayISO()),W-80,160);g.textAlign='left';
+  g.fillStyle=LN;g.fillRect(80,215,W-160,3);
+  let y=290;const kv=(k,v)=>{g.font=F(28);g.fillStyle=MU;g.fillText(k,80,y);g.font=F(32,600);g.fillStyle=TX;g.fillText(v,360,y);y+=56};
+  kv("Об'єкт",p.name||pid);kv('Показники на',d1(T));kv('Дата зняття',dmy(r.date||todayISO()));
+  // таблиця
+  y+=20;const cols=[80,420,640,860,1080], hd=['Лічильник','Попередній','Поточний','Спожито',''];
+  g.fillStyle='#f1f5f9';g.fillRect(80,y-38,W-160,58);g.font=F(24,600);g.fillStyle=MU;hd.forEach((h,i)=>{if(!h)return;g.textAlign=i?'right':'left';g.fillText(h,i?cols[i]+170:cols[0]+16,y)});y+=70;
+  for(const [k,nm,un] of [['w','Вода','м³'],['e','Електроенергія','кВт·год']]){if(r[k]==null)continue;const pv=mrChg(r,k)?null:mrPrev(pid,T,k);
+    g.textAlign='left';g.font=F(30,600);g.fillStyle=TX;g.fillText(nm,cols[0]+16,y);g.font=F(22);g.fillStyle=MU;g.fillText(un+(mrChg(r,k)?' · новий лічильник':''),cols[0]+16,y+30);
+    g.textAlign='right';g.font=F(30);g.fillStyle=TX;g.fillText(pv!=null?mrNum(pv):'—',cols[1]+170,y);g.font=F(30,700);g.fillText(mrNum(r[k]),cols[2]+170,y);
+    g.font=F(30,600);g.fillStyle=BL;g.fillText(pv!=null?nf1.format(Math.round((r[k]-pv)*100)/100):'—',cols[3]+170,y);
+    y+=50;g.fillStyle=LN;g.fillRect(80,y,W-160,2);y+=60}
+  g.textAlign='left';
+  // фото
+  const ph=[];for(const k of ['w','e'])if(r[k+'Ph']){try{const u=await window.wlStore.url(r[k+'Ph']), b=await (await fetch(u)).blob(), bm=await createImageBitmap(b);ph.push([k==='w'?'Вода':'Електроенергія',bm])}catch(_){}}
+  if(ph.length){y+=10;g.font=F(26,600);g.fillStyle=MU;g.fillText('Фото лічильників',80,y);y+=24;const gap=30, bw=(W-160-gap*(ph.length-1))/ph.length, maxH=H-y-170;
+    ph.forEach(([lb,bm],i)=>{const sc=Math.min(bw/bm.width,maxH/bm.height), dw=bm.width*sc, dh=bm.height*sc, x=80+i*(bw+gap)+(bw-dw)/2;g.drawImage(bm,x,y+10,dw,dh);g.strokeStyle=LN;g.lineWidth=2;g.strokeRect(x,y+10,dw,dh);g.font=F(22);g.fillStyle=MU;g.fillText(lb,80+i*(bw+gap),y+dh+44)})}
+  g.fillStyle=LN;g.fillRect(80,H-110,W-160,2);g.font=F(22);g.fillStyle=MU;g.fillText('WaterLab · '+(r.by?'зняв(ла): '+r.by+' · ':'')+'сформовано '+dmy(todayISO()),80,H-70);
+  const jb=await new Promise(ok=>c.toBlob(ok,'image/jpeg',0.85)), jpg=new Uint8Array(await jb.arrayBuffer());
+  return new File([pdfFromJpeg(jpg,W,H)],'Показники_'+(p.name||pid).replace(/[^\wА-Яа-яІіЇїЄєҐґ]+/g,'_')+'_'+T+'.pdf',{type:'application/pdf'})}
 /* передача показників бухгалтеру орендодавця: текст + фото через «Поділитися» / email */
 function mrText(pid,T){const p=S.points[pid]||{}, r=S.mread[T+'_'+pid]||{}, L=['Передача показників лічильників',"Об'єкт: "+(p.name||pid),'Дата зняття: '+dmy(r.date||todayISO())];
   for(const [k,nm,un] of [['w','Вода','м³'],['e','Електроенергія','кВт·год']]){if(r[k]==null)continue;const pv=mrPrev(pid,T,k);
     L.push(nm+': '+mrNum(r[k])+' '+un+(pv!=null&&!mrChg(r,k)?' (попередній '+mrNum(pv)+', спожито '+nf1.format(Math.round((r[k]-pv)*100)/100)+' '+un+')':''))}
-  if(r.wPh||r.ePh)L.push('Фото лічильників додаю.');L.push('','WaterLab');return L.join('\n')}
+  L.push((r.wPh||r.ePh)?'Документ з фото лічильників — у вкладенні (PDF).':'Документ — у вкладенні (PDF).');L.push('','WaterLab');return L.join('\n')}
 async function mrSend(pid){const T=mrT||mrDefault(), p=S.points[pid]||{}, r=S.mread[T+'_'+pid];if(!r){toast('Спершу внесіть показники');return}
   const txt=mrText(pid,T), to=p.mrTo||'', em=(to.match(/[^\s,;]+@[^\s,;]+/)||[])[0]||'';
   const subj='Показники лічильників · '+(p.name||pid)+' · '+dmy(r.date||'');
   infoSheet('Передати показники','Бухгалтеру орендодавця: '+(p.name||pid),
     `<label class="full" style="display:block;margin-bottom:8px">Кому (email або телефон)<input id="mrTo" value="${esc(to)}" placeholder="buh@example.com або +380…" style="width:100%"></label>
      <textarea id="mrTxt" rows="9" style="width:100%;font:inherit;font-size:13px">${esc(txt)}</textarea>
-     <div class="note" id="mrPhN">${r.wPh||r.ePh?'Готую фото…':'Без фото'}</div>
+     <div class="note" id="mrPhN">Готую PDF з лого${r.wPh||r.ePh?' і фото':''}…</div>
      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-       <button type="button" class="btn pri" id="mrShare">Надіслати… (Viber, Telegram, пошта)</button>
+       <button type="button" class="btn pri" id="mrShare">Надіслати PDF… (Viber, Telegram, пошта)</button>
+       <button type="button" class="btn" id="mrPdfDl">Завантажити PDF</button>
        <button type="button" class="btn" id="mrMail">Email</button>
        <button type="button" class="btn" id="mrCopy">Копіювати текст</button></div>
      ${r.sent?`<p class="note" style="margin-top:8px">Уже надсилали: ${dmy(r.sent.at.slice(0,10))}${r.sent.to?' · '+esc(r.sent.to):''}${r.sent.by?' · '+esc(r.sent.by):''}</p>`:''}`);
   const files=[];
-  (async()=>{for(const [k,nm] of [['w','voda'],['e','svitlo']]){const ph=r[k+'Ph'];if(!ph)continue;try{const u=await window.wlStore.url(ph), b=await (await fetch(u)).blob();files.push(new File([b],nm+'_'+(p.name||pid).replace(/[^\wА-Яа-яІіЇїЄєҐґ]+/g,'_')+'.jpg',{type:b.type||'image/jpeg'}))}catch(_){}}
-    const n=$('#mrPhN');if(n)n.textContent=files.length?'Фото готові: '+files.length:(r.wPh||r.ePh?'Фото не вдалося підготувати — надішліть текст':'Без фото')})();
+  (async()=>{try{files.push(await mrPdf(pid,T))}catch(e){}
+    const n=$('#mrPhN');if(n)n.textContent=files.length?'PDF готовий: '+files[0].name:'PDF не вдалося зробити — надішліть текст'})();
+  $('#mrPdfDl').onclick=()=>{if(!files.length){toast('PDF ще готується');return}const a=document.createElement('a');a.href=URL.createObjectURL(files[0]);a.download=files[0].name;document.body.appendChild(a);a.click();a.remove()};
   const mark=async how=>{const t=($('#mrTo')||{}).value||'';if(t!==to&&mrMgr())await w(()=>db.doc('points/'+pid).set({...S.points[pid],mrTo:t.trim()}));
     const cur_=S.mread[T+'_'+pid];if(cur_)await w(()=>db.doc('mread/'+T+'_'+pid).set({...cur_,sent:{at:new Date().toISOString().slice(0,16),to:t.trim(),by:window.WL_NAME||'',how}}))};
   $('#mrShare').onclick=async()=>{const text=$('#mrTxt').value, d={title:subj,text};
@@ -1498,7 +1536,7 @@ async function mrSend(pid){const T=mrT||mrDefault(), p=S.points[pid]||{}, r=S.mr
     if(!navigator.share){toast('Тут немає «Поділитися» — скористайтесь Email або Копіювати');return}
     try{await navigator.share(d);await mark('share');toast('Надіслано')}catch(e){if(e&&e.name!=='AbortError')toast('Не вдалося: '+e.message)}};
   $('#mrMail').onclick=async()=>{const t=$('#mrTo').value, e=(t.match(/[^\s,;]+@[^\s,;]+/)||[])[0]||em;
-    location.href='mailto:'+encodeURIComponent(e)+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent($('#mrTxt').value+(files.length?'\n\n(фото — окремо, вкладенням)':''));await mark('email')};
+    location.href='mailto:'+encodeURIComponent(e)+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent($('#mrTxt').value+(files.length?'\n\n(PDF з фото — вкладенням)':''));await mark('email')};
   $('#mrCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('#mrTxt').value);toast('Скопійовано')}catch(_){toast('Не вдалося скопіювати')}}}
 function mrPhoto(path){infoSheet('Фото лічильника','',`<img data-ph="${esc(path)}" alt="" style="width:100%;border-radius:8px">`);setTimeout(mrHydrate,0)}
 /* перенесення одного показника в «Комуналку» (кінець попереднього місяця) */
