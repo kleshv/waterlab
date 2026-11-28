@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261129n">
+<meta name="wl-build" content="20261129o">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}.mrbtn{display:flex;align-items:center;gap:14px;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:16px;cursor:pointer;text-align:left;font:inherit;color:#fff;background:linear-gradient(135deg,#2b6cb0,#3d8fd6);box-shadow:0 4px 14px rgba(43,108,176,.28)}
 .mrbtn:active{transform:scale(.99)}.mrico{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.18)}
 .mrtx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.mrtx b{font-size:16px;letter-spacing:.01em}.mrtx span{font-size:12.5px;opacity:.88}.mrar{font-size:26px;opacity:.8;line-height:1}
@@ -306,9 +306,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261129n"></script>
+<script src="config.js?v=20261129o"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261129n"></script>
+<script src="shim.js?v=20261129o"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx','mread'];
@@ -2784,13 +2784,18 @@ function moneyCard(){
   const gap=(revB+tail-notYet+revC-Racc)+(Eacc-expB2-expC2)+(RUacc-rent-util)+TR+dF;
   const free=money-obl, rest=Math.round((free-(O+NET-PP+gap-obl))*100)/100;
   for(const x of NM)D['net'+x.m]=[['Виручка по точках',x.c.R],['− Оренда',-x.c.rent],['− Комуналка',-(x.c.water+x.c.elec)],['− Операційні витрати',-(x.c.toir+x.c.fa)]].concat(x.c.capex?[['− Розвиток з доходу',-x.c.capex]]:[]).concat(Math.abs(x.mt.net-x.c.net)>0.01?[['округлення',x.mt.net-x.c.net]]:[]);
-  {const G=[];if(tail)G.push(['Картка за '+dd(tailD)+' прийшла на рахунок у '+MN[+B0.slice(5)-1],tail]);if(notYet)G.push(['Картка після виписки ('+dd(ls&&ls.to)+') ще не на рахунку',-notYet]);
-   const rd=revB+revC-Racc;if(Math.abs(rd)>0.5)G.push(['Гроші за місяць (рахунок + готівка) мінус виручка по точках',rd]);
-   for(const e of Object.values(S.exp))if(e.month>=B0&&!['bank','cash'].includes(expSrc(e)))G.push([dd(e.date)+' · '+esc(e.article)+' · '+esc(payerOf(e))+(expSrc(e)==='card'?', картка':', ще не оплачено')+' — у витратах, з рахунку/готівки не йшло',+e.amount||0]);
-   if(exK.bank+exK.cash)G.push(['Компенсовано витрати з карток (з рахунку/готівки)',-(exK.bank+exK.cash)]);
-   if(RUacc)G.push(['Оренда й комуналка нараховані в прибутку',RUacc]);if(rent+util)G.push(['Оренда й комуналка сплачені',-(rent+util)]);
-   if(Math.abs(TR)>0.5)G.push(['Перекази й компенсації (див. «± Перекази»)',TR]);if(Math.abs(dF)>0.5)G.push(['Розбіжність з випискою / фактом готівки',dF]);
-   const gs=G.reduce((a,[,v])=>a+v,0);if(Math.abs(gap-gs)>0.5)G.push(['Інше',gap-gs]);D.gap=G}
+  /* розклад різниці між прибутком і грошима на зрозумілі частини */
+  const msSet=new Set(ms), BR={};const add=(k,t,v)=>{if(Math.abs(v)<0.005)return;(BR[k]=BR[k]||[]).push([t,v])};
+  for(const e of Object.values(S.exp))if(e.month>=B0&&!['bank','cash'].includes(expSrc(e)))add('unp',dd(e.date)+' · '+esc(e.article)+' · '+(expSrc(e)==='card'?esc(payerOf(e))+', своєю карткою':'сервіс, ще не сплачено'),+e.amount||0);
+  for(const x of NM){const ru=x.c.rent+x.c.water+x.c.elec, pd=(rentM[x.m]||0)+(utilM[x.m]||0);add('unp','Оренда й комуналка за '+MN[+x.m.slice(5)-1]+': нараховано '+f0(ru)+', сплачено '+f0(pd),ru-pd)}
+  for(const m of Object.keys({...rentM,...utilM}).sort())if(!msSet.has(m))add('old',(m<B0?'Оренда й комуналка за ':'Оренда й комуналка наперед за ')+MN[+m.slice(5)-1],-((rentM[m]||0)+(utilM[m]||0)));
+  if(exK.bank+exK.cash)add('old','Компенсовано витрати, оплачені картками',-(exK.bank+exK.cash));
+  {const sp=Object.values(S.svc).filter(j=>j.type==='pay'&&(j.src==='bank'||j.src==='dan')&&(j.date||'')>=d0).reduce((a,j)=>a+(+j.amount||0),0);add('old','Оплачено сервіс',-sp)}
+  if(tail)add('card','Картка за '+dd(tailD)+' прийшла на рахунок у '+MN[+B0.slice(5)-1],tail);if(notYet)add('card','Картка після '+dd(ls&&ls.to)+' ще не на рахунку',-notYet);
+  {const rd=revB+revC-Racc;add('card','Гроші від продажів мінус виручка по точках',rd)}
+  add('tr','Перекази й компенсації між рахунками',TR);add('tr','Розбіжність з випискою / фактом готівки',dF);
+  const sumK=k=>(BR[k]||[]).reduce((a,[,v])=>a+v,0), known=['unp','old','card','tr'].reduce((a,k)=>a+sumK(k),0);add('etc','Інше',gap-known);
+  for(const k in BR)D['br_'+k]=BR[k];D.gap=[].concat(...Object.values(BR))
   D.obl=[['Владу — витрати з його картки',vOwe],['Даниїлу — витрати з його картки',dOwe],['Сервіс — роботи й фільтри',ana],['Компанії фільтрів',filtD],['Оренда й комуналка — не сплачено',unpaid],['Даниїлу — розвиток без внеску',danDev]].filter(([,v])=>v>0.5).map(([t,v])=>[t,-v]);
   window._bridge={free,net:NET,paid:PP,left:NM.reduce((a,x)=>a+x.mt.net+((profM[x.m]||{}).bank||0)+((profM[x.m]||{}).cash||0),0),rest,m:ms[ms.length-1]};
   const thru=ms.map(m=>(S.months[m]||{}).gwThru).filter(Boolean).pop();
@@ -2826,8 +2831,12 @@ function moneyCard(){
    ${kv2('Залишок на '+balStartTxt(),f0(O))}
    ${NM.map(x=>kv2('+ Прибуток до розподілу за '+MN[+x.m.slice(5)-1]+' <span class="note">· Головна</span>',f0(x.mt.net),'','net'+x.m)).join('')}
    ${PP?kv2('− Виплачено прибутку',f0(-PP),'','pay'):''}
-   ${Math.abs(gap)>0.5?kv2('± Нараховано ≠ оплачено',f0(gap),'','gap'):''}
-   ${obl>0.5?kv2('− Борги',f0(-obl),'','obl'):''}
+   ${Math.abs(sumK('unp'))>0.5?kv2('+ Ще не сплачено <span class="note">· у прибутку віднято, гроші ще в нас</span>',f0(sumK('unp')),'','br_unp'):''}
+   ${Math.abs(sumK('old'))>0.5?kv2('− Сплачено за минулі місяці й борги <span class="note">· гроші пішли, прибуток не зменшують</span>',f0(sumK('old')),'','br_old'):''}
+   ${Math.abs(sumK('card'))>0.5?kv2('± Картка в дорозі',f0(sumK('card')),'','br_card'):''}
+   ${Math.abs(sumK('tr'))>0.5?kv2('± Перекази між рахунками',f0(sumK('tr')),'','br_tr'):''}
+   ${Math.abs(sumK('etc'))>0.5?kv2('± Інше',f0(sumK('etc')),'','br_etc'):''}
+   ${obl>0.5?kv2('− Борги <span class="note">· «Кому ми винні»</span>',f0(-obl),'','obl'):''}
    ${Math.abs(rest)>1?kv2('<span class="neg">± Нерозпізнано — щось внесено не так</span>',f0(rest)):''}
    ${kv2('= Вільні до виплати'+(Math.abs(rest)<=1?' <span class="note">✓ зійшлося</span>':''),f0(free),'final')}</section>`;
 }
