@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261128k">
+<meta name="wl-build" content="20261128l">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}.mrbtn{display:flex;align-items:center;gap:14px;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:16px;cursor:pointer;text-align:left;font:inherit;color:#fff;background:linear-gradient(135deg,#2b6cb0,#3d8fd6);box-shadow:0 4px 14px rgba(43,108,176,.28)}
 .mrbtn:active{transform:scale(.99)}.mrico{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.18)}
 .mrtx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.mrtx b{font-size:16px;letter-spacing:.01em}.mrtx span{font-size:12.5px;opacity:.88}.mrar{font-size:26px;opacity:.8;line-height:1}
@@ -293,7 +293,7 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
       <button class="tab" role="tab" data-tab="myexp" aria-selected="false" type="button">Інші платежі</button>
       <button class="tab" role="tab" data-tab="recon" aria-selected="false" type="button">Звірки</button>
       <button class="tab" role="tab" data-tab="points" aria-selected="false" type="button">Точки</button>
-      <button class="tab" role="tab" data-tab="svc" aria-selected="false" type="button">Регламент</button>
+      <button class="tab" role="tab" data-tab="svc" aria-selected="false" type="button">Сервіс</button>
       <button class="tab" role="tab" data-tab="meters" aria-selected="false" type="button">Показники</button>
       <button class="tab" role="tab" data-tab="inv" aria-selected="false" type="button">Інвестиції</button>
     </div>
@@ -305,9 +305,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261128k"></script>
+<script src="config.js?v=20261128l"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261128k"></script>
+<script src="shim.js?v=20261128l"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx','mread'];
@@ -969,8 +969,8 @@ function viewSettle(){
   const JA=jobsAll(), SLs=svcLedger(), anaDebt=SLs.tot, anaNew=JA.filter(j=>j.type==='work'&&j.st==='new').reduce((a,j)=>a+(+j.amount||0),0);
   let h=`<section class="card"><div class="shead"><h2>Взаєморозрахунки партнерів</h2>${canWrite?`<button class="btn sm pri" data-act="addPay" type="button">+ Переказ</button>`:''}</div>`;
   const tiles=[];
-  const filtD=Object.values(S.svc).filter(j=>filtNew({...j,type:j.type})).reduce((a,j)=>a+(+j.filt||0),0), svcAll=anaDebt+filtD;
-  const svcTile=(Math.abs(anaDebt)>0.5||filtD>0.5)?`<button class="tile tapt" type="button" data-act="goTab" data-id="svc:job"><div class="l">Сервіс разом →</div><div class="v">${f0(svcAll)}</div><div class="s">Анатолій ${anaDebt<0?'−':''}${f0(Math.abs(anaDebt))} · фільтри ${f0(filtD)}</div></button>`:'';
+  const filtD=Object.values(S.svc).filter(j=>filtNew({...j,type:j.type})).reduce((a,j)=>a+(+j.filt||0),0), svcTot=anaDebt+filtD;
+  const svcOn=Math.abs(anaDebt)>0.5||filtD>0.5;
   const arr=k=>setOpen===k?'▾':'▸', dd=danDevOwed();
   const tile=(k,l,v,sub)=>`<button class="tile tapt" type="button" data-act="setSetOpen" data-id="${k}"><div class="l">${l} ${arr(k)}</div><div class="v">${v}</div><div class="s">${sub}</div></button>`;
   const left=got-danExp, hasOp=debt>0.5||(om&&(got>0.5||danExp>0.5));
@@ -979,6 +979,7 @@ function viewSettle(){
   const dIn=DP.reduce((a,i)=>a+(+i.hrn||0),0), dOut=DD.reduce((a,x)=>a+(+x.a||0),0);
   const sm='<span style="font-size:13px;font-weight:400">', DE=om?Object.values(S.exp).filter(e=>e.month===om&&e.payer==='Даниїл'&&!e.ana1).sort((a,b)=>(a.date||'').localeCompare(b.date||'')):[];
   if(hasOp)tiles.push(debt>0.5?tile('op','Операційна діяльність',f0(debt)+' '+sm+'Влад винен</span>','за закритими місяцями'):tile('op','Операційна діяльність',f0(Math.abs(left))+(left<-0.5?' '+sm+'винні Даниїлу</span>':' '+sm+'у Даниїла</span>'),mLabel(om).toLowerCase()+' · отримав '+f0(got)+' · витрати '+f0(danExp)));
+  if(svcOn)tiles.push(tile('svc','Сервіс',f0(svcTot),'Анатолій '+(anaDebt<0?'−':'')+f0(Math.abs(anaDebt))+' · фільтри '+f0(filtD)));
   if(dd>0.5)tiles.push(tile('dev','Розвиток',f0(dd)+' '+sm+'винні Даниїлу</span>','отримав '+f0(dIn)+' · витрати '+f0(dOut)));
   if(tiles.length)h+=`<div class="tiles">${tiles.join('')}</div>`;
   const R=[], row=(l,v,cls='')=>R.push(`<span class="${cls}">${l}</span><span class="num ${cls}">${v}</span>`), hd=t=>R.push(`<span class="glabel" style="grid-column:1/-1;margin-top:6px">${t}</span>`);
@@ -996,8 +997,14 @@ function viewSettle(){
     hd('Отримав');for(const i of DP)row((i.date?dmy(i.date).slice(0,5):'—')+' · внесок '+esc(i.investor||'')+' '+fUsd(i.usd),f0(i.hrn),'inrow');row('Отримав',f0(dIn));
     hd('Витрати');for(const x of DD)row((x.d?dmy(x.d).slice(0,5):'—')+' · '+esc(x.p||''),f0(x.a),'note');row('Витрати',f0(dOut));
     row('<b>'+(dOut-dIn>=0?'= Винні Даниїлу':'= У Даниїла')+'</b>','<b>'+f0(Math.abs(dOut-dIn))+'</b>')}
+  if(setOpen==='svc'&&svcOn){
+    const SL=svcLedger();let run=0,cut2=-1;SL.L.forEach(([,v],i)=>{run+=v;if(Math.abs(run)<0.5)cut2=i});
+    hd('Анатолій · роботи і виплати');if(cut2>=0&&cut2<SL.L.length-1)row('Раніше розраховано','0','note');
+    for(const [t,v] of SL.L.slice(cut2+1))row(t,(v<0?'−':'')+f0(Math.abs(v)),v<0?'inrow':'note');row('Анатолій',f0(anaDebt));
+    const FL=Object.values(S.svc).filter(j=>filtNew(j)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(FL.length){hd('Фільтри');for(const j of FL)row(dmy(j.date).slice(0,5)+' · '+esc((S.points[j.point]||{}).name||''),f0(+j.filt),'note');row('Фільтри',f0(filtD))}
+    row('<b>= Сервіс</b>','<b>'+f0(svcTot)+'</b>')}
   if(R.length)h+=`<div class="check" style="margin-top:8px">${R.join('')}</div>`;
-  if(svcTile)h+=`<div class="sub" style="margin-top:14px">Сервіс</div><div class="tiles">${svcTile}</div><p class="note" style="margin:6px 0 0">Роботи Анатолія — у витратах одразу; виплати Анатолію вносяться в «Регламенті».</p>`;
   if(om)h+=`<p class="note" style="margin:6px 0 0">Після закриття ${mGen(om)} перекази й витрати зведуться в розподіл прибутку 50/50.</p>`;
   if(false){
     h+=`<div class="tbl" style="margin-top:12px"><table><thead><tr><th>Дата</th><th>Операція</th><th class="num">Сума</th></tr></thead><tbody>`;
