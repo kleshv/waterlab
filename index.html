@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261128i">
+<meta name="wl-build" content="20261128j">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}.mrbtn{display:flex;align-items:center;gap:14px;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:16px;cursor:pointer;text-align:left;font:inherit;color:#fff;background:linear-gradient(135deg,#2b6cb0,#3d8fd6);box-shadow:0 4px 14px rgba(43,108,176,.28)}
 .mrbtn:active{transform:scale(.99)}.mrico{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.18)}
 .mrtx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.mrtx b{font-size:16px;letter-spacing:.01em}.mrtx span{font-size:12.5px;opacity:.88}.mrar{font-size:26px;opacity:.8;line-height:1}
@@ -305,9 +305,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261128i"></script>
+<script src="config.js?v=20261128j"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261128i"></script>
+<script src="shim.js?v=20261128j"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx','mread'];
@@ -795,10 +795,10 @@ const jobsAll=()=>Object.entries(S.svc).filter(([,e])=>e.type==='work'||e.type==
 /* Сервіс з 23.11: нараховується роботa Анатолію + фільтри; Влад платить окремо (з ФОП через свою картку) */
 const svcStart=()=>(S.meta.settings||{}).svcStart||'2026-11-23';
 const filtNew=j=>j.type==='work'&&(j.date||'')>=svcStart()&&+j.filt>0&&(!j.expId||!S.exp[j.expId]||S.exp[j.expId].payer==='Сервіс');
-function svcLedger(){const JA=jobsAll();let acc=0,paid=0,ana=0,filt=0;const L=[];const pn_=id=>esc((S.points[id]||{}).name||'');
-  for(const j of JA){if(j.type==='work'){const a=+j.amount||0, f=filtNew(j)?+j.filt:0;if(!a&&!f)continue;ana+=a;filt+=f;acc+=a+f;L.push([dmy(j.date).slice(0,5)+' · '+esc(JOBK[j.kind]||'робота')+(j.point?' · '+pn_(j.point):'')+(f?' (робота '+f0(a)+' + фільтри '+nf2.format(f)+')':''),a+f])}
-    else if(j.type==='pay'){paid+=+j.amount||0;L.push([dmy(j.date).slice(0,5)+' · оплачено'+(j.src==='bank'?' (Влад, з ФОП)':''),-(+j.amount||0)])}}
-  const r=x=>Math.round(x*100)/100;return {tot:r(acc-paid),acc:r(acc),paid:r(paid),ana:r(ana),filt:r(filt),L}}
+function svcLedger(){const JA=jobsAll();let acc=0,paid=0;const L=[];const pn_=id=>esc((S.points[id]||{}).name||'');
+  for(const j of JA){if(j.type==='work'){const a=+j.amount||0;if(!a)continue;acc+=a;L.push([dmy(j.date).slice(0,5)+' · '+esc(JOBK[j.kind]||'робота')+(j.point?' · '+pn_(j.point):''),a])}
+    else if(j.type==='pay'){paid+=+j.amount||0;L.push([dmy(j.date).slice(0,5)+' · виплата Анатолію',-(+j.amount||0)])}}
+  const r=x=>Math.round(x*100)/100;return {tot:r(acc-paid),acc:r(acc),paid:r(paid),ana:r(acc-paid),filt:0,L}}
 const jobPend=()=>jobsAll().filter(j=>j.type==='work'&&j.st==='new');
 function viewJobs(){
   const L=jobsAll(), owner=role==='owner';let bal=0,pend=0;for(const j of L){if(j.type==='work'&&j.st==='new'){pend+=+j.amount||0;continue}bal+=j.type==='work'?(+j.amount||0):-(+j.amount||0)}
@@ -806,7 +806,7 @@ function viewJobs(){
   const sum=a=>a.reduce((x,j)=>x+(+j.amount||0),0), SL=svcLedger();
   let h=`<section class="card"><div class="shead"><h2>Роботи Анатолія й розрахунок</h2></div>
   ${canWrite?`<div class="jacts"><button class="btn pri" data-act="addSvc" type="button">+ Заміна</button><button class="btn" data-act="addJob" type="button">+ Інша робота</button>${owner?`<button class="btn" data-act="addJobPay" type="button">+ Виплата</button>`:''}</div>`:''}
-  <div class="tiles t3"><div class="tile hi"><div class="l">${SL.tot>=0?'Сервіс до оплати':'Сервіс сплачено наперед'}</div><div class="v">${f0(Math.abs(SL.tot))}</div><div class="s">роботи й фільтри − оплати</div>${owner&&canWrite&&SL.tot>0.5?`<button class="btn sm pri" type="button" data-act="svcClose" style="margin-top:8px">Закрити період</button>`:''}</div>
+  <div class="tiles t3"><div class="tile hi"><div class="l">${SL.tot>=0?'Винні Анатолію':'Анатолій винен'}</div><div class="v">${f0(Math.abs(SL.tot))}</div><div class="s">роботи − виплати</div></div>
   <div class="tile"><div class="l">Роботи · ${MN[+m.slice(5)-1]}</div><div class="v">${f0(sum(mw))}</div><div class="s">${mw.length} записів</div></div>
   <div class="tile"><div class="l">Виплачено · ${MN[+m.slice(5)-1]}</div><div class="v">${f0(sum(mp))}</div><div class="s">${mp.length} виплат</div></div></div></section>`;
   if(false&&P.length)h+=`<section class="card"><h2>Чекає підтвердження</h2><p class="note">${owner?'Після підтвердження запис іде у витрати окремо, як «Сервіс»: робота — у борг Анатолію (закривається «+ Виплата»), фільтри — оплата компанії фільтрів.':'Після підтвердження запис піде у витрати WaterLab.'}</p>
@@ -814,15 +814,15 @@ function viewJobs(){
   let cm='',rows='';const R=L.slice().reverse().slice(0,120);
   for(const j of R){const mm=j.date.slice(0,7);if(mm!==cm){cm=mm;const W=L.filter(x=>x.type==='work'&&x.date.slice(0,7)===mm),Pp=L.filter(x=>x.type==='pay'&&x.date.slice(0,7)===mm);rows+=`<tr class="grp"><td colspan="2">${mLabel(mm)}</td><td class="num">${sum(W)?'роботи '+f0(sum(W)):''}${sum(W)&&sum(Pp)?' · ':''}${sum(Pp)?'виплати '+f0(sum(Pp)):''}</td></tr>`}
     const pay=j.type==='pay';
-    rows+=`<tr class="${canWrite&&(owner||j.st==='new'||pay)?'click':''}" data-act="${canWrite?'editJob':''}" data-id="${j.id}"><td>${dmy(j.date)}</td><td>${pay?'<b>'+(j.to==='svc'?'Оплата сервісу':j.to==='filt'?'Оплата фільтрів':'Виплата Анатолію')+'</b>':esc(JOBK[j.kind]||j.kind)}${j.point?' · '+esc((S.points[j.point]||{}).name||''):''}${j.note?`<div class="note">${esc(j.note)}</div>`:''}</td><td class="num ${pay?'pos':''}">${pay?'−':''}${f0(j.amount)}${j.filt?`<div class="note">фільтри ${nf2.format(j.filt)}</div>`:''}</td></tr>`}
-  h+=`<section class="card"><h2>Журнал</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Робота</th><th class="num">Сума</th></tr></thead><tbody>${rows}</tbody></table></div><p class="note">Робота й фільтри одразу йдуть у витрати місяця (фінрез) як «Сервіс». Це окремий розрахунок, не каса Даниїла: Влад закриває його періодично — «Закрити період».</p></section>`;
+    rows+=`<tr class="${canWrite&&(owner||j.st==='new'||pay)?'click':''}" data-act="${canWrite?'editJob':''}" data-id="${j.id}"><td>${dmy(j.date)}</td><td>${pay?'<b>'+(j.to==='svc'?'Оплата сервісу':j.to==='filt'?'Оплата фільтрів':'Виплата Анатолію')+'</b>':esc(JOBK[j.kind]||j.kind)}${j.point?' · '+esc((S.points[j.point]||{}).name||''):''}${j.note?`<div class="note">${esc(j.note)}</div>`:''}</td><td class="num ${pay?'pos':''}">${pay?'−':''}${f0(j.amount)}</td></tr>`}
+  h+=`<section class="card"><h2>Журнал</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Робота</th><th class="num">Сума</th></tr></thead><tbody>${rows}</tbody></table></div><p class="note">Тут лише робота Анатолія і виплати йому. Робота й фільтри одразу йдуть у витрати місяця (фінрез) як «Сервіс».</p></section>`;
   return h;
 }
 function jobForm(j){j=j||{};const pts=pointsList().filter(p=>p.id!=='p00'&&p.active!==false);const pay=j.type==='pay';
   return (pay?'':sel('kind','Що',j.kind||'svc',Object.entries(JOBK),true)+sel('point','Точка',j.point||'',[['','— без точки —'],...pts.map(p=>[p.id,p.name])],true))+fld('date','Дата',j.date||todayISO2(),{type:'date'})+fld('amount',pay?'Сума, грн':'Оплата за роботу, грн',j.amount??'')+(pay?'':fld('filt','Фільтри для WaterLab, грн',j.filt??''))+fld('note','Коментар',j.note||'',{type:'text',full:true})}
 async function saveJob(id,base,fd){const a=parseNum(String(fd.amount||''));if(a===null||String(fd.amount||'').trim()==='')return 'Вкажіть суму';if(!fd.date)return 'Вкажіть дату';
   const d={...base,date:fd.date,amount:a,note:fd.note||''};delete d.id;
-  if(base.type==='pay'){d.to=base.to||'svc';if(!base.src&&d.date>=svcStart())d.src='bank'}
+  if(base.type==='pay'){d.to='ana'}
   if(base.type==='work'){d.kind=fd.kind;d.point=fd.point||'';const f=parseNum(String(fd.filt||''));if(f)d.filt=f;else delete d.filt}
   if(!await w(()=>db.doc('svc/'+(id||db.collection('svc').doc().id)).set(d)))return 'Не збереглося';toast('Записано')}
 function addJob(){openSheet('Інша робота','Сервіс, ремонт, монтаж або матеріали.',jobForm({type:'work'}),fd=>saveJob(null,{type:'work',st:'new',by:me||''},fd))}
@@ -831,7 +831,7 @@ function svcClose(){const SL=svcLedger();
     fld('date','Дата оплати',todayISO2(),{type:'date'})+fld('amount','Сума, грн',SL.tot>0?String(SL.tot).replace('.',','):'')+fld('note','Коментар',`за роботи по ${dmy(todayISO2()).slice(0,5)}`,{type:'text',full:true}),
     async fd=>{const a=parseNum(String(fd.amount||''));if(!a)return 'Вкажіть суму';if(!fd.date)return 'Вкажіть дату';
       if(!await w(()=>db.doc('svc/'+db.collection('svc').doc().id).set({type:'pay',to:'svc',src:'bank',date:fd.date,amount:a,note:fd.note||'',by:me||''})))return 'Не збереглося';toast('Період закрито · оплату записано')})}
-function addJobPay(){openSheet('Виплата','Оплата Анатолію за роботи або компанії фільтрів.',jobForm({type:'pay'}),fd=>saveJob(null,{type:'pay',by:me||''},fd))}
+function addJobPay(){openSheet('Виплата Анатолію','Гроші, які Анатолій отримав за роботи.',jobForm({type:'pay'}),fd=>saveJob(null,{type:'pay',by:me||''},fd))}
 function editJob(id){const j=S.svc[id];if(!j)return;const owner=role==='owner';
   if(j.st==='ok'&&j.type==='work'&&!owner){toast('Запис уже підтверджено');return}
   openSheet(j.type==='pay'?(j.to==='svc'?'Оплата сервісу':j.to==='filt'?'Оплата фільтрів':'Виплата Анатолію'):(JOBK[j.kind]||'Робота'),j.st==='ok'&&j.expId?'Уже у витратах WaterLab — зміни тут не змінять витрату.':'',jobForm(j),fd=>saveJob(id,j,fd),async()=>await w(()=>db.doc('svc/'+id).delete()))}
@@ -969,7 +969,7 @@ function viewSettle(){
   const JA=jobsAll(), SLs=svcLedger(), anaDebt=SLs.tot, anaNew=JA.filter(j=>j.type==='work'&&j.st==='new').reduce((a,j)=>a+(+j.amount||0),0);
   let h=`<section class="card"><div class="shead"><h2>Взаєморозрахунки партнерів</h2>${canWrite?`<button class="btn sm pri" data-act="addPay" type="button">+ Переказ</button>`:''}</div>`;
   const tiles=[];
-  const svcTile=(anaSum>0.5||Math.abs(anaDebt)>0.5)?`<button class="tile tapt" type="button" data-act="goTab" data-id="svc:job"><div class="l">Сервіс · Анатолій →</div><div class="v">${f0(Math.abs(anaDebt))}</div><div class="s">${anaDebt>=0?'до оплати (роботи й фільтри − оплати Влада)':'сплачено наперед'}${anaNew?` · ще ${f0(anaNew)} чекає підтвердження`:''}${anaSum>0.5?`<br>нараховано у витрати ${f0(anaSum)} (з фільтрами)`:''}</div></button>`:'';
+  const svcTile=(anaSum>0.5||Math.abs(anaDebt)>0.5)?`<button class="tile tapt" type="button" data-act="goTab" data-id="svc:job"><div class="l">Сервіс · Анатолій →</div><div class="v">${f0(Math.abs(anaDebt))}</div><div class="s">${anaDebt>=0?'винні Анатолію (роботи − виплати)':'Анатолію виплачено наперед'}${anaNew?` · ще ${f0(anaNew)} чекає підтвердження`:''}${anaSum>0.5?`<br>нараховано у витрати ${f0(anaSum)} (з фільтрами)`:''}</div></button>`:'';
   const arr=k=>setOpen===k?'▾':'▸', dd=danDevOwed();
   const tile=(k,l,v,sub)=>`<button class="tile tapt" type="button" data-act="setSetOpen" data-id="${k}"><div class="l">${l} ${arr(k)}</div><div class="v">${v}</div><div class="s">${sub}</div></button>`;
   const left=got-danExp, hasOp=debt>0.5||(om&&(got>0.5||danExp>0.5));
@@ -996,7 +996,7 @@ function viewSettle(){
     hd('Витрати');for(const x of DD)row((x.d?dmy(x.d).slice(0,5):'—')+' · '+esc(x.p||''),f0(x.a),'note');row('Витрати',f0(dOut));
     row('<b>'+(dOut-dIn>=0?'= Винні Даниїлу':'= У Даниїла')+'</b>','<b>'+f0(Math.abs(dOut-dIn))+'</b>')}
   if(R.length)h+=`<div class="check" style="margin-top:8px">${R.join('')}</div>`;
-  if(svcTile)h+=`<div class="sub" style="margin-top:14px">Сервіс</div><div class="tiles">${svcTile}</div><p class="note" style="margin:6px 0 0">Сервіс — окремий розрахунок: роботи й фільтри у витратах одразу, Влад закриває період оплатою з ФОП.</p>`;
+  if(svcTile)h+=`<div class="sub" style="margin-top:14px">Сервіс</div><div class="tiles">${svcTile}</div><p class="note" style="margin:6px 0 0">Роботи Анатолія — у витратах одразу; виплати Анатолію вносяться в «Регламенті».</p>`;
   if(om)h+=`<p class="note" style="margin:6px 0 0">Після закриття ${mGen(om)} перекази й витрати зведуться в розподіл прибутку 50/50.</p>`;
   if(false){
     h+=`<div class="tbl" style="margin-top:12px"><table><thead><tr><th>Дата</th><th>Операція</th><th class="num">Сума</th></tr></thead><tbody>`;
@@ -2682,7 +2682,7 @@ function moneyCard(){
    if(RUacc)G.push(['Оренда й комуналка нараховані в прибутку',RUacc]);if(rent+util)G.push(['Оренда й комуналка сплачені',-(rent+util)]);
    if(Math.abs(TR)>0.5)G.push(['Перекази й компенсації (див. «± Перекази»)',TR]);if(Math.abs(dF)>0.5)G.push(['Розбіжність з випискою / фактом готівки',dF]);
    const gs=G.reduce((a,[,v])=>a+v,0);if(Math.abs(gap-gs)>0.5)G.push(['Інше',gap-gs]);D.gap=G}
-  D.obl=[['Владу — витрати з його картки',vOwe],['Даниїлу — витрати з його картки',dOwe],['Сервіс — Анатолій і фільтри',ana],['Компанії фільтрів',filtD],['Оренда й комуналка — не сплачено',unpaid],['Даниїлу — розвиток без внеску',danDev]].filter(([,v])=>v>0.5).map(([t,v])=>[t,-v]);
+  D.obl=[['Владу — витрати з його картки',vOwe],['Даниїлу — витрати з його картки',dOwe],['Анатолію за роботи',ana],['Компанії фільтрів',filtD],['Оренда й комуналка — не сплачено',unpaid],['Даниїлу — розвиток без внеску',danDev]].filter(([,v])=>v>0.5).map(([t,v])=>[t,-v]);
   window._bridge={free,net:NET,paid:PP,left:NM.reduce((a,x)=>a+x.mt.net+((profM[x.m]||{}).bank||0)+((profM[x.m]||{}).cash||0),0),rest,m:ms[ms.length-1]};
   const thru=ms.map(m=>(S.months[m]||{}).gwThru).filter(Boolean).pop();
   const kv2=(a,b,c='',key='')=>{const has=key&&D[key]&&D[key].length;if(has)balT[key]=a.replace(/<[^>]+>/g,'').replace(/·.*$/,'').replace(/^[+−±=\s]+/,'').trim();
@@ -2712,7 +2712,7 @@ function moneyCard(){
   </tbody></table></div>
   ${bFact!=null?`<p class="note" style="margin:4px 0 0">Рахунок за випискою на ${dmy(ls.to)}: <b>${f0(bFact)}</b>${dB&&Math.abs(dB)>1?` · розбіжність ${f0(dB)} — див. «Рух по рахунку»`:' ✓'}</p>`:''}`})()}
   <div class="glabel" style="margin-top:14px">Кому ми винні</div>
-   ${vOwe>0.5?kv2('Владу — витрати з його картки',f0(vOwe),'','oV'):''}${dOwe>0.5?kv2('Даниїлу — витрати з його картки',f0(dOwe),'','oD'):''}${ana>0.5?kv2('Сервіс — Анатолій і фільтри',f0(ana),'','ana'):''}${filtD>0.5?kv2('Компанії фільтрів',f0(filtD),'','filt'):''}${unpaid>0.5?kv2('Оренда й комуналка — не сплачено',f0(unpaid),'','unp'):''}${danDev>0.5?kv2('Даниїлу — розвиток без внеску',f0(danDev),'','dev'):''}${kv2('= Разом боргів',f0(obl),'final')}
+   ${vOwe>0.5?kv2('Владу — витрати з його картки',f0(vOwe),'','oV'):''}${dOwe>0.5?kv2('Даниїлу — витрати з його картки',f0(dOwe),'','oD'):''}${ana>0.5?kv2('Анатолію за роботи',f0(ana),'','ana'):''}${filtD>0.5?kv2('Компанії фільтрів',f0(filtD),'','filt'):''}${unpaid>0.5?kv2('Оренда й комуналка — не сплачено',f0(unpaid),'','unp'):''}${danDev>0.5?kv2('Даниїлу — розвиток без внеску',f0(danDev),'','dev'):''}${kv2('= Разом боргів',f0(obl),'final')}
   <div class="glabel" style="margin-top:14px">Вільні гроші й прибуток <span class="note">· як пов'язано з Головною</span></div>
    ${kv2('Залишок на '+balStartTxt(),f0(O))}
    ${NM.map(x=>kv2('+ Прибуток до розподілу за '+MN[+x.m.slice(5)-1]+' <span class="note">· Головна</span>',f0(x.mt.net),'','net'+x.m)).join('')}
