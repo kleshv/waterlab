@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261128g">
+<meta name="wl-build" content="20261128h">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}.mrbtn{display:flex;align-items:center;gap:14px;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:16px;cursor:pointer;text-align:left;font:inherit;color:#fff;background:linear-gradient(135deg,#2b6cb0,#3d8fd6);box-shadow:0 4px 14px rgba(43,108,176,.28)}
 .mrbtn:active{transform:scale(.99)}.mrico{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.18)}
 .mrtx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.mrtx b{font-size:16px;letter-spacing:.01em}.mrtx span{font-size:12.5px;opacity:.88}.mrar{font-size:26px;opacity:.8;line-height:1}
@@ -305,9 +305,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261128g"></script>
+<script src="config.js?v=20261128h"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261128g"></script>
+<script src="shim.js?v=20261128h"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx','mread'];
@@ -796,7 +796,7 @@ const jobsAll=()=>Object.entries(S.svc).filter(([,e])=>e.type==='work'||e.type==
 const svcStart=()=>(S.meta.settings||{}).svcStart||'2026-11-23';
 const filtNew=j=>j.type==='work'&&(j.date||'')>=svcStart()&&+j.filt>0&&(!j.expId||!S.exp[j.expId]||S.exp[j.expId].payer==='Сервіс');
 function svcLedger(){const JA=jobsAll();let ana=0,filt=0;const LA=[],LF=[];
-  for(const j of JA){if(j.type==='work'){ana+=+j.amount||0;if(+j.amount)LA.push([dmy(j.date).slice(0,5)+' · '+esc(JOBK[j.kind]||'робота')+(j.point?' · '+esc((S.points[j.point]||{}).name||''):''),+j.amount]);if(filtNew(j)){filt+=+j.filt;LF.push([dmy(j.date).slice(0,5)+' · фільтри · '+esc((S.points[j.point]||{}).name||''),+j.filt])}}
+  for(const j of JA){if(j.type==='work'&&(j.date||'')>=svcStart())continue;if(j.type==='work'){ana+=+j.amount||0;if(+j.amount)LA.push([dmy(j.date).slice(0,5)+' · '+esc(JOBK[j.kind]||'робота')+(j.point?' · '+esc((S.points[j.point]||{}).name||''):''),+j.amount]);if(filtNew(j)){filt+=+j.filt;LF.push([dmy(j.date).slice(0,5)+' · фільтри · '+esc((S.points[j.point]||{}).name||''),+j.filt])}}
     else if(j.type==='pay'){if(j.to==='filt'){filt-=+j.amount||0;LF.push([dmy(j.date).slice(0,5)+' · оплачено компанії фільтрів',-(+j.amount||0)])}else{ana-=+j.amount||0;LA.push([dmy(j.date).slice(0,5)+' · виплата Анатолію',-(+j.amount||0)])}}}
   return {ana:Math.round(ana*100)/100,filt:Math.round(filt*100)/100,LA,LF}}
 const jobPend=()=>jobsAll().filter(j=>j.type==='work'&&j.st==='new');
@@ -806,7 +806,7 @@ function viewJobs(){
   const sum=a=>a.reduce((x,j)=>x+(+j.amount||0),0), SL=svcLedger();
   let h=`<section class="card"><div class="shead"><h2>Роботи Анатолія й розрахунок</h2></div>
   ${canWrite?`<div class="jacts"><button class="btn pri" data-act="addSvc" type="button">+ Заміна</button><button class="btn" data-act="addJob" type="button">+ Інша робота</button>${owner?`<button class="btn" data-act="addJobPay" type="button">+ Виплата</button>`:''}</div>`:''}
-  <div class="tiles t3"><div class="tile hi"><div class="l">До оплати за сервіс</div><div class="v">${f0(Math.max(0,SL.ana)+Math.max(0,SL.filt))}</div><div class="s">Анатолію ${f0(Math.max(0,SL.ana))}${SL.filt>0.5?' · фільтри '+f0(SL.filt):''}</div>${owner&&canWrite&&(SL.ana>0.5||SL.filt>0.5)?`<button class="btn sm pri" type="button" data-act="svcPaid" style="margin-top:8px">Оплачено</button>`:''}</div>
+  <div class="tiles t3"><div class="tile hi"><div class="l">${SL.ana>=0?'Винні Анатолію':'Анатолій винен'}</div><div class="v">${f0(Math.abs(SL.ana))}</div><div class="s">старі роботи (до ${dmy(svcStart()).slice(0,5)}) − виплати</div></div>
   <div class="tile"><div class="l">Роботи · ${MN[+m.slice(5)-1]}</div><div class="v">${f0(sum(mw))}</div><div class="s">${mw.length} записів</div></div>
   <div class="tile"><div class="l">Виплачено · ${MN[+m.slice(5)-1]}</div><div class="v">${f0(sum(mp))}</div><div class="s">${mp.length} виплат</div></div></div></section>`;
   if(false&&P.length)h+=`<section class="card"><h2>Чекає підтвердження</h2><p class="note">${owner?'Після підтвердження запис іде у витрати окремо, як «Сервіс»: робота — у борг Анатолію (закривається «+ Виплата»), фільтри — оплата компанії фільтрів.':'Після підтвердження запис піде у витрати WaterLab.'}</p>
@@ -815,7 +815,7 @@ function viewJobs(){
   for(const j of R){const mm=j.date.slice(0,7);if(mm!==cm){cm=mm;const W=L.filter(x=>x.type==='work'&&x.date.slice(0,7)===mm),Pp=L.filter(x=>x.type==='pay'&&x.date.slice(0,7)===mm);rows+=`<tr class="grp"><td colspan="2">${mLabel(mm)}</td><td class="num">${sum(W)?'роботи '+f0(sum(W)):''}${sum(W)&&sum(Pp)?' · ':''}${sum(Pp)?'виплати '+f0(sum(Pp)):''}</td></tr>`}
     const pay=j.type==='pay';
     rows+=`<tr class="${canWrite&&(owner||j.st==='new'||pay)?'click':''}" data-act="${canWrite?'editJob':''}" data-id="${j.id}"><td>${dmy(j.date)}</td><td>${pay?'<b>'+(j.to==='filt'?'Оплата фільтрів':'Виплата Анатолію')+'</b>':esc(JOBK[j.kind]||j.kind)}${j.point?' · '+esc((S.points[j.point]||{}).name||''):''}${j.note?`<div class="note">${esc(j.note)}</div>`:''}</td><td class="num ${pay?'pos':''}">${pay?'−':''}${f0(j.amount)}${j.filt?`<div class="note">фільтри ${nf2.format(j.filt)}</div>`:''}</td></tr>`}
-  h+=`<section class="card"><h2>Журнал</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Робота</th><th class="num">Сума</th></tr></thead><tbody>${rows}</tbody></table></div><p class="note">Робота й фільтри одразу йдуть у витрати місяця як «Сервіс». Даниїл платить з грошей, які переказує Влад, і тисне «Оплачено».</p></section>`;
+  h+=`<section class="card"><h2>Журнал</h2><div class="tbl"><table class="pl ut"><thead><tr><th>Дата</th><th>Робота</th><th class="num">Сума</th></tr></thead><tbody>${rows}</tbody></table></div><p class="note">З ${dmy(svcStart()).slice(0,5)} заміни одразу йдуть у витрати Даниїла (робота й фільтри): він платить Анатолію й за фільтри з грошей, які переказує Влад. Нічого підтверджувати не треба.</p></section>`;
   return h;
 }
 function jobForm(j){j=j||{};const pts=pointsList().filter(p=>p.id!=='p00'&&p.active!==false);const pay=j.type==='pay';
@@ -839,7 +839,7 @@ function editJob(id){const j=S.svc[id];if(!j)return;const owner=role==='owner';
 async function jobOk(id,silent){const j=S.svc[id];if(!j||j.st!=='new')return;
   let m=j.date.slice(0,7);if(isClosed(m)||!S.months[m]){const op=monthsList().filter(x=>!isClosed(x)).pop();if(!op){toast('Немає відкритого місяця');return}m=op}
   const amt=(+j.amount||0)+(+j.filt||0);const eid=db.collection('exp').doc().id;
-  const e={cat:'ТОіР',article:JOBART[j.kind]||'Сервіс і заміна фільтрів',amount:Math.round(amt*100)/100,month:m,date:j.date,point:j.point||'',payer:'Сервіс',note:(JOBK[j.kind]||'')+(j.filt?` (робота ${f0(j.amount)} + фільтри ${nf2.format(j.filt)})`:'')+(j.note?' · '+j.note:''),recurring:false,by:me||'',src:'svc:'+id,ana1:true};
+  const e={cat:'ТОіР',article:JOBART[j.kind]||'Сервіс і заміна фільтрів',amount:Math.round(amt*100)/100,month:m,date:j.date,point:j.point||'',...(j.date>=svcStart()?{payer:'Даниїл',paidFrom:'cash'}:{payer:'Сервіс',ana1:true}),note:(JOBK[j.kind]||'')+(j.filt?` (робота ${f0(j.amount)} + фільтри ${nf2.format(j.filt)})`:'')+(j.note?' · '+j.note:''),recurring:false,by:me||'',src:'svc:'+id};
   if(!await w(()=>db.doc('exp/'+eid).set(e)))return;
   await w(()=>db.doc('svc/'+id).set({...j,st:'ok',expId:eid,okBy:me||''}));if(!silent)toast('Підтверджено · у витратах '+mLabel(m))}
 function viewMyExp(){
@@ -997,7 +997,7 @@ function viewSettle(){
     hd('Витрати');for(const x of DD)row((x.d?dmy(x.d).slice(0,5):'—')+' · '+esc(x.p||''),f0(x.a),'note');row('Витрати',f0(dOut));
     row('<b>'+(dOut-dIn>=0?'= Винні Даниїлу':'= У Даниїла')+'</b>','<b>'+f0(Math.abs(dOut-dIn))+'</b>')}
   if(R.length)h+=`<div class="check" style="margin-top:8px">${R.join('')}</div>`;
-  if(svcTile)h+=`<div class="sub" style="margin-top:14px">Сервіс</div><div class="tiles">${svcTile}</div><p class="note" style="margin:6px 0 0">Роботи Анатолія й фільтри — у витратах одразу. Влад переказує Даниїлу як завжди, Даниїл платить і тисне «Оплачено» в «Регламенті».</p>`;
+  if(svcTile)h+=`<div class="sub" style="margin-top:14px">Сервіс</div><div class="tiles">${svcTile}</div><p class="note" style="margin:6px 0 0">З ${dmy(svcStart()).slice(0,5)} роботи Анатолія й фільтри одразу йдуть у витрати Даниїла. Тут — лише залишок за старими роботами.</p>`;
   if(om)h+=`<p class="note" style="margin:6px 0 0">Після закриття ${mGen(om)} перекази й витрати зведуться в розподіл прибутку 50/50.</p>`;
   if(false){
     h+=`<div class="tbl" style="margin-top:12px"><table><thead><tr><th>Дата</th><th>Операція</th><th class="num">Сума</th></tr></thead><tbody>`;
