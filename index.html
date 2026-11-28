@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta name="wl-build" content="20261128j">
+<meta name="wl-build" content="20261128k">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}.mrbtn{display:flex;align-items:center;gap:14px;width:100%;margin:0 0 12px;padding:14px 16px;border:0;border-radius:16px;cursor:pointer;text-align:left;font:inherit;color:#fff;background:linear-gradient(135deg,#2b6cb0,#3d8fd6);box-shadow:0 4px 14px rgba(43,108,176,.28)}
 .mrbtn:active{transform:scale(.99)}.mrico{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.18)}
 .mrtx{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.mrtx b{font-size:16px;letter-spacing:.01em}.mrtx span{font-size:12.5px;opacity:.88}.mrar{font-size:26px;opacity:.8;line-height:1}
@@ -305,9 +305,9 @@ header .tab[aria-selected="true"],.tab[aria-selected="true"]{background:var(--ac
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="config.js?v=20261128j"></script>
+<script src="config.js?v=20261128k"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="shim.js?v=20261128j"></script>
+<script src="shim.js?v=20261128k"></script>
 <script>
 const MN=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
 const COLS=['points','months','pm','exp','settle','meta','util','pay','tariffs','inv','bal','mov','radj','expreq','svc','sales','meter','gwday','bankop','devx','mread'];
@@ -969,7 +969,8 @@ function viewSettle(){
   const JA=jobsAll(), SLs=svcLedger(), anaDebt=SLs.tot, anaNew=JA.filter(j=>j.type==='work'&&j.st==='new').reduce((a,j)=>a+(+j.amount||0),0);
   let h=`<section class="card"><div class="shead"><h2>Взаєморозрахунки партнерів</h2>${canWrite?`<button class="btn sm pri" data-act="addPay" type="button">+ Переказ</button>`:''}</div>`;
   const tiles=[];
-  const svcTile=(anaSum>0.5||Math.abs(anaDebt)>0.5)?`<button class="tile tapt" type="button" data-act="goTab" data-id="svc:job"><div class="l">Сервіс · Анатолій →</div><div class="v">${f0(Math.abs(anaDebt))}</div><div class="s">${anaDebt>=0?'винні Анатолію (роботи − виплати)':'Анатолію виплачено наперед'}${anaNew?` · ще ${f0(anaNew)} чекає підтвердження`:''}${anaSum>0.5?`<br>нараховано у витрати ${f0(anaSum)} (з фільтрами)`:''}</div></button>`:'';
+  const filtD=Object.values(S.svc).filter(j=>filtNew({...j,type:j.type})).reduce((a,j)=>a+(+j.filt||0),0), svcAll=anaDebt+filtD;
+  const svcTile=(Math.abs(anaDebt)>0.5||filtD>0.5)?`<button class="tile tapt" type="button" data-act="goTab" data-id="svc:job"><div class="l">Сервіс разом →</div><div class="v">${f0(svcAll)}</div><div class="s">Анатолій ${anaDebt<0?'−':''}${f0(Math.abs(anaDebt))} · фільтри ${f0(filtD)}</div></button>`:'';
   const arr=k=>setOpen===k?'▾':'▸', dd=danDevOwed();
   const tile=(k,l,v,sub)=>`<button class="tile tapt" type="button" data-act="setSetOpen" data-id="${k}"><div class="l">${l} ${arr(k)}</div><div class="v">${v}</div><div class="s">${sub}</div></button>`;
   const left=got-danExp, hasOp=debt>0.5||(om&&(got>0.5||danExp>0.5));
